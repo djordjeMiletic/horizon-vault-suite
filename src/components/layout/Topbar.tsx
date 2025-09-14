@@ -24,6 +24,9 @@ import { useToast } from '@/hooks/use-toast';
 // Import notifications data
 import notificationsData from '@/mocks/seed/notifications.json';
 
+// Simple state to track read notifications across app
+const readNotifications = new Set<string>();
+
 export const Topbar = () => {
   const { user, logout } = useAuth();
   const { toast } = useToast();
@@ -32,9 +35,14 @@ export const Topbar = () => {
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
-  // Merge seed notifications with store notifications
-  const allNotifications = [...notificationsData.filter(n => n.userId === user?.id), ...notifications.filter(n => n.userId === user?.id)]
+  // Merge seed notifications with store notifications, handle read state properly
+  const seedNotifications = notificationsData
+    .filter(n => n.userId === user?.id)
+    .map(n => ({ ...n, read: readNotifications.has(n.id) }));
+  
+  const allNotifications = [...seedNotifications, ...notifications.filter(n => n.userId === user?.id)]
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 8);
 
@@ -46,8 +54,19 @@ export const Topbar = () => {
   };
 
   const handleMarkAllRead = () => {
-    markAllAsRead(user?.id || '');
-    toast({ title: "Success", description: "All notifications marked as read" });
+    if (user?.id) {
+      // Mark store notifications as read
+      markAllAsRead(user.id);
+      // Mark seed notifications as read by adding to Set
+      allNotifications.forEach(n => {
+        if (n.userId === user.id) {
+          readNotifications.add(n.id);
+        }
+      });
+      // Force component re-render to reflect changes
+      setForceUpdate(prev => prev + 1);
+      toast({ title: "Success", description: "All notifications marked as read" });
+    }
   };
 
   const getBreadcrumb = () => {

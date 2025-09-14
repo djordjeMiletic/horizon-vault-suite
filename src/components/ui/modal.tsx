@@ -21,6 +21,8 @@ export const Modal = ({ open, onOpenChange, children, className }: ModalProps) =
     if (open) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
     }
 
     return () => {
@@ -33,7 +35,7 @@ export const Modal = ({ open, onOpenChange, children, className }: ModalProps) =
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-[60] flex items-center justify-center"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onOpenChange(false);

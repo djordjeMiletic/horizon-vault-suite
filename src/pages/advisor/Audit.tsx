@@ -204,7 +204,7 @@ const Audit = () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant={getActionBadgeVariant(entry.action)}>
-                          {entry.action.replace('_', ' ')}
+                          {entry.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -244,7 +244,7 @@ const Audit = () => {
                               <div>
                                 <h4 className="font-medium mb-2">Action</h4>
                                 <Badge variant={getActionBadgeVariant(entry.action)}>
-                                  {entry.action.replace('_', ' ')}
+                                  {entry.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                                 </Badge>
                               </div>
 

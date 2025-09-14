@@ -1,29 +1,90 @@
 [
   {
-    "id": "goal-2024-01",
+    "id": "goal-2025-04",
     "advisorId": "1",
-    "month": "2024-01",
+    "month": "2025-04",
     "target": 50000,
-    "achieved": 42500,
-    "progress": 0.85,
-    "type": "Monthly APE"
+    "achieved": 42300,
+    "progress": 0.846,
+    "type": "Monthly APE",
+    "milestones": [
+      {
+        "id": "milestone-001",
+        "note": "Q2 Target Review",
+        "date": "2025-04-15",
+        "completed": true
+      }
+    ]
   },
   {
-    "id": "goal-2024-02", 
+    "id": "goal-2025-05",
     "advisorId": "1",
-    "month": "2024-02",
+    "month": "2025-05",
+    "target": 50000,
+    "achieved": 51200,
+    "progress": 1.024,
+    "type": "Monthly APE",
+    "milestones": []
+  },
+  {
+    "id": "goal-2025-06",
+    "advisorId": "1",
+    "month": "2025-06",
+    "target": 52000,
+    "achieved": 48900,
+    "progress": 0.940,
+    "type": "Monthly APE",
+    "milestones": [
+      {
+        "id": "milestone-002",
+        "note": "Mid-year Performance Review",
+        "date": "2025-06-30",
+        "completed": true
+      }
+    ]
+  },
+  {
+    "id": "goal-2025-07",
+    "advisorId": "1",
+    "month": "2025-07",
+    "target": 52000,
+    "achieved": 53800,
+    "progress": 1.035,
+    "type": "Monthly APE",
+    "milestones": []
+  },
+  {
+    "id": "goal-2025-08",
+    "advisorId": "1",
+    "month": "2025-08",
     "target": 55000,
-    "achieved": 61200,
-    "progress": 1.11,
-    "type": "Monthly APE"
+    "achieved": 49750,
+    "progress": 0.904,
+    "type": "Monthly APE",
+    "milestones": [
+      {
+        "id": "milestone-003",
+        "note": "Summer Campaign Launch",
+        "date": "2025-08-01",
+        "completed": true
+      }
+    ]
   },
   {
-    "id": "goal-2024-03",
+    "id": "goal-2025-09",
     "advisorId": "1",
-    "month": "2024-03", 
-    "target": 60000,
-    "achieved": 38400,
-    "progress": 0.64,
-    "type": "Monthly APE"
+    "month": "2025-09",
+    "target": 55000,
+    "achieved": 52100,
+    "progress": 0.947,
+    "type": "Monthly APE",
+    "milestones": [
+      {
+        "id": "milestone-004",
+        "note": "Q3 Target Assessment",
+        "date": "2025-09-30",
+        "completed": false
+      }
+    ]
   }
 ]
