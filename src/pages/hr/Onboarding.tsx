@@ -12,6 +12,19 @@ import { Label } from '@/components/ui/label';
 import { Search, Users, Eye, CheckCircle, Clock, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+// Define task interface for proper typing
+interface OnboardingTask {
+  id: string;
+  title: string;
+  description: string;
+  category: 'HR Documentation' | 'Regulatory' | 'Training' | 'IT Setup' | 'Orientation';
+  status: 'Pending' | 'In Progress' | 'Completed';
+  assignedTo?: string;
+  completedAt?: string;
+  completedBy?: string;
+  dueDate: string;
+}
+
 const Onboarding = () => {
   const { onboarding, updateTask, completeTask } = useOnboardingStore();
   const { toast } = useToast();
@@ -163,14 +176,17 @@ const Onboarding = () => {
   );
 };
 
-const OnboardingDetailsSheet = ({ record, onTaskComplete }) => {
-  const groupedTasks = record.tasks.reduce((groups, task) => {
+const OnboardingDetailsSheet = ({ record, onTaskComplete }: {
+  record: any;
+  onTaskComplete: (recordId: string, taskId: string, completed: boolean) => void;
+}) => {
+  const groupedTasks: Record<string, OnboardingTask[]> = record.tasks.reduce((groups: Record<string, OnboardingTask[]>, task: OnboardingTask) => {
     if (!groups[task.category]) {
       groups[task.category] = [];
     }
     groups[task.category].push(task);
     return groups;
-  }, {} as Record<string, typeof record.tasks>);
+  }, {});
 
   const categoryIcons = {
     'HR Documentation': Users,
