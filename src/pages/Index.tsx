@@ -53,35 +53,35 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-12">
-        <div className="grid lg:grid-cols-3 gap-12">
-          {/* Hero Section - 2 columns */}
-          <div className="lg:col-span-2 space-y-8">
-            <div className="text-center lg:text-left">
-              <h1 className="text-5xl lg:text-6xl font-bold mb-6 bg-gradient-accent bg-clip-text text-transparent">
-                Event Horizon Advice Group
-              </h1>
-              <p className="text-xl text-muted-foreground mb-8 max-w-2xl">
-                Empowering financial advisors with cutting-edge technology and comprehensive 
-                commission tracking. Navigate the future of financial advisory services with confidence.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/products">
-                  <Button size="lg" className="w-full sm:w-auto">
-                    Explore Products
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/contact">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    Get in Touch
-                  </Button>
-                </Link>
-              </div>
+      <main className="container max-w-5xl mx-auto px-6 py-12">
+        <div className="space-y-8">
+          {/* Hero Section */}
+          <div className="text-center">
+            <h1 className="text-2xl md:text-4xl font-bold mb-6 bg-gradient-accent bg-clip-text text-transparent">
+              Event Horizon Advice Group
+            </h1>
+            <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-3xl mx-auto">
+              Empowering financial advisors with cutting-edge technology and comprehensive 
+              commission tracking. Navigate the future of financial advisory services with confidence.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/products">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Explore Products
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/contact">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                  Get in Touch
+                </Button>
+              </Link>
             </div>
+          </div>
 
-            {/* About Section */}
-            <div className="grid md:grid-cols-3 gap-6">
+          {/* About Section */}
+          <div className="mt-10 md:mt-14">
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8">
               {highlights.map((highlight, index) => (
                 <Card key={index} className="bg-card/80 backdrop-blur border-border/50 hover:bg-card/90 transition-all duration-300">
                   <CardHeader>
@@ -96,68 +96,6 @@ const Index = () => {
                 </Card>
               ))}
             </div>
-          </div>
-
-          {/* Sign In Panel - 1 column */}
-          <div className="lg:col-span-1">
-            <Card className="bg-card/90 backdrop-blur border-border/50 shadow-elegant">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Portal Access</CardTitle>
-                <CardDescription>
-                  Sign in as Advisor, Manager, Referral Partner, Administrator, or Client.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <Badge variant="secondary">Advisor</Badge>
-                      <p className="text-xs text-muted-foreground mt-1">Full advisory portal</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <Badge variant="secondary">Manager</Badge>
-                      <p className="text-xs text-muted-foreground mt-1">Management features</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <Badge variant="secondary">Administrator</Badge>
-                      <p className="text-xs text-muted-foreground mt-1">Admin & compliance</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <Badge variant="secondary">Client</Badge>
-                      <p className="text-xs text-muted-foreground mt-1">Client portal access</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Link to="/login" className="block">
-                    <Button className="w-full" size="lg">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    disabled
-                    title="Demo only"
-                  >
-                    Sign Up (Demo Only)
-                  </Button>
-                </div>
-
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">
-                    Secure access to your financial dashboard
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </main>

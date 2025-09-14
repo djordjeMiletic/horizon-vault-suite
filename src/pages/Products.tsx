@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Shield, TrendingUp, Clock } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ArrowLeft, Shield, TrendingUp, Clock, Users, Heart, Umbrella, Star } from 'lucide-react';
 
 import productsData from '@/mocks/seed/products.json';
 
@@ -58,18 +59,27 @@ const Products = () => {
           <div className="grid md:grid-cols-3 gap-6">
             {productsData.map((product) => (
               <Card key={product.id} className="bg-card/80 backdrop-blur border-border/50 hover:bg-card/90 transition-all duration-300">
-                <CardHeader>
+                <CardHeader className="p-5 md:p-6">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-xl">{product.name}</CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground mt-1">
-                        {product.provider}
-                      </CardDescription>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Shield className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl">{product.name}</CardTitle>
+                        <CardDescription className="text-sm text-muted-foreground mt-1">
+                          {product.provider}
+                        </CardDescription>
+                      </div>
                     </div>
                     <Badge variant="secondary">{product.type}</Badge>
                   </div>
+                  <div className="flex space-x-2 mt-3">
+                    <Badge variant="outline">Rate {(product.commissionRate * 100)}%</Badge>
+                    <Badge variant="outline">Margin {(product.margin * 100)}%</Badge>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-5 md:p-6 pt-0">
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                     {product.description}
                   </p>
@@ -87,9 +97,11 @@ const Products = () => {
 
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button className="w-full">Learn More</Button>
+                      <Button variant="secondary" className="w-full hover:bg-secondary/70">
+                        Learn More
+                      </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-lg md:max-w-2xl w-[92vw] mx-auto p-4 md:p-6 lg:p-8 rounded-2xl shadow-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle className="flex items-center justify-between">
                           {product.name}
@@ -162,13 +174,137 @@ const Products = () => {
             ))}
           </div>
 
-          <div className="text-center mt-12">
-            <p className="text-muted-foreground mb-4">
-              Ready to start offering these products to your clients?
-            </p>
-            <Link to="/login">
-              <Button size="lg">Access Advisor Portal</Button>
-            </Link>
+          
+          {/* Additional Content Sections */}
+          <div className="mt-16 space-y-12">
+            {/* Key Benefits */}
+            <section>
+              <h2 className="text-3xl font-bold text-center mb-8">Key Benefits</h2>
+              <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Heart className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Comprehensive Coverage</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Protect your family's financial future with extensive life insurance coverage tailored to your needs.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Competitive Returns</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Benefit from industry-leading rates and performance-driven returns on your investment.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Umbrella className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Financial Security</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Ensure long-term financial stability and peace of mind for you and your loved ones.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Star className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Expert Support</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Access professional guidance from experienced financial advisors throughout your journey.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Who it's for */}
+            <section>
+              <h2 className="text-3xl font-bold text-center mb-8">Who Our Products Serve</h2>
+              <div className="max-w-3xl mx-auto text-center">
+                <p className="text-muted-foreground leading-relaxed">
+                  Our life insurance solutions are designed for families seeking financial protection, 
+                  small and medium enterprises looking to safeguard key personnel, and high-net-worth 
+                  individuals requiring sophisticated wealth planning strategies. Whether you're a young 
+                  professional starting your financial journey, a growing family with dependents, or 
+                  approaching retirement with legacy planning needs, our comprehensive product range 
+                  offers tailored solutions to meet your unique circumstances.
+                </p>
+              </div>
+            </section>
+
+            {/* Compliance Note */}
+            <section>
+              <div className="bg-accent-surface/20 border border-accent-surface/30 rounded-lg p-6 text-center">
+                <p className="text-sm font-medium text-foreground">
+                  Illustrative information only. Not financial advice.
+                </p>
+              </div>
+            </section>
+
+            {/* FAQ */}
+            <section>
+              <h2 className="text-3xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+              <div className="max-w-3xl mx-auto">
+                <Accordion type="single" collapsible className="space-y-4">
+                  <AccordionItem value="eligibility">
+                    <AccordionTrigger>What are the eligibility requirements?</AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-muted-foreground">
+                        Eligibility varies by product but generally includes age requirements (typically 18-75), 
+                        health assessments, and residency status. Some products may require minimum premium 
+                        levels or financial underwriting for larger coverage amounts.
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="payouts">
+                    <AccordionTrigger>How do payout timelines work?</AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-muted-foreground">
+                        Standard claims are typically processed within 10-15 business days once all required 
+                        documentation is received. Complex cases may take longer for thorough review. 
+                        Emergency advances may be available in certain circumstances.
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="fees">
+                    <AccordionTrigger>What fees are involved?</AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-muted-foreground">
+                        Our products feature transparent fee structures with no hidden charges. 
+                        Management fees, policy fees, and surrender charges (where applicable) are clearly 
+                        outlined in your product documentation. Many products offer fee waivers for 
+                        long-term commitments.
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="switching">
+                    <AccordionTrigger>Can I switch between products?</AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-muted-foreground">
+                        Yes, we offer flexible switching options between compatible products. 
+                        Transfers may be subject to certain terms and conditions, and we recommend 
+                        consulting with your advisor to ensure the switch aligns with your financial goals 
+                        and circumstances.
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </section>
           </div>
         </div>
       </main>
