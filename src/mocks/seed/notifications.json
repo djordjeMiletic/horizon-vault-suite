@@ -1,0 +1,32 @@
+[
+  {
+    "id": "notif-001",
+    "userId": "1",
+    "type": "commission",
+    "title": "Commission Payment Processed",
+    "message": "Your commission of £315.75 for policy RP-2024-001 has been processed.",
+    "timestamp": "2024-01-15T14:30:00Z",
+    "read": false,
+    "priority": "normal"
+  },
+  {
+    "id": "notif-002",
+    "userId": "1", 
+    "type": "compliance",
+    "title": "Compliance Review Required",
+    "message": "Policy MS-2024-003 requires compliance review before commission payment.",
+    "timestamp": "2024-03-10T09:15:00Z",
+    "read": false,
+    "priority": "high"
+  },
+  {
+    "id": "notif-003",
+    "userId": "4",
+    "type": "contact",
+    "title": "New Contact Form Submission", 
+    "message": "New inquiry received from website contact form.",
+    "timestamp": "2024-03-15T16:45:00Z",
+    "read": false,
+    "priority": "normal"
+  }
+]

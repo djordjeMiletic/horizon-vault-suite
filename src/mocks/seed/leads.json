@@ -1,0 +1,63 @@
+[
+  {
+    "id": "lead-001",
+    "name": "Robert Smith",
+    "email": "robert.smith@email.com",
+    "phone": "+44 20 7946 1234",
+    "source": "Website Contact",
+    "status": "New",
+    "assignedTo": null,
+    "priority": "Medium",
+    "estimatedValue": 25000,
+    "createdAt": "2024-03-15T16:45:00Z",
+    "lastContact": null,
+    "notes": "Interested in life insurance, has young family",
+    "assignmentHistory": []
+  },
+  {
+    "id": "lead-002",
+    "name": "Lisa Johnson", 
+    "email": "lisa.johnson@email.com",
+    "phone": "+44 20 7946 5678",
+    "source": "Office Visit - London",
+    "status": "Qualified",
+    "assignedTo": "1",
+    "assignedToName": "Sarah Thompson",
+    "priority": "High",
+    "estimatedValue": 45000,
+    "createdAt": "2024-03-12T11:20:00Z",
+    "lastContact": "2024-03-14T10:00:00Z", 
+    "notes": "High net worth individual, interested in investment-linked products",
+    "assignmentHistory": [
+      {
+        "assignedTo": "1",
+        "assignedBy": "4", 
+        "assignedAt": "2024-03-12T14:30:00Z",
+        "reason": "Geographic location match"
+      }
+    ]
+  },
+  {
+    "id": "lead-003",
+    "name": "Thomas Brown",
+    "email": "thomas.brown@email.com", 
+    "phone": "+44 20 7946 9101",
+    "source": "Referral Partner",
+    "status": "Proposal",
+    "assignedTo": "2",
+    "assignedToName": "Michael Chen",
+    "priority": "High",
+    "estimatedValue": 75000,
+    "createdAt": "2024-03-08T09:30:00Z",
+    "lastContact": "2024-03-14T15:30:00Z",
+    "notes": "Business owner looking for key person insurance",
+    "assignmentHistory": [
+      {
+        "assignedTo": "2",
+        "assignedBy": "4",
+        "assignedAt": "2024-03-08T10:00:00Z", 
+        "reason": "Expertise in business insurance"
+      }
+    ]
+  }
+]

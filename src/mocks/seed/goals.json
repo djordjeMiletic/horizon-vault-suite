@@ -1,0 +1,29 @@
+[
+  {
+    "id": "goal-2024-01",
+    "advisorId": "1",
+    "month": "2024-01",
+    "target": 50000,
+    "achieved": 42500,
+    "progress": 0.85,
+    "type": "Monthly APE"
+  },
+  {
+    "id": "goal-2024-02", 
+    "advisorId": "1",
+    "month": "2024-02",
+    "target": 55000,
+    "achieved": 61200,
+    "progress": 1.11,
+    "type": "Monthly APE"
+  },
+  {
+    "id": "goal-2024-03",
+    "advisorId": "1",
+    "month": "2024-03", 
+    "target": 60000,
+    "achieved": 38400,
+    "progress": 0.64,
+    "type": "Monthly APE"
+  }
+]
