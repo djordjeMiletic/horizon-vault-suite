@@ -1,0 +1,99 @@
+[
+  {
+    "id": "INT-001",
+    "candidateId": "APP-001",
+    "candidateName": "Emma Thompson",
+    "jobId": "JOB-001",
+    "jobTitle": "Senior Life Insurance Advisor",
+    "interviewerId": "1",
+    "interviewerName": "John Smith",
+    "scheduledAt": "2025-09-10T14:00:00Z",
+    "duration": 60,
+    "type": "Final Interview",
+    "status": "Scheduled",
+    "location": "London Office - Conference Room A",
+    "notes": "Final interview for senior advisor position. Focus on sales experience and client management skills.",
+    "interviewQuestions": [
+      "Tell us about your most challenging client case",
+      "How do you handle objections during sales presentations?",
+      "Describe your approach to maintaining long-term client relationships"
+    ]
+  },
+  {
+    "id": "INT-002", 
+    "candidateId": "APP-002",
+    "candidateName": "James Wilson",
+    "jobId": "JOB-002",
+    "jobTitle": "Junior Financial Advisor", 
+    "interviewerId": "2",
+    "interviewerName": "Sarah Johnson",
+    "scheduledAt": "2025-09-12T10:30:00Z",
+    "duration": 45,
+    "type": "Initial Interview",
+    "status": "Scheduled",
+    "location": "Dublin Office - Meeting Room 2",
+    "notes": "First interview for junior position. Assess potential and cultural fit.",
+    "interviewQuestions": [
+      "Why are you interested in financial services?", 
+      "How do you handle working under pressure?",
+      "What are your career goals in financial advisory?"
+    ]
+  },
+  {
+    "id": "INT-003",
+    "candidateId": "APP-003",
+    "candidateName": "Maria Schmidt",
+    "jobId": "JOB-003", 
+    "jobTitle": "Compliance Officer",
+    "interviewerId": "1",
+    "interviewerName": "John Smith",
+    "scheduledAt": "2025-08-22T15:00:00Z",
+    "duration": 90,
+    "type": "Technical Interview", 
+    "status": "Completed",
+    "location": "Frankfurt Office - Executive Suite",
+    "notes": "Excellent technical knowledge. Strong understanding of EU regulations. Recommended for hire.",
+    "interviewQuestions": [
+      "Explain the key changes in Solvency II regulations",
+      "How would you implement a new compliance framework?", 
+      "Describe your experience with regulatory audits"
+    ],
+    "feedback": "Outstanding candidate with deep regulatory knowledge. Highly recommended for position."
+  },
+  {
+    "id": "INT-004",
+    "candidateId": "APP-004",
+    "candidateName": "Aleksandar Petrovic",
+    "jobId": "JOB-004",
+    "jobTitle": "IT Support Specialist",
+    "interviewerId": "3", 
+    "interviewerName": "Michael Brown",
+    "scheduledAt": "2025-09-15T13:00:00Z",
+    "duration": 45,
+    "type": "Technical Assessment",
+    "status": "Scheduled",
+    "location": "Belgrade Office - IT Department",
+    "notes": "Technical interview to assess hands-on IT skills and problem-solving abilities.",
+    "interviewQuestions": [
+      "Walk us through troubleshooting a network connectivity issue",
+      "How would you handle a critical server outage?",
+      "Describe your experience with Windows Server administration"
+    ]
+  },
+  {
+    "id": "INT-005",
+    "candidateId": "APP-005",
+    "candidateName": "Sophie Martin", 
+    "jobId": "JOB-001",
+    "jobTitle": "Senior Life Insurance Advisor",
+    "interviewerId": "2",
+    "interviewerName": "Sarah Johnson", 
+    "scheduledAt": "2025-09-03T11:00:00Z",
+    "duration": 30,
+    "type": "Screening Interview",
+    "status": "Cancelled",
+    "location": "Phone Interview",
+    "notes": "Interview cancelled after CV review revealed insufficient experience for senior role.",
+    "feedback": "Candidate does not meet minimum experience requirements. Application rejected."
+  }
+]

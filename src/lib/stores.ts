@@ -226,6 +226,86 @@ interface Appointment {
   location?: string;
   createdAt: string;
   updatedAt: string;
+  synced?: boolean;
+}
+
+// HR Interfaces
+interface Job {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  description: string;
+  requirements: string[];
+  status: 'Open' | 'Closed';
+  postedAt: string;
+  createdBy: string;
+  applicantCount: number;
+}
+
+interface Applicant {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  appliedFor: string;
+  jobTitle: string;
+  status: 'New' | 'Screening' | 'Interview' | 'Offer' | 'Rejected';
+  appliedAt: string;
+  cv: string;
+  notes: string;
+  timeline: Array<{
+    id: string;
+    at: string;
+    action: string;
+    by: string;
+    details: string;
+  }>;
+}
+
+interface Interview {
+  id: string;
+  candidateId: string;
+  candidateName: string;
+  jobId: string;
+  jobTitle: string;
+  interviewerId: string;
+  interviewerName: string;
+  scheduledAt: string;
+  duration: number;
+  type: string;
+  status: 'Scheduled' | 'Completed' | 'Cancelled';
+  location: string;
+  notes: string;
+  interviewQuestions: string[];
+  feedback?: string;
+}
+
+interface OnboardingTask {
+  id: string;
+  title: string;
+  description: string;
+  category: 'HR Documentation' | 'Regulatory' | 'Training' | 'IT Setup' | 'Orientation';
+  status: 'Pending' | 'In Progress' | 'Completed';
+  assignedTo?: string;
+  completedAt?: string;
+  completedBy?: string;
+  dueDate: string;
+}
+
+interface OnboardingRecord {
+  id: string;
+  candidateId: string;
+  candidateName: string;
+  jobId: string;
+  jobTitle: string;
+  startDate: string;
+  status: 'Not Started' | 'In Progress' | 'Completed';
+  progress: number;
+  assignedHR: string;
+  tasks: OnboardingTask[];
+  notes: string;
+  createdAt: string;
 }
 
 // Store interfaces
@@ -275,6 +355,35 @@ interface AppointmentStore {
   appointments: Appointment[];
   addAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateAppointment: (id: string, updates: Partial<Appointment>) => void;
+}
+
+// HR Store interfaces
+interface JobStore {
+  jobs: Job[];
+  addJob: (job: Omit<Job, 'id' | 'postedAt' | 'applicantCount'>) => void;
+  updateJob: (id: string, updates: Partial<Job>) => void;
+  toggleJobStatus: (id: string) => void;
+}
+
+interface ApplicantStore {
+  applicants: Applicant[];
+  addApplicant: (applicant: Omit<Applicant, 'id' | 'appliedAt' | 'timeline'>) => void;
+  updateApplicant: (id: string, updates: Partial<Applicant>) => void;
+  addTimelineEntry: (applicantId: string, entry: Omit<Applicant['timeline'][0], 'id'>) => void;
+}
+
+interface InterviewStore {
+  interviews: Interview[];
+  addInterview: (interview: Omit<Interview, 'id'>) => void;
+  updateInterview: (id: string, updates: Partial<Interview>) => void;
+}
+
+interface OnboardingStore {
+  onboarding: OnboardingRecord[];
+  addOnboarding: (record: Omit<OnboardingRecord, 'id' | 'createdAt' | 'progress'>) => void;
+  updateOnboarding: (id: string, updates: Partial<OnboardingRecord>) => void;
+  updateTask: (recordId: string, taskId: string, updates: Partial<OnboardingTask>) => void;
+  completeTask: (recordId: string, taskId: string, completedBy: string) => void;
 }
 
 // Store implementations
@@ -503,6 +612,155 @@ export const useAppointmentStore = create<AppointmentStore>((set) => ({
     set((state) => ({
       appointments: state.appointments.map((a) =>
         a.id === id ? { ...a, ...updates, updatedAt: new Date().toISOString() } : a
+      ),
+    })),
+}));
+
+// HR Store implementations
+export const useJobStore = create<JobStore>((set) => ({
+  jobs: [],
+  addJob: (job) =>
+    set((state) => ({
+      jobs: [
+        ...state.jobs,
+        {
+          ...job,
+          id: `JOB-${Date.now()}`,
+          postedAt: new Date().toISOString(),
+          applicantCount: 0,
+        },
+      ],
+    })),
+  updateJob: (id, updates) =>
+    set((state) => ({
+      jobs: state.jobs.map((j) =>
+        j.id === id ? { ...j, ...updates } : j
+      ),
+    })),
+  toggleJobStatus: (id) =>
+    set((state) => ({
+      jobs: state.jobs.map((j) =>
+        j.id === id ? { ...j, status: j.status === 'Open' ? 'Closed' : 'Open' } : j
+      ),
+    })),
+}));
+
+export const useApplicantStore = create<ApplicantStore>((set) => ({
+  applicants: [],
+  addApplicant: (applicant) =>
+    set((state) => ({
+      applicants: [
+        ...state.applicants,
+        {
+          ...applicant,
+          id: `APP-${Date.now()}`,
+          appliedAt: new Date().toISOString(),
+          timeline: [{
+            id: `TL-${Date.now()}`,
+            at: new Date().toISOString(),
+            action: 'Application Received',
+            by: 'System',
+            details: 'Application submitted via website'
+          }]
+        },
+      ],
+    })),
+  updateApplicant: (id, updates) =>
+    set((state) => ({
+      applicants: state.applicants.map((a) =>
+        a.id === id ? { ...a, ...updates } : a
+      ),
+    })),
+  addTimelineEntry: (applicantId, entry) =>
+    set((state) => ({
+      applicants: state.applicants.map((a) =>
+        a.id === applicantId
+          ? {
+              ...a,
+              timeline: [...a.timeline, { ...entry, id: `TL-${Date.now()}` }]
+            }
+          : a
+      ),
+    })),
+}));
+
+export const useInterviewStore = create<InterviewStore>((set) => ({
+  interviews: [],
+  addInterview: (interview) =>
+    set((state) => ({
+      interviews: [
+        ...state.interviews,
+        {
+          ...interview,
+          id: `INT-${Date.now()}`,
+        },
+      ],
+    })),
+  updateInterview: (id, updates) =>
+    set((state) => ({
+      interviews: state.interviews.map((i) =>
+        i.id === id ? { ...i, ...updates } : i
+      ),
+    })),
+}));
+
+export const useOnboardingStore = create<OnboardingStore>((set) => ({
+  onboarding: [],
+  addOnboarding: (record) =>
+    set((state) => ({
+      onboarding: [
+        ...state.onboarding,
+        {
+          ...record,
+          id: `ONB-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          progress: Math.round((record.tasks.filter(t => t.status === 'Completed').length / record.tasks.length) * 100),
+        },
+      ],
+    })),
+  updateOnboarding: (id, updates) =>
+    set((state) => ({
+      onboarding: state.onboarding.map((o) =>
+        o.id === id ? { ...o, ...updates } : o
+      ),
+    })),
+  updateTask: (recordId, taskId, updates) =>
+    set((state) => ({
+      onboarding: state.onboarding.map((o) =>
+        o.id === recordId
+          ? {
+              ...o,
+              tasks: o.tasks.map((t) =>
+                t.id === taskId ? { ...t, ...updates } : t
+              ),
+              progress: Math.round(
+                (o.tasks.filter(t => t.id === taskId ? updates.status === 'Completed' : t.status === 'Completed').length / o.tasks.length) * 100
+              ),
+            }
+          : o
+      ),
+    })),
+  completeTask: (recordId, taskId, completedBy) =>
+    set((state) => ({
+      onboarding: state.onboarding.map((o) =>
+        o.id === recordId
+          ? {
+              ...o,
+              tasks: o.tasks.map((t) =>
+                t.id === taskId
+                  ? {
+                      ...t,
+                      status: 'Completed' as const,
+                      completedAt: new Date().toISOString(),
+                      completedBy,
+                    }
+                  : t
+              ),
+              progress: Math.round(
+                (o.tasks.filter(t => t.id === taskId || t.status === 'Completed').length / o.tasks.length) * 100
+              ),
+            }
+          : o
       ),
     })),
 }));
