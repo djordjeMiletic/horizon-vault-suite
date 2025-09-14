@@ -10,11 +10,37 @@ const Cases = () => {
       
       <Card className="bg-gradient-card border-border/50">
         <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-          <CardDescription>Case management will be available shortly</CardDescription>
+          <CardTitle>My Cases</CardTitle>
+          <CardDescription>Track your insurance applications and policies</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">View and manage your insurance applications and policy cases.</p>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Case ID</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Advisor</TableHead>
+                <TableHead>Updated</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-mono">C-301</TableCell>
+                <TableCell>Royal Protect Life</TableCell>
+                <TableCell><Badge variant="secondary">Processing</Badge></TableCell>
+                <TableCell>John Smith</TableCell>
+                <TableCell>{new Date().toLocaleDateString()}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-mono">C-302</TableCell>
+                <TableCell>Metro Shield Health</TableCell>
+                <TableCell><Badge variant="default">Approved</Badge></TableCell>
+                <TableCell>John Smith</TableCell>
+                <TableCell>{new Date().toLocaleDateString()}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
