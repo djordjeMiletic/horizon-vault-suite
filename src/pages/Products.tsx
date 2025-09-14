@@ -60,7 +60,7 @@ const Products = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex items-center space-x-2 mb-6">
             <Link to="/" className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" />
@@ -69,31 +69,31 @@ const Products = () => {
             <span className="text-foreground">Products</span>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
             {productsData.map((product) => (
               <Card key={product.id} className="bg-card border-border hover:shadow-card transition-all duration-300">
-                <CardHeader className="p-5 md:p-6">
+                <CardHeader className="p-6 md:p-8">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">
                       <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
                         <Shield className="h-5 w-5 text-accent" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl text-primary">{product.name}</CardTitle>
-                        <CardDescription className="text-sm text-muted-foreground mt-1">
+                        <CardTitle className="text-lg md:text-2xl font-semibold text-primary">{product.name}</CardTitle>
+                        <CardDescription className="text-sm md:text-base text-muted-foreground mt-1">
                           {product.provider}
                         </CardDescription>
                       </div>
                     </div>
                     <Badge variant="secondary">{product.type}</Badge>
                   </div>
-                  <div className="flex space-x-2 mt-3">
+                  <div className="flex space-x-2 mt-4 md:mt-5">
                     <Badge className="bg-accent/20 text-accent-foreground border-accent">Rate {(product.commissionRate * 100)}%</Badge>
                     <Badge className="bg-accent/20 text-accent-foreground border-accent">Margin {(product.margin * 100)}%</Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-5 md:p-6 pt-0">
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                <CardContent className="p-6 md:p-8 pt-0 space-y-4 md:space-y-5">
+                  <p className="text-sm md:text-base text-muted-foreground mb-4 line-clamp-2">
                     {product.description}
                   </p>
                   
@@ -110,7 +110,7 @@ const Products = () => {
 
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                      <Button variant="secondary" className="w-full h-11 px-6">
                         Learn More
                       </Button>
                     </DialogTrigger>
@@ -256,14 +256,6 @@ const Products = () => {
               </div>
             </section>
 
-            {/* Compliance Note */}
-            <section>
-              <div className="bg-accent/10 border border-accent/30 rounded-lg p-6 text-center">
-                <p className="text-sm font-medium text-accent-foreground">
-                  Illustrative information only. Not financial advice.
-                </p>
-              </div>
-            </section>
 
             {/* FAQ */}
             <section>
