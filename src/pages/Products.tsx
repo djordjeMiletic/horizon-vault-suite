@@ -9,34 +9,54 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { ArrowLeft, Shield, TrendingUp, Clock, Users, Heart, Umbrella, Star } from 'lucide-react';
 
 import productsData from '@/mocks/seed/products.json';
+import bannerImage from '@/assets/products-banner.jpg';
 
 const Products = () => {
   return (
-    <div className="min-h-screen bg-gradient-hero">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur">
+      <header className="border-b border-border bg-primary/95 backdrop-blur">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-accent rounded-lg flex items-center justify-center">
-                <span className="text-background font-bold text-sm">EH</span>
+              <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                <span className="text-accent-foreground font-bold text-sm">EH</span>
               </div>
-              <span className="font-semibold text-lg">Event Horizon</span>
+              <span className="font-semibold text-lg text-primary-foreground">Event Horizon</span>
             </Link>
             
             <nav className="hidden md:flex items-center space-x-6">
-              <Link to="/" className="text-muted-foreground hover:text-foreground">About</Link>
-              <Link to="/products" className="text-primary font-medium">Products</Link>
-              <Link to="/offices" className="text-muted-foreground hover:text-foreground">Offices</Link>
-              <Link to="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link>
+              <Link to="/" className="text-primary-foreground/80 hover:text-primary-foreground">About</Link>
+              <Link to="/products" className="text-accent font-medium">Products</Link>
+              <Link to="/offices" className="text-primary-foreground/80 hover:text-primary-foreground">Offices</Link>
+              <Link to="/contact" className="text-primary-foreground/80 hover:text-primary-foreground">Contact</Link>
             </nav>
 
             <Link to="/login">
-              <Button variant="default">Portal Access</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Portal Access</Button>
             </Link>
           </div>
         </div>
       </header>
+
+      {/* Banner Section */}
+      <section 
+        className="relative h-64 flex items-center justify-center bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${bannerImage})`
+        }}
+      >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-secondary"></div>
+        
+        {/* Content */}
+        <div className="relative z-10 container mx-auto px-6 text-center">
+          <h1 className="text-4xl font-bold mb-4 text-white">Our Product Portfolio</h1>
+          <p className="text-xl text-white/90 max-w-2xl mx-auto">
+            Comprehensive life insurance solutions designed to protect what matters most to you and your family.
+          </p>
+        </div>
+      </section>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12">
@@ -49,24 +69,17 @@ const Products = () => {
             <span className="text-foreground">Products</span>
           </div>
 
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Our Product Portfolio</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Comprehensive life insurance solutions designed to protect what matters most to you and your family.
-            </p>
-          </div>
-
           <div className="grid md:grid-cols-3 gap-6">
             {productsData.map((product) => (
-              <Card key={product.id} className="bg-card/80 backdrop-blur border-border/50 hover:bg-card/90 transition-all duration-300">
+              <Card key={product.id} className="bg-card border-border hover:shadow-card transition-all duration-300">
                 <CardHeader className="p-5 md:p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Shield className="h-5 w-5 text-primary" />
+                      <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
+                        <Shield className="h-5 w-5 text-accent" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl">{product.name}</CardTitle>
+                        <CardTitle className="text-xl text-primary">{product.name}</CardTitle>
                         <CardDescription className="text-sm text-muted-foreground mt-1">
                           {product.provider}
                         </CardDescription>
@@ -75,8 +88,8 @@ const Products = () => {
                     <Badge variant="secondary">{product.type}</Badge>
                   </div>
                   <div className="flex space-x-2 mt-3">
-                    <Badge variant="outline">Rate {(product.commissionRate * 100)}%</Badge>
-                    <Badge variant="outline">Margin {(product.margin * 100)}%</Badge>
+                    <Badge className="bg-accent/20 text-accent-foreground border-accent">Rate {(product.commissionRate * 100)}%</Badge>
+                    <Badge className="bg-accent/20 text-accent-foreground border-accent">Margin {(product.margin * 100)}%</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="p-5 md:p-6 pt-0">
@@ -86,24 +99,24 @@ const Products = () => {
                   
                   <div className="space-y-2 mb-6">
                     <div className="flex items-center space-x-2 text-sm">
-                      <Shield className="h-4 w-4 text-primary" />
+                      <Shield className="h-4 w-4 text-accent" />
                       <span>Commission Rate: {(product.commissionRate * 100)}%</span>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
-                      <TrendingUp className="h-4 w-4 text-primary" />
+                      <TrendingUp className="h-4 w-4 text-accent" />
                       <span>Margin: {(product.margin * 100)}%</span>
                     </div>
                   </div>
 
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="secondary" className="w-full hover:bg-secondary/70">
+                      <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                         Learn More
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-lg md:max-w-2xl w-[92vw] mx-auto p-4 md:p-6 lg:p-8 rounded-2xl shadow-2xl max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center justify-between">
+                      <DialogHeader className="bg-secondary/20 -m-4 md:-m-6 lg:-m-8 p-4 md:p-6 lg:p-8 mb-6 rounded-t-2xl">
+                        <DialogTitle className="flex items-center justify-between text-primary">
                           {product.name}
                           <Badge variant="secondary">{product.type}</Badge>
                         </DialogTitle>
@@ -145,7 +158,7 @@ const Products = () => {
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>Commission Amount:</span>
-                              <span className="font-medium text-primary">£{product.commissionExample.commission}</span>
+                              <span className="font-medium text-accent">£{product.commissionExample.commission}</span>
                             </div>
                             <p className="text-xs text-muted-foreground pt-2">
                               {product.commissionExample.note}
@@ -160,7 +173,7 @@ const Products = () => {
                               {product.bands.map((band, index) => (
                                 <div key={index} className="flex justify-between text-sm bg-muted/30 p-2 rounded">
                                   <span>£{band.threshold.toLocaleString()}+ threshold</span>
-                                  <span className="text-primary">+{(band.rateAdjustment * 100)}% rate bonus</span>
+                                  <span className="text-accent">+{(band.rateAdjustment * 100)}% rate bonus</span>
                                 </div>
                               ))}
                             </div>
@@ -182,8 +195,8 @@ const Products = () => {
               <h2 className="text-3xl font-bold text-center mb-8">Key Benefits</h2>
               <div className="grid md:grid-cols-2 gap-6 md:gap-8">
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Heart className="h-6 w-6 text-primary" />
+                  <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Heart className="h-6 w-6 text-accent" />
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Comprehensive Coverage</h3>
@@ -193,8 +206,8 @@ const Products = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="h-6 w-6 text-primary" />
+                  <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="h-6 w-6 text-accent" />
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Competitive Returns</h3>
@@ -204,8 +217,8 @@ const Products = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Umbrella className="h-6 w-6 text-primary" />
+                  <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Umbrella className="h-6 w-6 text-accent" />
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Financial Security</h3>
@@ -215,8 +228,8 @@ const Products = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Star className="h-6 w-6 text-primary" />
+                  <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Star className="h-6 w-6 text-accent" />
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Expert Support</h3>
@@ -245,8 +258,8 @@ const Products = () => {
 
             {/* Compliance Note */}
             <section>
-              <div className="bg-accent-surface/20 border border-accent-surface/30 rounded-lg p-6 text-center">
-                <p className="text-sm font-medium text-foreground">
+              <div className="bg-accent/10 border border-accent/30 rounded-lg p-6 text-center">
+                <p className="text-sm font-medium text-accent-foreground">
                   Illustrative information only. Not financial advice.
                 </p>
               </div>

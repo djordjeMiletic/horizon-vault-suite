@@ -10,6 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, MapPin, Phone, Mail, Clock, Calendar, MessageCircle, Video, Copy } from 'lucide-react';
 
+import londonOfficeImg from '@/assets/london-office.jpg';
+import dublinOfficeImg from '@/assets/dublin-office.jpg';
+import frankfurtOfficeImg from '@/assets/frankfurt-office.jpg';
+import belgradeOfficeImg from '@/assets/belgrade-office.jpg';
+
 const Offices = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +27,8 @@ const Offices = () => {
       phone: '+44 20 7946 0958',
       email: 'london@eventhorizon.com',
       hours: 'Mon-Fri: 9:00 AM - 6:00 PM',
-      description: 'Our flagship office in the heart of London\'s financial district.'
+      description: 'Our flagship office in the heart of London\'s financial district.',
+      image: londonOfficeImg
     },
     {
       id: 'dublin',
@@ -31,7 +37,8 @@ const Offices = () => {
       phone: '+353 1 234 5678',
       email: 'dublin@eventhorizon.com',
       hours: 'Mon-Fri: 9:00 AM - 5:30 PM',
-      description: 'Serving clients across Ireland with comprehensive financial solutions.'
+      description: 'Serving clients across Ireland with comprehensive financial solutions.',
+      image: dublinOfficeImg
     },
     {
       id: 'frankfurt',
@@ -40,7 +47,8 @@ const Offices = () => {
       phone: '+49 69 1234 5678',
       email: 'frankfurt@eventhorizon.com',
       hours: 'Mon-Fri: 8:30 AM - 5:30 PM',
-      description: 'Central European operations hub with multilingual support.'
+      description: 'Central European operations hub with multilingual support.',
+      image: frankfurtOfficeImg
     },
     {
       id: 'belgrade',
@@ -49,7 +57,8 @@ const Offices = () => {
       phone: '+381 11 123 4567', 
       email: 'belgrade@eventhorizon.com',
       hours: 'Mon-Fri: 9:00 AM - 6:00 PM',
-      description: 'Expanding operations in Southeast Europe with local expertise.'
+      description: 'Expanding operations in Southeast Europe with local expertise.',
+      image: belgradeOfficeImg
     }
   ];
 
@@ -122,27 +131,27 @@ const Offices = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur">
+      <header className="border-b border-border bg-primary/95 backdrop-blur">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-accent rounded-lg flex items-center justify-center">
-                <span className="text-background font-bold text-sm">EH</span>
+              <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                <span className="text-accent-foreground font-bold text-sm">EH</span>
               </div>
-              <span className="font-semibold text-lg">Event Horizon</span>
+              <span className="font-semibold text-lg text-primary-foreground">Event Horizon</span>
             </Link>
             
             <nav className="hidden md:flex items-center space-x-6">
-              <Link to="/" className="text-muted-foreground hover:text-foreground">About</Link>
-              <Link to="/products" className="text-muted-foreground hover:text-foreground">Products</Link>
-              <Link to="/offices" className="text-primary font-medium">Offices</Link>
-              <Link to="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link>
+              <Link to="/" className="text-primary-foreground/80 hover:text-primary-foreground">About</Link>
+              <Link to="/products" className="text-primary-foreground/80 hover:text-primary-foreground">Products</Link>
+              <Link to="/offices" className="text-accent font-medium">Offices</Link>
+              <Link to="/contact" className="text-primary-foreground/80 hover:text-primary-foreground">Contact</Link>
             </nav>
 
             <Link to="/login">
-              <Button variant="default">Portal Access</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Portal Access</Button>
             </Link>
           </div>
         </div>
@@ -168,30 +177,38 @@ const Offices = () => {
 
           <div className="grid md:grid-cols-2 gap-8">
             {offices.map((office) => (
-              <Card key={office.id} className="bg-card/80 backdrop-blur border-border/50">
-                <CardHeader>
-                  <CardTitle className="flex items-start justify-between">
-                    <span>{office.name}</span>
-                    <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
-                  </CardTitle>
-                  <CardDescription>{office.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <Card key={office.id} className="bg-card border-border overflow-hidden">
+                {/* Office Image */}
+                <div 
+                  className="relative h-48 bg-cover bg-center bg-no-repeat"
+                  style={{
+                    backgroundImage: `url(${office.image})`
+                  }}
+                >
+                  {/* Dark overlay for text readability */}
+                  <div className="absolute inset-0 bg-primary/60"></div>
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <h3 className="text-xl font-bold">{office.name}</h3>
+                    <p className="text-sm text-white/90">{office.description}</p>
+                  </div>
+                </div>
+
+                <CardContent className="space-y-4 p-6">
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start space-x-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <MapPin className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
                       <span>{office.address}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <Phone className="h-4 w-4 text-accent" />
                       <span>{office.phone}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <Mail className="h-4 w-4 text-accent" />
                       <span>{office.email}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <Clock className="h-4 w-4 text-accent" />
                       <span>{office.hours}</span>
                     </div>
                   </div>
@@ -200,7 +217,7 @@ const Offices = () => {
                     {/* Schedule Appointment */}
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="default" className="w-full">
+                        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                           <Calendar className="h-4 w-4 mr-2" />
                           Schedule Appointment
                         </Button>
@@ -251,7 +268,7 @@ const Offices = () => {
                     {/* Book Consultation */}
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full">
+                        <Button variant="secondary" className="w-full">
                           <MessageCircle className="h-4 w-4 mr-2" />
                           Book Consultation
                         </Button>

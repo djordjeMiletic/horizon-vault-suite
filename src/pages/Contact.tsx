@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, Phone, MapPin, Clock } from 'lucide-react';
 
+import contactHeaderImg from '@/assets/contact-header.jpg';
+
 const Contact = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,31 +58,50 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur">
+      <header className="border-b border-border bg-primary/95 backdrop-blur">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-accent rounded-lg flex items-center justify-center">
-                <span className="text-background font-bold text-sm">EH</span>
+              <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                <span className="text-accent-foreground font-bold text-sm">EH</span>
               </div>
-              <span className="font-semibold text-lg">Event Horizon</span>
+              <span className="font-semibold text-lg text-primary-foreground">Event Horizon</span>
             </Link>
             
             <nav className="hidden md:flex items-center space-x-6">
-              <Link to="/" className="text-muted-foreground hover:text-foreground">About</Link>
-              <Link to="/products" className="text-muted-foreground hover:text-foreground">Products</Link>
-              <Link to="/offices" className="text-muted-foreground hover:text-foreground">Offices</Link>
-              <Link to="/contact" className="text-primary font-medium">Contact</Link>
+              <Link to="/" className="text-primary-foreground/80 hover:text-primary-foreground">About</Link>
+              <Link to="/products" className="text-primary-foreground/80 hover:text-primary-foreground">Products</Link>
+              <Link to="/offices" className="text-primary-foreground/80 hover:text-primary-foreground">Offices</Link>
+              <Link to="/contact" className="text-accent font-medium">Contact</Link>
             </nav>
 
             <Link to="/login">
-              <Button variant="default">Portal Access</Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Portal Access</Button>
             </Link>
           </div>
         </div>
       </header>
+
+      {/* Header Section with Background Image */}
+      <section 
+        className="relative h-64 flex items-center justify-center bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${contactHeaderImg})`
+        }}
+      >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-primary/70"></div>
+        
+        {/* Content */}
+        <div className="relative z-10 container mx-auto px-6 text-center">
+          <h1 className="text-4xl font-bold mb-4 text-white">Get in Touch</h1>
+          <p className="text-xl text-white/90 max-w-2xl mx-auto">
+            Have questions about our services or need personalized advice? We're here to help.
+          </p>
+        </div>
+      </section>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12">
@@ -93,16 +114,9 @@ const Contact = () => {
             <span className="text-foreground">Contact</span>
           </div>
 
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Get in Touch</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Have questions about our services or need personalized advice? We're here to help.
-            </p>
-          </div>
-
           <div className="grid md:grid-cols-2 gap-8">
             {/* Contact Form */}
-            <Card className="bg-card/80 backdrop-blur border-border/50">
+            <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle>Send us a Message</CardTitle>
                 <CardDescription>
@@ -148,7 +162,7 @@ const Contact = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full" 
+                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" 
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Sending...' : 'Send Message'}
@@ -159,7 +173,7 @@ const Contact = () => {
 
             {/* Contact Information */}
             <div className="space-y-6">
-              <Card className="bg-card/80 backdrop-blur border-border/50">
+              <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle>Contact Information</CardTitle>
                   <CardDescription>
@@ -168,7 +182,7 @@ const Contact = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start space-x-3">
-                    <Mail className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <Mail className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium">Email</p>
                       <p className="text-sm text-muted-foreground">info@eventhorizon.com</p>
@@ -177,7 +191,7 @@ const Contact = () => {
                   </div>
                   
                   <div className="flex items-start space-x-3">
-                    <Phone className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <Phone className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium">Phone</p>
                       <p className="text-sm text-muted-foreground">+44 20 7946 0958 (UK)</p>
@@ -186,7 +200,7 @@ const Contact = () => {
                   </div>
                   
                   <div className="flex items-start space-x-3">
-                    <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <MapPin className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium">Headquarters</p>
                       <p className="text-sm text-muted-foreground">
@@ -198,7 +212,7 @@ const Contact = () => {
                   </div>
                   
                   <div className="flex items-start space-x-3">
-                    <Clock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <Clock className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium">Business Hours</p>
                       <p className="text-sm text-muted-foreground">
@@ -211,7 +225,7 @@ const Contact = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/80 backdrop-blur border-border/50">
+              <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle>Emergency Support</CardTitle>
                   <CardDescription>
@@ -236,7 +250,7 @@ const Contact = () => {
                   Need immediate access to your account?
                 </p>
                 <Link to="/login">
-                  <Button size="lg">Portal Access</Button>
+                  <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">Portal Access</Button>
                 </Link>
               </div>
             </div>

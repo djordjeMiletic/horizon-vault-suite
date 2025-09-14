@@ -6,55 +6,56 @@
 
 @layer base {
   :root {
-    /* Custom Dark Elegant Palette */
-    --background: 210 57% 11%; /* #0B1B2B - Navy background */
-    --foreground: 44 24% 90%; /* #EAE6DA - Cream/beige text */
+    /* New Professional Palette */
+    --background: 0 0% 96%; /* #F4F6F8 - Neutral background */
+    --foreground: 210 100% 19%; /* #0A3D62 - Primary dark blue text */
 
-    --card: 210 40% 16%; /* #1A2A3A - Surface/Card */
-    --card-foreground: 44 24% 90%; /* #EAE6DA - Cream text on cards */
+    --card: 0 0% 96%; /* #F4F6F8 - Neutral card background */
+    --card-foreground: 210 100% 19%; /* #0A3D62 - Primary text on cards */
 
-    --popover: 210 40% 16%; /* #1A2A3A - Surface */
-    --popover-foreground: 44 24% 90%; /* #EAE6DA - Cream text */
+    --popover: 0 0% 100%; /* White popover background */
+    --popover-foreground: 210 100% 19%; /* #0A3D62 - Primary text */
 
-    --primary: 44 59% 58%; /* #C6A15B - Gold accent */
-    --primary-foreground: 210 57% 11%; /* #0B1B2B - Navy text on gold */
+    --primary: 210 100% 19%; /* #0A3D62 - Dark blue primary */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
 
-    --secondary: 210 40% 16%; /* #1A2A3A - Surface */
-    --secondary-foreground: 44 24% 90%; /* #EAE6DA - Cream text */
+    --secondary: 203 64% 61%; /* #60A3D9 - Light blue secondary */
+    --secondary-foreground: 210 100% 19%; /* #0A3D62 - Dark text on light blue */
 
-    --muted: 210 40% 16%; /* #1A2A3A - Surface */
-    --muted-foreground: 44 24% 70%; /* Muted cream */
+    --muted: 210 14% 89%; /* Light gray muted */
+    --muted-foreground: 210 100% 19%; /* Primary text for muted */
 
-    --accent: 44 62% 85%; /* #F3E9D2 - Light cream accent surface */
-    --accent-foreground: 210 57% 11%; /* #0B1B2B - Navy text on light cream */
+    --accent: 51 83% 53%; /* #D4AF37 - Gold accent */
+    --accent-foreground: 210 100% 19%; /* #0A3D62 - Dark text on gold */
 
-    --destructive: 343 65% 32%; /* #8B1E3F - Burgundy error */
-    --destructive-foreground: 44 24% 90%; /* #EAE6DA - Cream text on burgundy */
+    --destructive: 0 62% 50%; /* Red error */
+    --destructive-foreground: 0 0% 100%; /* White text on red */
 
-    --border: 210 40% 25%; /* Slightly lighter than card */
-    --input: 210 40% 20%; /* Darker input background */
-    --ring: 44 59% 58%; /* #C6A15B - Gold focus ring */
+    --border: 210 14% 83%; /* Light border */
+    --input: 0 0% 100%; /* White input background */
+    --ring: 51 83% 53%; /* #D4AF37 - Gold focus ring */
 
     --radius: 0.75rem;
 
     /* Sidebar colors */
-    --sidebar-background: 210 57% 11%; /* #0B1B2B - Navy */
-    --sidebar-foreground: 44 24% 90%; /* #EAE6DA - Cream */
-    --sidebar-primary: 44 59% 58%; /* #C6A15B - Gold */
-    --sidebar-primary-foreground: 210 57% 11%; /* #0B1B2B - Navy */
-    --sidebar-accent: 210 40% 16%; /* #1A2A3A - Surface */
-    --sidebar-accent-foreground: 44 24% 90%; /* #EAE6DA - Cream */
-    --sidebar-border: 210 40% 25%; /* Border */
-    --sidebar-ring: 44 59% 58%; /* #C6A15B - Gold */
+    --sidebar-background: 210 100% 19%; /* #0A3D62 - Primary dark blue */
+    --sidebar-foreground: 0 0% 100%; /* White text */
+    --sidebar-primary: 51 83% 53%; /* #D4AF37 - Gold */
+    --sidebar-primary-foreground: 210 100% 19%; /* #0A3D62 - Dark text on gold */
+    --sidebar-accent: 203 64% 61%; /* #60A3D9 - Light blue */
+    --sidebar-accent-foreground: 210 100% 19%; /* #0A3D62 - Dark text */
+    --sidebar-border: 210 14% 83%; /* Light border */
+    --sidebar-ring: 51 83% 53%; /* #D4AF37 - Gold */
 
     /* Custom gradient definitions */
-    --gradient-hero: linear-gradient(135deg, hsl(var(--background)), hsl(210 40% 16%));
-    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(210 40% 18%));
-    --gradient-accent: linear-gradient(135deg, hsl(var(--primary)), hsl(44 59% 65%));
+    --gradient-hero: linear-gradient(135deg, hsl(210 100% 19% / 0.8), hsl(210 100% 19% / 0.6));
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(0 0% 100%));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(51 83% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(203 64% 61% / 0.4), hsl(203 64% 61% / 0.6));
     
-    /* Shadows with gold glow */
-    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
-    --shadow-card: 0 4px 20px -4px hsl(210 57% 5% / 0.5);
+    /* Shadows with professional styling */
+    --shadow-elegant: 0 10px 30px -10px hsl(210 100% 19% / 0.2);
+    --shadow-card: 0 4px 20px -4px hsl(210 100% 19% / 0.1);
     
     /* Animation */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
