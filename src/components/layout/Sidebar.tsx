@@ -96,14 +96,14 @@ export const Sidebar = () => {
 
   const getNavClassName = ({ isActive }: { isActive: boolean }) =>
     isActive 
-      ? 'bg-primary/20 text-primary font-medium border-r-2 border-primary' 
-      : 'hover:bg-muted/50 text-foreground';
+      ? 'bg-secondary/30 text-secondary font-medium focus-visible:outline-2 focus-visible:outline-secondary' 
+      : 'hover:bg-secondary/15 text-neutral focus-visible:outline-2 focus-visible:outline-secondary';
 
   if (items.length === 0) return null;
 
   return (
     <SidebarComponent
-      className={collapsed ? 'w-14' : 'w-60'}
+      className={`${collapsed ? 'w-14' : 'w-60'} bg-primary border-primary/20`}
     >
       <SidebarContent>
         <SidebarGroup>
@@ -124,8 +124,13 @@ export const Sidebar = () => {
                       end 
                       className={getNavClassName}
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {({ isActive }) => (
+                        <>
+                          <item.icon className="mr-2 h-4 w-4 opacity-80" />
+                          <span className={collapsed ? 'sr-only' : ''}>{item.title}</span>
+                          {isActive && <span className="sr-only" aria-current="page">Current page</span>}
+                        </>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
