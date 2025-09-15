@@ -519,7 +519,7 @@ const InterviewDetailsSheet = ({ interview, onStatusUpdate }) => {
         <div>
           <Label className="text-sm font-medium text-muted-foreground">Interview Questions</Label>
           <ul className="mt-1 space-y-2">
-            {interview.interviewQuestions.map((question, index) => (
+            {(interview.interviewQuestions || []).map((question, index) => (
               <li key={index} className="text-sm flex items-start gap-2">
                 <span className="text-muted-foreground font-medium">{index + 1}.</span>
                 {question}
