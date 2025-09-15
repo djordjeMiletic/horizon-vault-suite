@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/sidebar';
 
 export const Sidebar = () => {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const { user } = useAuth();
   const location = useLocation();
 
@@ -111,6 +111,11 @@ export const Sidebar = () => {
   const currentPath = location.pathname;
   const collapsed = state === 'collapsed';
 
+  const handleNavigation = () => {
+    // Auto-close sidebar on navigation for mobile/tablet
+    setOpenMobile(false);
+  };
+
   const getNavClassName = ({ isActive }: { isActive: boolean }) =>
     isActive 
       ? 'bg-secondary/30 text-secondary font-medium focus-visible:outline-2 focus-visible:outline-secondary' 
@@ -120,8 +125,8 @@ export const Sidebar = () => {
 
   return (
     <SidebarComponent
-      className={`${collapsed ? 'w-14' : 'w-60'} bg-primary border-primary/20 hidden xl:flex`}
-      collapsible="icon"
+      className="bg-primary border-primary/20"
+      collapsible="offcanvas"
     >
       <SidebarContent>
         <SidebarGroup>
@@ -142,6 +147,7 @@ export const Sidebar = () => {
                       to={item.url} 
                       end 
                       className={getNavClassName}
+                      onClick={handleNavigation}
                     >
                       {({ isActive }) => (
                         <>

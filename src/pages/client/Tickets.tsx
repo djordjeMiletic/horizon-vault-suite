@@ -10,16 +10,15 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useTicketStore } from '@/lib/stores';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, MessageSquare, Clock, AlertTriangle, Search, Send } from 'lucide-react';
+import clientTicketsData from '@/mocks/seed/client-tickets.json';
 import { format, formatDistanceToNow } from 'date-fns';
 
 const Tickets = () => {
-  const { tickets, addTicket, updateTicketStatus } = useTicketStore();
   const [filter, setFilter] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<number | null>(null);
   const [newReply, setNewReply] = useState('');
   const [ticketForm, setTicketForm] = useState({
     subject: '',
@@ -28,15 +27,15 @@ const Tickets = () => {
   });
   const { toast } = useToast();
 
-  // Filter tickets for client (created by client)
-  const clientTickets = tickets.filter(ticket => ticket.id.includes('T-'));
+  // Use mock data
+  const clientTickets = clientTicketsData;
   
   const filteredTickets = clientTickets.filter(ticket =>
     ticket.subject.toLowerCase().includes(filter.toLowerCase()) ||
-    ticket.id.toLowerCase().includes(filter.toLowerCase())
+    ticket.id.toString().includes(filter)
   );
 
-  const selectedTicketData = tickets.find(t => t.id === selectedTicket);
+  const selectedTicketData = clientTickets.find(t => t.id === selectedTicket);
 
   const handleCreateTicket = () => {
     if (!ticketForm.subject.trim() || !ticketForm.message.trim()) {
@@ -48,13 +47,6 @@ const Tickets = () => {
       return;
     }
 
-    const newTicket = {
-      subject: ticketForm.subject,
-      priority: ticketForm.priority.toLowerCase() as 'low' | 'medium' | 'high',
-      description: ticketForm.message
-    };
-
-    addTicket(newTicket);
     setIsCreateOpen(false);
     setTicketForm({ subject: '', priority: 'Medium', message: '' });
 
@@ -250,51 +242,51 @@ const Tickets = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Subject</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTickets
-                .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
-                .map((ticket) => (
-                  <TableRow key={ticket.id}>
-                    <TableCell className="font-mono text-sm">{ticket.id}</TableCell>
-                    <TableCell className="font-medium">{ticket.subject}</TableCell>
-                    <TableCell>
-                      <Badge variant={getPriorityColor(ticket.priority)} className="gap-1">
-                        {getPriorityIcon(ticket.priority)}
-                        {ticket.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusColor(ticket.status)}>
-                        {ticket.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{format(new Date(ticket.created), 'MMM d, yyyy')}</TableCell>
-                    <TableCell>{formatDistanceToNow(new Date(ticket.created), { addSuffix: true })}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedTicket(ticket.id)}
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">ID</TableHead>
+                  <TableHead>Subject</TableHead>
+                  <TableHead className="hidden sm:table-cell">Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Last Update</TableHead>
+                  <TableHead className="w-20">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTickets
+                  .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime())
+                  .map((ticket) => (
+                    <TableRow key={ticket.id}>
+                      <TableCell className="font-mono text-sm">#{ticket.id}</TableCell>
+                      <TableCell className="font-medium">{ticket.subject}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant={getPriorityColor(ticket.priority)} className="gap-1">
+                          {getPriorityIcon(ticket.priority)}
+                          {ticket.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(ticket.status)}>
+                          {ticket.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{ticket.lastUpdate}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedTicket(ticket.id)}
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -320,7 +312,7 @@ const Tickets = () => {
               <div className="mb-4">
                 <h3 className="font-medium mb-2">{selectedTicketData.subject}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Created {format(new Date(selectedTicketData.created), 'PPp')}
+                  Created {selectedTicketData.createdDate}
                 </p>
                 {selectedTicketData.description && (
                   <div className="mt-3 p-3 bg-muted rounded-lg">
@@ -329,7 +321,7 @@ const Tickets = () => {
                 )}
               </div>
 
-              {selectedTicketData.status !== 'closed' && (
+              {selectedTicketData.status !== 'Resolved' && (
                 <div className="flex space-x-2">
                   <Textarea
                     placeholder="Type your reply..."

@@ -95,7 +95,7 @@ export const Topbar = () => {
     <header className="h-14 sm:h-16 border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
       <div className="h-full flex items-center justify-between px-2 sm:px-4 lg:px-6">
         <div className="flex items-center space-x-2 sm:space-x-4">
-          <SidebarTrigger className="xl:hidden" />
+          <SidebarTrigger className="lg:hidden" />
           
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-accent rounded-lg flex items-center justify-center">

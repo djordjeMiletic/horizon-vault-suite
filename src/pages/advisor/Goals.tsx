@@ -77,7 +77,7 @@ const Goals = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -116,7 +116,8 @@ const Goals = () => {
             <CardDescription>Target vs Achieved - Last 6 Months</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+            <div className="overflow-hidden">
+              <ResponsiveContainer width="100%" height={280}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
@@ -138,6 +139,7 @@ const Goals = () => {
                 />
               </LineChart>
             </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
