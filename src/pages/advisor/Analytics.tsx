@@ -1,154 +1,96 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, PieChart as PieChartIcon, BarChart3 } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
-import { rollupMonthly, getDateRange, formatMonthForDisplay } from '@/lib/timeSeries';
-
-import commissionsData from '@/mocks/seed/commissions.json';
-import productsData from '@/mocks/seed/products.json';
-import paymentsData from '@/mocks/seed/payments.json';
+import { useSession } from '@/state/SessionContext';
+import { getSeries, getProductMix } from '@/services/analytics';
+import type { SeriesPoint, ProductMixItem } from '@/types/api';
 
 const Analytics = () => {
-  const { user } = useAuth();
-  const [dateRange, setDateRange] = useState('last3Months');
+  const { user } = useSession();
+  const [dateRange, setDateRange] = useState<'last3' | 'last6' | 'ytd'>('last3');
   const [selectedAdvisor, setSelectedAdvisor] = useState('all');
+  const [seriesData, setSeriesData] = useState<SeriesPoint[]>([]);
+  const [productMixData, setProductMixData] = useState<ProductMixItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Get unique advisors for filtering
-  const getAdvisors = () => {
-    const advisorEmails = [...new Set(paymentsData.map(p => p.advisorEmail))];
-    return advisorEmails.map(email => {
-      if (email === 'advisor@advisor.com') return { email, name: 'Sarah Johnson' };
-      if (email === 'advisor2@advisor.com') return { email, name: 'Michael Carter' };
-      return { email, name: email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase()) };
-    });
-  };
+  const advisors = [
+    { email: 'sarah.johnson@event-horizon.test', name: 'Sarah Johnson' },
+    { email: 'michael.carter@event-horizon.test', name: 'Michael Carter' }
+  ];
 
-  const advisors = getAdvisors();
-
-  // Filter payments based on user role and selected advisor
-  const getFilteredPayments = () => {
-    let filtered = paymentsData;
-
-    // Role-based data scoping
-    if (user?.role === 'advisor') {
-      // Advisors ONLY see their own data - ignore advisor filter entirely
-      filtered = filtered.filter(p => p.advisorEmail === user?.email);
-    } else if (user?.role === 'manager') {
-      // Managers see all advisors by default, can filter with advisor selection
-      // Apply advisor filter only for managers
-      if (selectedAdvisor !== 'all') {
-        if (Array.isArray(selectedAdvisor)) {
-          // Multi-select support
-          filtered = filtered.filter(p => selectedAdvisor.includes(p.advisorEmail));
-        } else {
-          // Single select
-          filtered = filtered.filter(p => p.advisorEmail === selectedAdvisor);
+  // Load analytics data
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      setIsLoading(true);
+      try {
+        let advisorEmail: string | undefined;
+        
+        if (user?.role === 'Advisor') {
+          advisorEmail = user.email;
+        } else if (user?.role === 'Manager' && selectedAdvisor !== 'all') {
+          advisorEmail = selectedAdvisor;
         }
+
+        const [series, productMix] = await Promise.all([
+          getSeries(dateRange, advisorEmail),
+          getProductMix(dateRange, advisorEmail)
+        ]);
+
+        setSeriesData(series);
+        setProductMixData(productMix);
+      } catch (error) {
+        console.error('Failed to load analytics:', error);
+        // Set fallback data on error
+        setSeriesData([]);
+        setProductMixData([]);
+      } finally {
+        setIsLoading(false);
       }
-    } else if (user?.role === 'referral') {
-      // Referral partners see all data (read-only)
-      // In production, this would be scoped to their referrals only
-    }
+    };
 
-    return filtered;
-  };
-
-  const userPayments = getFilteredPayments();
-
-  // Get date range based on selection  
-  const { from, to } = getDateRange(dateRange as any);
-
-  // Monthly commissions data using new utility
-  const getMonthlyData = () => {
-    const rollups = rollupMonthly(userPayments, { from, to });
-    return rollups.map(rollup => ({
-      month: formatMonthForDisplay(rollup.month),
-      amount: Number(rollup.totalCommission.toFixed(2))
-    }));
-  };
-
-  // YTD data calculation
-  const getYTDData = () => {
-    const monthlyData = getMonthlyData();
-    let cumulative = 0;
-    
-    return monthlyData.map(item => {
-      cumulative += item.amount;
-      return {
-        ...item,
-        amount: cumulative
-      };
-    });
-  };
-
-  // Product mix data using filtered payments
-  const getProductMixData = () => {
-    const productData: Record<string, number> = {};
-    const filteredPayments = userPayments.filter(payment => {
-      const paymentMonth = payment.date.slice(0, 7);
-      return paymentMonth >= from && paymentMonth <= to;
-    });
-    
-    const totalAmount = filteredPayments.reduce((sum, p) => {
-      // Simple commission calculation
-      return sum + (p.ape * 0.03); // 3% commission rate
-    }, 0);
-    
-    filteredPayments.forEach(payment => {
-      const product = productsData.find(p => p.id === payment.productId);
-      const productName = product?.name || payment.productId;
-      
-      if (!productData[productName]) {
-        productData[productName] = 0;
-      }
-      productData[productName] += payment.ape * 0.03; // Commission calculation
-    });
-
-    return Object.entries(productData).map(([name, value]) => ({
-      name,
-      value: Number(value.toFixed(2)),
-      percentage: totalAmount > 0 ? ((value / totalAmount) * 100).toFixed(1) : '0.0'
-    }));
-  };
-
-  const monthlyData = getMonthlyData();
-  const ytdData = getYTDData();
-  const productMixData = getProductMixData();
-  const chartData = monthlyData;
-
-  // Colors for charts - using new palette
-  const COLORS = ['#0A3D62', '#60A3D9', '#D4AF37', '#F4F6F8', '#0A3D62CC'];
+    loadAnalytics();
+  }, [dateRange, selectedAdvisor, user]);
 
   // Calculate summary statistics
-  const totalCommissions = chartData.reduce((sum, d) => sum + d.amount, 0);
-  const averageMonthly = chartData.length > 0 
-    ? chartData.reduce((sum, d) => sum + d.amount, 0) / chartData.length
+  const totalCommissions = seriesData.reduce((sum, d) => sum + d.value, 0);
+  const averageMonthly = seriesData.length > 0 
+    ? totalCommissions / seriesData.length 
     : 0;
+  const growth = seriesData.length >= 2 
+    ? ((seriesData[seriesData.length - 1].value - seriesData[0].value) / seriesData[0].value) * 100 
+    : 0;
+
+  // Colors for charts
+  const COLORS = ['#0A3D62', '#60A3D9', '#D4AF37', '#F4F6F8', '#0A3D62CC'];
+
+  // Format product mix data for pie chart
+  const pieChartData = productMixData.map((item, index) => ({
+    name: item.product,
+    value: item.amount,
+    fill: COLORS[index % COLORS.length]
+  }));
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Analytics</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
           <p className="text-muted-foreground">
-            {user?.role === 'advisor' && 'Your performance insights and trends'}
-            {user?.role === 'manager' && 'Team performance insights and trends'}  
-            {user?.role === 'referral' && 'Performance insights and trends (read-only)'}
-            {user?.role === 'admin' && 'Performance insights and trends'}
+            Performance insights and commission analytics
           </p>
         </div>
-        <div className="flex gap-4">
-          {/* Advisor Filter - ONLY shown for managers */}
-          {user?.role === 'manager' && (
+        
+        <div className="flex gap-2">
+          {user?.role === 'Manager' && (
             <Select value={selectedAdvisor} onValueChange={setSelectedAdvisor}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select advisor" />
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Advisors</SelectItem>
-                {advisors.map(advisor => (
+                {advisors.map((advisor) => (
                   <SelectItem key={advisor.email} value={advisor.email}>
                     {advisor.name}
                   </SelectItem>
@@ -156,158 +98,195 @@ const Analytics = () => {
               </SelectContent>
             </Select>
           )}
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-48">
+          
+          <Select value={dateRange} onValueChange={(value: 'last3' | 'last6' | 'ytd') => setDateRange(value)}>
+            <SelectTrigger className="w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="last3Months">Last 3 Months</SelectItem>
-              <SelectItem value="last6Months">Last 6 Months</SelectItem>
-              <SelectItem value="ytd">YTD</SelectItem>
+              <SelectItem value="last3">Last 3 Months</SelectItem>
+              <SelectItem value="last6">Last 6 Months</SelectItem>
+              <SelectItem value="ytd">Year to Date</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-card border-border/50">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Commissions
-            </CardTitle>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Commissions</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">£{totalCommissions.toFixed(2)}</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? '...' : `£${totalCommissions.toLocaleString()}`}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {user?.role === 'advisor' ? 'Your data' : 
-               (selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name)}
+              {dateRange === 'last3' ? 'Last 3 months' : dateRange === 'last6' ? 'Last 6 months' : 'Year to date'}
             </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-card border-border/50">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Monthly Average
-            </CardTitle>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Average</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">£{averageMonthly.toFixed(2)}</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? '...' : `£${averageMonthly.toLocaleString()}`}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Per month average
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Growth Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? '...' : `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Period over period
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-gradient-card border-border/50">
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Monthly Commissions
-              <span className="text-xs text-muted-foreground ml-auto">
-                {user?.role === 'advisor' ? 'Your data' : 
-                 (selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name)}
-              </span>
-            </CardTitle>
+            <CardTitle>Commission Trend</CardTitle>
+            <CardDescription>Monthly commission performance</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#60A3D9" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="#60A3D9" stopOpacity={0.01}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" />
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="#0A3D62"
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    stroke="#0A3D62"
-                    fontSize={12}
-                    tickFormatter={(value) => `£${value.toLocaleString()}`}
-                  />
-                  <Tooltip 
-                    formatter={(value: number) => [`£${value.toLocaleString()}`, 'Commission']}
-                    labelStyle={{ color: '#0A3D62' }}
-                    contentStyle={{ 
-                      backgroundColor: '#F4F6F8', 
-                      border: '1px solid #60A3D9',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="amount" 
-                    stroke="#60A3D9" 
-                    strokeWidth={2}
-                    fill="url(#colorAmount)" 
-                    dot={{ fill: '#60A3D9', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: '#60A3D9', strokeWidth: 2 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div style={{ width: '100%', height: '300px' }}>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">Loading chart data...</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={seriesData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="month" 
+                      className="text-sm fill-muted-foreground"
+                    />
+                    <YAxis 
+                      className="text-sm fill-muted-foreground"
+                      tickFormatter={(value) => `£${value}`}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [`£${value}`, 'Commission']}
+                      labelStyle={{ color: 'var(--foreground)' }}
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#0A3D62" 
+                      strokeWidth={2}
+                      dot={{ fill: '#0A3D62', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-card border-border/50 overflow-hidden">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChartIcon className="h-5 w-5" />
-              Product Mix
-              <span className="text-xs text-muted-foreground ml-auto">
-                {user?.role === 'advisor' ? 'Your data' : 
-                 (selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name)}
-              </span>
-            </CardTitle>
+            <CardTitle>Product Mix</CardTitle>
+            <CardDescription>Commission breakdown by product</CardDescription>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="h-64 overflow-hidden">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={productMixData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="55%"
-                    outerRadius="80%"
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ percentage }) => parseFloat(percentage) > 5 ? `${percentage}%` : ''}
-                    labelLine={false}
-                  >
-                    {productMixData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => [`£${value.toLocaleString()}`, 'Commission']} />
-                </PieChart>
-              </ResponsiveContainer>
+          <CardContent>
+            <div style={{ width: '100%', height: '300px' }}>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">Loading chart data...</p>
+                </div>
+              ) : productMixData.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">No product data available</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: £${value}`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => [`£${value}`, 'Commission']}
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </div>
-            
-            {/* Legend */}
-            <div className="flex flex-wrap gap-3 mt-4 px-2">
-              {productMixData.map((entry, index) => (
-                <div key={entry.name} className="flex items-center gap-2 text-sm">
-                  <div 
-                    className="w-3 h-3 rounded-full flex-shrink-0" 
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
-                  <span className="text-muted-foreground truncate">
-                    {entry.name} ({entry.percentage}%)
-                  </span>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Product Performance Table */}
+      {!isLoading && productMixData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Performance</CardTitle>
+            <CardDescription>Detailed breakdown by product</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {productMixData.map((product, index) => (
+                <div key={product.product} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="font-medium">{product.product}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">£{product.amount.toLocaleString()}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {((product.amount / totalCommissions) * 100).toFixed(1)}%
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   );
 };
