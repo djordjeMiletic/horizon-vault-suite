@@ -11,7 +11,11 @@ import {
   useInterviewStore,
   useOnboardingStore,
   useProductStore,
-  useCommissionStore
+  useCommissionStore,
+  usePaymentDataStore,
+  useGoalsDataStore,
+  useNotificationDataStore,
+  useTicketDataStore
 } from './stores';
 
 // Import seed data
@@ -28,6 +32,10 @@ import interviewsData from '@/mocks/seed/interviews.json';
 import onboardingData from '@/mocks/seed/onboarding.json';
 import productsData from '@/mocks/seed/products.json';
 import commissionsData from '@/mocks/seed/commissions.json';
+import paymentsData from '@/mocks/seed/payments.json';
+import goalsData from '@/mocks/seed/goals.json';
+import notificationsData from '@/mocks/seed/notifications.json';
+import ticketsData from '@/mocks/seed/tickets.json';
 
 let isInitialized = false;
 
@@ -42,43 +50,36 @@ export const initializeSeedData = () => {
     complianceStore.documents.push(doc as any);
   });
 
-  // Initialize payment cycles
   const paymentCycleStore = usePaymentCycleStore.getState();
   (paymentCyclesData as any[]).forEach(cycle => {
     paymentCycleStore.cycles.push(cycle as any);
   });
 
-  // Initialize leads
   const leadStore = useLeadStore.getState();
   (leadsData as any[]).forEach(lead => {
     leadStore.leads.push(lead as any);
   });
 
-  // Initialize cases
   const caseStore = useCaseStore.getState();
   (casesData as any[]).forEach(caseItem => {
     caseStore.cases.push(caseItem as any);
   });
 
-  // Initialize client documents
   const clientDocumentStore = useClientDocumentStore.getState();
   (documentsData as any[]).forEach(doc => {
     clientDocumentStore.documents.push(doc as any);
   });
 
-  // Initialize message threads
   const messageStore = useMessageStore.getState();
   (messagesData as any[]).forEach(thread => {
     messageStore.threads.push(thread as any);
   });
 
-  // Initialize appointments
   const appointmentStore = useAppointmentStore.getState();
   (appointmentsData as any[]).forEach(appointment => {
     appointmentStore.appointments.push(appointment as any);
   });
 
-  // Initialize HR data
   const jobStore = useJobStore.getState();
   (jobsData as any[]).forEach(job => {
     jobStore.jobs.push(job as any);
@@ -99,17 +100,28 @@ export const initializeSeedData = () => {
     onboardingStore.onboarding.push(record as any);
   });
 
-  // Initialize products
   const productStore = useProductStore.getState();
   (productsData as any[]).forEach(product => {
     productStore.products.push(product as any);
   });
 
-  // Initialize commissions
   const commissionStore = useCommissionStore.getState();
   (commissionsData as any[]).forEach(commission => {
     commissionStore.commissions.push(commission as any);
   });
+
+  // Initialize new data stores
+  const paymentDataStore = usePaymentDataStore.getState();
+  paymentDataStore.setPayments(paymentsData as any[]);
+
+  const goalsDataStore = useGoalsDataStore.getState();
+  goalsDataStore.setGoalsData(goalsData as any);
+
+  const notificationDataStore = useNotificationDataStore.getState();
+  notificationDataStore.setNotifications(notificationsData as any[]);
+
+  const ticketDataStore = useTicketDataStore.getState();
+  ticketDataStore.setTickets(ticketsData as any[]);
 
   isInitialized = true;
   console.log('Seed data initialized successfully');
@@ -117,7 +129,6 @@ export const initializeSeedData = () => {
 
 // Initialize data on app startup
 if (typeof window !== 'undefined') {
-  // Only run in browser environment
   setTimeout(() => {
     initializeSeedData();
   }, 100);

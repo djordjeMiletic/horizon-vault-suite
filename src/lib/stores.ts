@@ -980,3 +980,136 @@ export interface Commission {
     executiveSalesManager: number;
   };
 }
+
+// New data store interfaces for seed data
+export interface PaymentData {
+  id: string;
+  date: string;
+  advisorEmail: string;
+  productId: string;
+  provider: string;
+  ape: number;
+  receipts: number;
+  status: string;
+  policyNumber?: string;
+  paymentDate?: string;
+  commissionAmount?: number;
+}
+
+export interface GoalsData {
+  advisors: Array<{
+    email: string;
+    monthlyTarget: number;
+    history: Array<{
+      month: string;
+      achieved: number;
+    }>;
+  }>;
+  manager: {
+    monthlyTarget: number;
+    history: Array<{
+      month: string;
+      achieved: number;
+    }>;
+  };
+}
+
+export interface NotificationData {
+  id: string;
+  title: string;
+  type: string;
+  createdAt: string;
+  read: boolean;
+  recipient?: string;
+  message?: string;
+  timestamp?: string;
+}
+
+export interface TicketData {
+  id: string;
+  subject: string;
+  from: string;
+  priority: string;
+  status: string;
+  assignee: string;
+  updatedAt: string;
+  thread: Array<{
+    at: string;
+    from: string;
+    text: string;
+  }>;
+}
+
+// New data store interfaces
+export interface PaymentDataStore {
+  payments: PaymentData[];
+  setPayments: (payments: PaymentData[]) => void;
+  getPaymentsByAdvisor: (advisorEmail: string) => PaymentData[];
+  getPaymentsByDateRange: (from: string, to: string) => PaymentData[];
+}
+
+export interface GoalsDataStore {
+  goalsData: GoalsData | null;
+  setGoalsData: (data: GoalsData) => void;
+  getAdvisorGoals: (email: string) => GoalsData['advisors'][0] | null;
+  getManagerGoals: () => GoalsData['manager'] | null;
+}
+
+export interface NotificationDataStore {
+  notifications: NotificationData[];
+  setNotifications: (notifications: NotificationData[]) => void;
+  getNotificationsByRecipient: (recipient: string) => NotificationData[];
+  markAsRead: (id: string) => void;
+  markAllAsRead: (recipient: string) => void;
+}
+
+export interface TicketDataStore {
+  tickets: TicketData[];
+  setTickets: (tickets: TicketData[]) => void;
+  getTicketsByUser: (userEmail: string) => TicketData[];
+}
+
+// New data store implementations
+export const usePaymentDataStore = create<PaymentDataStore>((set, get) => ({
+  payments: [],
+  setPayments: (payments) => set({ payments }),
+  getPaymentsByAdvisor: (advisorEmail) => 
+    get().payments.filter(p => p.advisorEmail === advisorEmail),
+  getPaymentsByDateRange: (from, to) =>
+    get().payments.filter(p => p.date >= from && p.date <= to),
+}));
+
+export const useGoalsDataStore = create<GoalsDataStore>((set, get) => ({
+  goalsData: null,
+  setGoalsData: (data) => set({ goalsData: data }),
+  getAdvisorGoals: (email) => 
+    get().goalsData?.advisors.find(a => a.email === email) || null,
+  getManagerGoals: () => get().goalsData?.manager || null,
+}));
+
+export const useNotificationDataStore = create<NotificationDataStore>((set, get) => ({
+  notifications: [],
+  setNotifications: (notifications) => set({ notifications }),
+  getNotificationsByRecipient: (recipient) =>
+    get().notifications.filter(n => n.recipient === recipient || !n.recipient),
+  markAsRead: (id) =>
+    set(state => ({
+      notifications: state.notifications.map(n =>
+        n.id === id ? { ...n, read: true } : n
+      )
+    })),
+  markAllAsRead: (recipient) =>
+    set(state => ({
+      notifications: state.notifications.map(n =>
+        (n.recipient === recipient || !n.recipient) ? { ...n, read: true } : n
+      )
+    })),
+}));
+
+export const useTicketDataStore = create<TicketDataStore>((set, get) => ({
+  tickets: [],
+  setTickets: (tickets) => set({ tickets }),
+  getTicketsByUser: (userEmail) =>
+    get().tickets.filter(t => t.from === userEmail || 
+      t.thread.some(m => m.from === userEmail)),
+}));

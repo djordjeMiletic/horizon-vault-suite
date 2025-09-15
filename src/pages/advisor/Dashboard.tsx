@@ -11,12 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, PoundSterling, Users, Bell, Calendar, ChevronRight, Plus, FileUp, Ticket, CreditCard } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useState } from 'react';
-import { usePaymentStore, useTicketStore, useDocumentStore, useNotificationStore } from '@/lib/stores';
-
-// Import mock data
-import commissionsData from '@/mocks/seed/commissions.json';
-import goalsData from '@/mocks/seed/goals.json';
-import notificationsData from '@/mocks/seed/notifications.json';
+import { usePaymentStore, useTicketStore, useDocumentStore, useNotificationStore, usePaymentDataStore, useGoalsDataStore, useNotificationDataStore } from '@/lib/stores';
+import { computeCommission } from '@/lib/commission';
+import { rollupMonthly, getCurrentMonth } from '@/lib/timeSeries';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -25,6 +22,13 @@ const Dashboard = () => {
   const { addTicket } = useTicketStore();
   const { addDocument } = useDocumentStore();
   const { addNotification } = useNotificationStore();
+  
+  // Use new data stores
+  const { payments, getPaymentsByAdvisor } = usePaymentDataStore();
+  const { getAdvisorGoals, getManagerGoals } = useGoalsDataStore();
+  const { notifications, getNotificationsByRecipient } = useNotificationDataStore();
+
+  const isManager = user?.role === 'manager';
 
   // Modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -140,56 +144,193 @@ const Dashboard = () => {
     toast({ title: "Success", description: "Ticket created (demo)" });
   };
 
-  // Calculate KPIs from mock data
-  const totalYTD = commissionsData
-    .filter(c => c.advisorId === user?.id)
-    .reduce((sum, c) => sum + c.commissionAmount, 0);
+// Simple commission calculator for dashboard KPIs
+const calculateCommission = (ape: number, receipts: number, productId: string = 'PRD-01') => {
+  // Use default policy for calculation
+  const defaultPolicy = {
+    productRatePct: 3.5,
+    marginPct: 20,
+    thresholdMultiplier: 2.5,
+    split: {
+      Advisor: 0.7,
+      Introducer: 0.1,
+      Manager: 0.15,
+      ExecSalesManager: 0.05
+    }
+  };
+  
+  const threshold = ape * defaultPolicy.thresholdMultiplier;
+  const methodUsed = receipts <= threshold ? 'APE' : 'Receipts';
+  const commissionBase = methodUsed === 'APE' 
+    ? ape * (defaultPolicy.productRatePct / 100)
+    : receipts * (defaultPolicy.productRatePct / 100);
+  const poolAmount = commissionBase * (1 - defaultPolicy.marginPct / 100);
+  
+  return {
+    methodUsed,
+    commissionBase,
+    poolAmount,
+    split: {
+      Advisor: poolAmount * defaultPolicy.split.Advisor,
+      Introducer: poolAmount * defaultPolicy.split.Introducer,
+      Manager: poolAmount * defaultPolicy.split.Manager,
+      ExecSalesManager: poolAmount * defaultPolicy.split.ExecSalesManager
+    }
+  };
+};
 
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-  const lastMonth = new Date();
-  lastMonth.setMonth(lastMonth.getMonth() - 1);
-  const lastMonthStr = lastMonth.toISOString().slice(0, 7);
+  // Calculate KPIs based on role
+  const getKPIData = () => {
+    if (isManager) {
+      // Manager sees aggregated data from all advisors
+      const relevantPayments = payments;
+      const commissionData = relevantPayments.map(p => {
+        const result = calculateCommission(p.ape, p.receipts, p.productId);
+        return {
+          commission: result.split.Advisor,
+          date: p.date,
+          advisorEmail: p.advisorEmail
+        };
+      });
+      
+      const currentMonth = getCurrentMonth();
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      const lastMonthStr = lastMonth.toISOString().slice(0, 7);
+      
+      const totalYTD = commissionData
+        .filter(c => c.date.startsWith('2025'))
+        .reduce((sum, c) => sum + c.commission, 0);
+        
+      const currentMonthCommissions = commissionData
+        .filter(c => c.date.slice(0, 7) === currentMonth)
+        .reduce((sum, c) => sum + c.commission, 0);
+        
+      const lastMonthCommissions = commissionData
+        .filter(c => c.date.slice(0, 7) === lastMonthStr)
+        .reduce((sum, c) => sum + c.commission, 0);
+        
+      const momChange = lastMonthCommissions > 0 
+        ? ((currentMonthCommissions - lastMonthCommissions) / lastMonthCommissions) * 100 
+        : 0;
+        
+      const paymentsLast30Days = relevantPayments
+        .filter(p => p.status === 'Approved')
+        .length;
+        
+      const avgPayment = paymentsLast30Days > 0 ? totalYTD / paymentsLast30Days : 0;
+      
+      // Recent payments (last 5) - format for display
+      const recentPayments = relevantPayments
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5)
+        .map(p => {
+          const result = calculateCommission(p.ape, p.receipts, p.productId);
+          return {
+            id: p.id,
+            policyNumber: p.id,
+            paymentDate: p.date,
+            commissionAmount: result.split.Advisor,
+            product: p.productId,
+            status: p.status
+          };
+        });
+        
+      // Manager goals
+      const managerGoals = getManagerGoals();
+      const currentGoal = managerGoals ? {
+        advisorId: user?.id,
+        month: currentMonth,
+        target: managerGoals.monthlyTarget,
+        achieved: managerGoals.history?.find(h => h.month === currentMonth)?.achieved || 0,
+        progress: managerGoals.monthlyTarget > 0 
+          ? (managerGoals.history?.find(h => h.month === currentMonth)?.achieved || 0) / managerGoals.monthlyTarget 
+          : 0,
+        type: 'Team Monthly Target'
+      } : null;
+      
+      return { totalYTD, momChange, paymentsLast30Days, avgPayment, recentPayments, currentGoal };
+    } else {
+      // Advisor sees only their own data
+      const advisorPayments = getPaymentsByAdvisor(user?.email || '');
+      const commissionData = advisorPayments.map(p => {
+        const result = calculateCommission(p.ape, p.receipts, p.productId);
+        return {
+          commission: result.split.Advisor,
+          date: p.date
+        };
+      });
+      
+      const currentMonth = getCurrentMonth();
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      const lastMonthStr = lastMonth.toISOString().slice(0, 7);
+      
+      const totalYTD = commissionData
+        .filter(c => c.date.startsWith('2025'))
+        .reduce((sum, c) => sum + c.commission, 0);
+        
+      const currentMonthCommissions = commissionData
+        .filter(c => c.date.slice(0, 7) === currentMonth)
+        .reduce((sum, c) => sum + c.commission, 0);
+        
+      const lastMonthCommissions = commissionData
+        .filter(c => c.date.slice(0, 7) === lastMonthStr)
+        .reduce((sum, c) => sum + c.commission, 0);
+        
+      const momChange = lastMonthCommissions > 0 
+        ? ((currentMonthCommissions - lastMonthCommissions) / lastMonthCommissions) * 100 
+        : 0;
+        
+      const paymentsLast30Days = advisorPayments
+        .filter(p => p.status === 'Approved')
+        .length;
+        
+      const avgPayment = paymentsLast30Days > 0 ? totalYTD / paymentsLast30Days : 0;
+      
+      // Recent payments (last 5) - format for display
+      const recentPayments = advisorPayments
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5)
+        .map(p => {
+          const result = calculateCommission(p.ape, p.receipts, p.productId);
+          return {
+            id: p.id,
+            policyNumber: p.id,
+            paymentDate: p.date,
+            commissionAmount: result.split.Advisor,
+            product: p.productId,
+            status: p.status
+          };
+        });
+        
+      // Advisor goals
+      const advisorGoals = getAdvisorGoals(user?.email || '');
+      const currentGoal = advisorGoals ? {
+        advisorId: user?.id,
+        month: currentMonth,
+        target: advisorGoals.monthlyTarget,
+        achieved: advisorGoals.history?.find(h => h.month === currentMonth)?.achieved || 0,
+        progress: advisorGoals.monthlyTarget > 0 
+          ? (advisorGoals.history?.find(h => h.month === currentMonth)?.achieved || 0) / advisorGoals.monthlyTarget 
+          : 0,
+        type: 'Monthly APE'
+      } : null;
+      
+      return { totalYTD, momChange, paymentsLast30Days, avgPayment, recentPayments, currentGoal };
+    }
+  };
 
-  const currentMonthCommissions = commissionsData
-    .filter(c => c.advisorId === user?.id && c.month === currentMonth)
-    .reduce((sum, c) => sum + c.commissionAmount, 0);
+  const { totalYTD, momChange, paymentsLast30Days, avgPayment, recentPayments, currentGoal } = getKPIData();
 
-  const lastMonthCommissions = commissionsData
-    .filter(c => c.advisorId === user?.id && c.month === lastMonthStr)
-    .reduce((sum, c) => sum + c.commissionAmount, 0);
-
-  const momChange = lastMonthCommissions > 0 
-    ? ((currentMonthCommissions - lastMonthCommissions) / lastMonthCommissions) * 100 
-    : 0;
-
-  const paymentsLast30Days = commissionsData
-    .filter(c => c.advisorId === user?.id && c.status === 'Paid')
-    .length;
-
-  const avgPayment = paymentsLast30Days > 0 ? totalYTD / paymentsLast30Days : 0;
-
-  // Recent payments (last 5)
-  const recentPayments = commissionsData
-    .filter(c => c.advisorId === user?.id)
-    .slice(0, 5);
-
-  // User notifications
-  const userNotifications = notificationsData
-    .filter(n => n.userId === user?.id)
-    .slice(0, 5);
-
-  // Current goals - adapt to new structure
-  const advisorGoalsData = goalsData.advisors?.find(a => a.email === user?.email);
-  const currentGoal = advisorGoalsData ? {
-    advisorId: user?.id,
-    month: currentMonth,
-    target: advisorGoalsData.monthlyTarget,
-    achieved: advisorGoalsData.history?.find(h => h.month === currentMonth)?.achieved || 0,
-    progress: advisorGoalsData.monthlyTarget > 0 
-      ? (advisorGoalsData.history?.find(h => h.month === currentMonth)?.achieved || 0) / advisorGoalsData.monthlyTarget 
-      : 0,
-    type: 'Monthly APE'
-  } : null;
+  // User notifications - format for display
+  const userNotifications = getNotificationsByRecipient(user?.email || '')
+    .slice(0, 5)
+    .map(n => ({
+      ...n,
+      message: n.title,
+      timestamp: n.createdAt
+    }));
 
   const kpiCards = [
     {
