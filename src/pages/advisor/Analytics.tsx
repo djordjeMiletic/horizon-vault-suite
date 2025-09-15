@@ -161,7 +161,6 @@ const Analytics = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="thisMonth">This Month</SelectItem>
               <SelectItem value="last3Months">Last 3 Months</SelectItem>
               <SelectItem value="last6Months">Last 6 Months</SelectItem>
               <SelectItem value="ytd">YTD</SelectItem>

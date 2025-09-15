@@ -41,7 +41,9 @@ export const AppLayout = () => {
         <div className="flex-1 flex flex-col min-w-0">
           <Topbar />
           <main className="flex-1 p-2 sm:p-4 lg:p-6 overflow-x-hidden">
-            <Outlet />
+            <div className="w-full overflow-hidden">
+              <Outlet />
+            </div>
           </main>
         </div>
       </div>

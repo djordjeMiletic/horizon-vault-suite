@@ -136,5 +136,89 @@
         "text": "User account created and welcome email sent. Onboarding completed."
       }
     ]
+  },
+  {
+    "id": "T-9106",
+    "subject": "Document upload issue",
+    "from": "client@client.com",
+    "priority": "Medium",
+    "status": "Open",
+    "assignee": "admin@admin.com",
+    "createdAt": "2025-09-14T11:20:00Z",
+    "updatedAt": "2025-09-14T11:20:00Z",
+    "thread": [
+      {
+        "id": "msg-012",
+        "timestamp": "2025-09-14T11:20:00Z",
+        "from": "client@client.com",
+        "text": "I'm having trouble uploading documents to my portal. The upload button doesn't seem to be working properly. Can you please help?"
+      }
+    ]
+  },
+  {
+    "id": "T-9107", 
+    "subject": "Meeting reschedule request",
+    "from": "client@client.com",
+    "priority": "Low",
+    "status": "Open",
+    "assignee": "advisor@advisor.com",
+    "createdAt": "2025-09-13T16:45:00Z",
+    "updatedAt": "2025-09-13T16:45:00Z",
+    "thread": [
+      {
+        "id": "msg-013",
+        "timestamp": "2025-09-13T16:45:00Z",
+        "from": "client@client.com",
+        "text": "Hi, I need to reschedule our appointment on Friday due to a family emergency. Could we possibly move it to next week?"
+      }
+    ]
+  },
+  {
+    "id": "T-9108",
+    "subject": "Update on case #12345",
+    "from": "client@client.com", 
+    "priority": "High",
+    "status": "In Progress",
+    "assignee": "advisor@advisor.com",
+    "createdAt": "2025-09-12T09:30:00Z",
+    "updatedAt": "2025-09-12T14:15:00Z",
+    "thread": [
+      {
+        "id": "msg-014",
+        "timestamp": "2025-09-12T09:30:00Z",
+        "from": "client@client.com",
+        "text": "Could I please get an update on case #12345? It's been over two weeks since the last communication and I'm concerned about the progress."
+      },
+      {
+        "id": "msg-015",
+        "timestamp": "2025-09-12T14:15:00Z",
+        "from": "advisor@advisor.com",
+        "text": "Thank you for following up. Your case is progressing well and we're currently in the final review stage. I'll send you a detailed update by end of week."
+      }
+    ]
+  },
+  {
+    "id": "T-9109",
+    "subject": "Password reset request",
+    "from": "client@client.com",
+    "priority": "Medium", 
+    "status": "Resolved",
+    "assignee": "admin@admin.com",
+    "createdAt": "2025-09-10T13:00:00Z",
+    "updatedAt": "2025-09-10T15:30:00Z",
+    "thread": [
+      {
+        "id": "msg-016",
+        "timestamp": "2025-09-10T13:00:00Z",
+        "from": "client@client.com",
+        "text": "I'm unable to log into my account. Could you please help me reset my password?"
+      },
+      {
+        "id": "msg-017",
+        "timestamp": "2025-09-10T15:30:00Z",
+        "from": "admin@admin.com",
+        "text": "Password has been reset successfully. Please check your email for the new temporary password and instructions to set up a new one."
+      }
+    ]
   }
 ]

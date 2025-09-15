@@ -128,5 +128,55 @@
     "timestamp": "2025-09-09T12:15:00Z",
     "read": true,
     "priority": "normal"
+  },
+  {
+    "id": "N-2006",
+    "userId": "4",
+    "type": "compliance",
+    "title": "New compliance document uploaded",
+    "message": "Updated risk assessment guidelines have been uploaded to the compliance portal.",
+    "timestamp": "2025-09-15T09:30:00Z",
+    "read": false,
+    "priority": "normal"
+  },
+  {
+    "id": "N-2007",
+    "userId": "4",
+    "type": "payment",
+    "title": "Payment cycle closed",
+    "message": "Payment cycle 2025-08 has been successfully closed and finalized.",
+    "timestamp": "2025-09-14T16:00:00Z",
+    "read": false,
+    "priority": "normal"
+  },
+  {
+    "id": "N-2008",
+    "userId": "4",
+    "type": "system",
+    "title": "System maintenance scheduled",
+    "message": "Planned system maintenance window scheduled for Sunday 10PM-2AM GMT. Services may be temporarily unavailable.",
+    "timestamp": "2025-09-13T10:45:00Z",
+    "read": false,
+    "priority": "high"
+  },
+  {
+    "id": "N-2009",
+    "userId": "4",
+    "type": "compliance",
+    "title": "Annual compliance review due",
+    "message": "Annual compliance review deadline approaching for Q4 2025. Please ensure all documentation is current.",
+    "timestamp": "2025-09-12T08:15:00Z",
+    "read": true,
+    "priority": "normal"
+  },
+  {
+    "id": "N-2010",
+    "userId": "4",
+    "type": "audit",
+    "title": "Security audit completed",
+    "message": "Quarterly security audit has been completed successfully. Report available in admin portal.",
+    "timestamp": "2025-09-11T14:20:00Z", 
+    "read": false,
+    "priority": "low"
   }
 ]
