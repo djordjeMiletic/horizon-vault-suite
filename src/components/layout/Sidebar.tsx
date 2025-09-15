@@ -103,6 +103,12 @@ export const Sidebar = () => {
       }
       return advisorItems;
     }
+    if (path.startsWith('/manager')) {
+      return managerItems;
+    }
+    if (path.startsWith('/referral')) {
+      return advisorItems.filter(item => item.url === '/advisor/reports');
+    }
     if (path.startsWith('/client')) return clientItems;
     if (path.startsWith('/admin')) return adminItems;
     if (path.startsWith('/hr')) return hrItems;
@@ -140,8 +146,9 @@ export const Sidebar = () => {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-primary-foreground/80">
-            {location.pathname.startsWith('/advisor') && 
-              (user?.role === 'Manager' ? 'Manager Portal' : 'Advisory Portal')}
+            {location.pathname.startsWith('/advisor') && 'Advisory Portal'}
+            {location.pathname.startsWith('/manager') && 'Manager Portal'}
+            {location.pathname.startsWith('/referral') && 'Referral Portal'}
             {location.pathname.startsWith('/client') && 'Client Portal'}
             {location.pathname.startsWith('/admin') && 'Admin Portal'}
             {location.pathname.startsWith('/hr') && 'HR Portal'}
