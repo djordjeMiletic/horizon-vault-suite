@@ -58,67 +58,88 @@ const CustomReports = () => {
   const [templateName, setTemplateName] = useState('');
 
   const buildReportData = () => {
-    let data = commissionsData.map(commission => {
-      const product = productsData.find(p => p.id === commission.productId);
-      const policy = policiesData.find(p => p.productId === commission.productId);
-      
-      let calculatedData = {};
-      if (policy) {
-        const payment = {
-          id: commission.id,
-          productId: commission.productId,
-          provider: product?.provider || '',
-          date: commission.paymentDate,
-          ape: commission.ape,
-          receipts: commission.actualReceipts,
-          status: commission.status as any,
-          advisorId: commission.advisorId,
-          policyNumber: commission.policyNumber,
-          clientId: commission.clientId
-        };
+    try {
+      let data = commissionsData.map(commission => {
+        const product = productsData.find(p => p.id === commission.productId);
+        const policy = policiesData.find(p => p.productId === commission.productId);
         
-        const result = computeCommission(payment, policy);
-        calculatedData = {
-          methodUsed: result.methodUsed,
-          commissionBase: result.commissionBase,
-          commissionPool: result.poolAmount,
-          productRatePct: policy.productRatePct,
-          marginPct: policy.marginPct,
-          ...result.split
+        let calculatedData = {};
+        if (policy && product) {
+          try {
+            const payment = {
+              id: commission.id || '',
+              productId: commission.productId || '',
+              provider: product?.provider || '',
+              date: commission.paymentDate || '',
+              ape: commission.ape || 0,
+              receipts: commission.actualReceipts || 0,
+              status: commission.status as any || 'Pending',
+              advisorId: commission.advisorId || '',
+              policyNumber: commission.policyNumber || '',
+              clientId: commission.clientId || ''
+            };
+            
+            const result = computeCommission(payment, policy);
+            calculatedData = {
+              methodUsed: result.methodUsed,
+              commissionBase: result.commissionBase,
+              commissionPool: result.poolAmount,
+              productRatePct: policy.productRatePct || 0,
+              marginPct: policy.marginPct || 0,
+              ...result.split
+            };
+          } catch (error) {
+            console.error('Error calculating commission for:', commission.id, error);
+            calculatedData = {
+              methodUsed: 'N/A',
+              commissionBase: 0,
+              commissionPool: 0,
+              productRatePct: 0,
+              marginPct: 0
+            };
+          }
+        }
+
+        return {
+          id: commission.id || '',
+          date: commission.paymentDate || '',
+          product: product?.name || commission.productId || 'Unknown Product',
+          provider: product?.provider || 'Unknown',
+          policyId: commission.policyNumber || 'N/A',
+          client: `Client ${commission.clientId || 'Unknown'}`,
+          advisor: `Advisor ${commission.advisorId || 'Unknown'}`,
+          role: 'Advisor', // Default role display
+          ape: commission.ape || 0,
+          receipts: commission.actualReceipts || 0,
+          status: commission.status || 'Pending',
+          ...calculatedData
         };
+      });
+
+      // Apply filters with safety checks
+      if (filters.dateRange.from) {
+        data = data.filter(item => item.date && item.date >= filters.dateRange.from);
+      }
+      if (filters.dateRange.to) {
+        data = data.filter(item => item.date && item.date <= filters.dateRange.to);
+      }
+      if (filters.products.length > 0) {
+        data = data.filter(item => item.product && filters.products.includes(item.product));
+      }
+      if (filters.status.length > 0 && !filters.status.includes('all')) {
+        data = data.filter(item => item.status && filters.status.includes(item.status));
       }
 
-      return {
-        id: commission.id,
-        date: commission.paymentDate,
-        product: product?.name || commission.productId,
-        provider: product?.provider || 'Unknown',
-        policyId: commission.policyNumber,
-        client: `Client ${commission.clientId}`,
-        advisor: `Advisor ${commission.advisorId}`,
-        role: 'Advisor', // Default role display
-        ape: commission.ape,
-        receipts: commission.actualReceipts,
-        status: commission.status,
-        ...calculatedData
-      };
-    });
-
-    // Apply filters
-    if (filters.dateRange.from) {
-      data = data.filter(item => item.date >= filters.dateRange.from);
+      return data;
+    } catch (error) {
+      console.error('Error building report data:', error);
+      toast({
+        title: 'Error Generating Report',
+        description: 'There was an error processing the report data. Please try again.',
+        variant: 'destructive'
+      });
+      return [];
     }
-    if (filters.dateRange.to) {
-      data = data.filter(item => item.date <= filters.dateRange.to);
-    }
-    if (filters.products.length > 0) {
-      data = data.filter(item => filters.products.includes(item.product));
-    }
-    if (filters.status.length > 0) {
-      data = data.filter(item => filters.status.includes(item.status));
-    }
-
-    return data;
   };
 
   const handleGenerate = () => {
@@ -131,17 +152,27 @@ const CustomReports = () => {
       return;
     }
 
-    const data = buildReportData();
-    setGeneratedData(data);
-    
-    toast({
-      title: 'Report Generated',
-      description: `Generated ${data.length} rows with ${selectedFields.length} columns.`
-    });
+    try {
+      const data = buildReportData();
+      setGeneratedData(data);
+      
+      toast({
+        title: 'Report Generated',
+        description: `Generated ${data.length} rows with ${selectedFields.length} columns.`
+      });
+    } catch (error) {
+      console.error('Error generating report:', error);
+      toast({
+        title: 'Generation Failed',
+        description: 'Unable to generate report. Please check your selections and try again.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleExportCSV = () => {
-    if (!canExportCSV(user?.role || '')) {
+    const userRole = user?.role || 'guest';
+    if (!canExportCSV(userRole)) {
       toast({
         title: 'Export Not Available',
         description: 'CSV export is not available for your role.',
@@ -159,44 +190,56 @@ const CustomReports = () => {
       return;
     }
 
-    const headers = selectedFields.map(field => 
-      AVAILABLE_FIELDS.find(f => f.id === field)?.label || field
-    );
+    try {
+      const headers = selectedFields.map(field => 
+        AVAILABLE_FIELDS.find(f => f.id === field)?.label || field
+      );
 
-    const csvData = generatedData.map(row => 
-      selectedFields.map(field => {
-        const value = row[field];
-        if (typeof value === 'number') {
-          const fieldInfo = AVAILABLE_FIELDS.find(f => f.id === field);
-          if (fieldInfo?.type === 'currency') {
-            return `£${value.toFixed(2)}`;
-          } else if (fieldInfo?.type === 'percentage') {
-            return `${value.toFixed(2)}%`;
+      const csvData = generatedData.map(row => 
+        selectedFields.map(field => {
+          const value = row[field];
+          if (value === null || value === undefined) {
+            return '';
           }
-        }
-        return value;
-      })
-    );
+          if (typeof value === 'number') {
+            const fieldInfo = AVAILABLE_FIELDS.find(f => f.id === field);
+            if (fieldInfo?.type === 'currency') {
+              return `£${value.toFixed(2)}`;
+            } else if (fieldInfo?.type === 'percentage') {
+              return `${value.toFixed(2)}%`;
+            }
+          }
+          return String(value).replace(/,/g, ';'); // Replace commas to avoid CSV issues
+        })
+      );
 
-    const csvContent = [
-      headers.join(','),
-      ...csvData.map(row => row.join(','))
-    ].join('\n');
+      const csvContent = [
+        headers.join(','),
+        ...csvData.map(row => row.join(','))
+      ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `custom-report-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `custom-report-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
-    toast({
-      title: 'Export Successful',
-      description: 'Custom report has been exported to CSV.'
-    });
+      toast({
+        title: 'Export Successful',
+        description: 'Custom report has been exported to CSV.'
+      });
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      toast({
+        title: 'Export Failed',
+        description: 'Unable to export CSV. Please try again.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleSaveTemplate = () => {
@@ -404,17 +447,17 @@ const CustomReports = () => {
                 <div>
                   <Label>Status</Label>
                   <Select
-                    value={filters.status.length > 0 ? filters.status[0] : ''}
+                    value={filters.status.length > 0 ? filters.status[0] : 'all'}
                     onValueChange={(value) => setFilters(prev => ({
                       ...prev,
-                      status: value ? [value] : []
+                      status: value === 'all' ? [] : [value]
                     }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Status</SelectItem>
+                      <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="Paid">Paid</SelectItem>
                       <SelectItem value="Pending">Pending</SelectItem>
                       <SelectItem value="Processing">Processing</SelectItem>
