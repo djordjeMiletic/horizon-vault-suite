@@ -318,7 +318,7 @@ const InterviewCreateDialog = ({
           </SelectTrigger>
           <SelectContent>
             {applicants
-              .filter(a => ['Screening', 'Interview'].includes(a.status))
+              .filter(a => ['Screening', 'Interview'].includes(a.status) && a.id && a.id.trim() !== '')
               .map(candidate => (
               <SelectItem key={candidate.id} value={candidate.id}>
                 {candidate.name} - {candidate.jobTitle}
