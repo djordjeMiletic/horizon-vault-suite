@@ -12,7 +12,6 @@ import paymentsData from '@/mocks/seed/payments.json';
 
 const Analytics = () => {
   const { user } = useAuth();
-  const [chartType, setChartType] = useState('last6Months');
   const [dateRange, setDateRange] = useState('last6Months');
 
   // Get user payments and calculate with rolling data
@@ -77,7 +76,7 @@ const Analytics = () => {
   const monthlyData = getMonthlyData();
   const ytdData = getYTDData();
   const productMixData = getProductMixData();
-  const chartData = chartType === 'monthly' ? monthlyData : ytdData;
+  const chartData = monthlyData;
 
   // Colors for charts - using new palette
   const COLORS = ['#0A3D62', '#60A3D9', '#D4AF37', '#F4F6F8', '#0A3D62CC'];
@@ -85,7 +84,7 @@ const Analytics = () => {
   // Calculate summary statistics
   const totalCommissions = chartData.reduce((sum, d) => sum + d.amount, 0);
   const averageMonthly = chartData.length > 0 
-    ? (chartType === 'monthly' ? chartData.reduce((sum, d) => sum + d.amount, 0) / chartData.length : totalCommissions)
+    ? chartData.reduce((sum, d) => sum + d.amount, 0) / chartData.length
     : 0;
 
   return (
@@ -95,28 +94,17 @@ const Analytics = () => {
           <h1 className="text-3xl font-bold">Analytics</h1>
           <p className="text-muted-foreground">Performance insights and trends</p>
         </div>
-        <div className="flex gap-2">
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="thisMonth">This Month</SelectItem>
-              <SelectItem value="last3Months">Last 3 Months</SelectItem>
-              <SelectItem value="last6Months">Last 6 Months</SelectItem>
-              <SelectItem value="ytd">YTD</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={chartType} onValueChange={setChartType}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="ytd">YTD</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={dateRange} onValueChange={setDateRange}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="thisMonth">This Month</SelectItem>
+            <SelectItem value="last3Months">Last 3 Months</SelectItem>
+            <SelectItem value="last6Months">Last 6 Months</SelectItem>
+            <SelectItem value="ytd">YTD</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Summary Cards */}
@@ -135,7 +123,7 @@ const Analytics = () => {
         <Card className="bg-gradient-card border-border/50">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {chartType === 'monthly' ? 'Monthly Average' : 'YTD Total'}
+              Monthly Average
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -150,7 +138,7 @@ const Analytics = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              {chartType === 'monthly' ? 'Monthly Commissions' : 'YTD Commissions'}
+              Monthly Commissions
             </CardTitle>
           </CardHeader>
           <CardContent>

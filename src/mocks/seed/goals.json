@@ -4,6 +4,12 @@
       "email": "advisor@advisor.com",
       "monthlyTarget": 12000,
       "history": [
+        {"month":"2024-10","achieved":8900},
+        {"month":"2024-11","achieved":9750},
+        {"month":"2024-12","achieved":11200},
+        {"month":"2025-01","achieved":10400},
+        {"month":"2025-02","achieved":9850},
+        {"month":"2025-03","achieved":11800},
         {"month":"2025-04","achieved":9800},
         {"month":"2025-05","achieved":11250},
         {"month":"2025-06","achieved":12400},
@@ -16,6 +22,12 @@
       "email": "advisor2@advisor.com",
       "monthlyTarget": 10000,
       "history": [
+        {"month":"2024-10","achieved":7800},
+        {"month":"2024-11","achieved":8400},
+        {"month":"2024-12","achieved":9100},
+        {"month":"2025-01","achieved":8850},
+        {"month":"2025-02","achieved":8200},
+        {"month":"2025-03","achieved":9600},
         {"month":"2025-04","achieved":8600},
         {"month":"2025-05","achieved":9300},
         {"month":"2025-06","achieved":10100},
@@ -28,6 +40,12 @@
   "manager": {
     "monthlyTarget": 22000,
     "history": [
+      {"month":"2024-10","achieved":16700},
+      {"month":"2024-11","achieved":18150},
+      {"month":"2024-12","achieved":20300},
+      {"month":"2025-01","achieved":19250},
+      {"month":"2025-02","achieved":18050},
+      {"month":"2025-03","achieved":21400},
       {"month":"2025-04","achieved":18400},
       {"month":"2025-05","achieved":20550},
       {"month":"2025-06","achieved":22500},
