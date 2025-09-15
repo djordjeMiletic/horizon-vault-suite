@@ -42,6 +42,7 @@ import AdminTickets from "./pages/admin/Tickets";
 import AdminAudit from "./pages/admin/Audit";
 import AdminNotifications from "./pages/admin/Notifications";
 import AdminProducts from "./pages/admin/Products";
+import AdminReports from "./pages/admin/Reports";
 
 // HR pages
 import HRJobs from "./pages/hr/Jobs";
@@ -189,6 +190,11 @@ const App = () => (
             <Route path="/admin/products" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminProducts />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminReports />
               </ProtectedRoute>
             } />
 

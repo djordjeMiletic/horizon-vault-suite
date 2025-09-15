@@ -66,11 +66,12 @@ export const Sidebar = () => {
     { title: 'Tickets', url: '/admin/tickets', icon: Ticket },
     { title: 'Audit Logs', url: '/admin/audit', icon: ClipboardList },
     { title: 'Notifications', url: '/admin/notifications', icon: BellRing },
+    { title: 'Reports', url: '/admin/reports', icon: FileText },
   ];
 
   const hrItems = [
-    { title: 'Jobs', url: '/hr/jobs', icon: Briefcase },
-    { title: 'Applications', url: '/hr/applications', icon: UserPlus },
+    { title: 'Recruitment', url: '/hr/jobs', icon: Briefcase },
+    { title: 'Applicants', url: '/hr/applications', icon: UserPlus },
     { title: 'Interviews', url: '/hr/interviews', icon: Calendar },
     { title: 'Onboarding', url: '/hr/onboarding', icon: ClipboardList },
   ];

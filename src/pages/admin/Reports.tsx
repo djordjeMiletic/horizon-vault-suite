@@ -8,15 +8,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Filter, Calendar } from 'lucide-react';
+import { Download, Filter } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { canExportCSV } from '@/lib/commission';
-import CustomReports from './components/CustomReports';
+import CustomReports from '../advisor/components/CustomReports';
 
 import commissionsData from '@/mocks/seed/commissions.json';
 import productsData from '@/mocks/seed/products.json';
 
-const Reports = () => {
+const AdminReports = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [filters, setFilters] = useState({
@@ -26,25 +26,16 @@ const Reports = () => {
     advisor: 'all'
   });
 
-  // Filter commissions based on current user and filters
+  // Get all commissions for admin view
   const getFilteredCommissions = () => {
     let filtered = commissionsData;
 
-    // Role-based filtering
-    if (user?.role === 'referral') {
-      // Referral partners see all commissions (read-only)
-      // In a real app, this would be restricted to their referrals only
-    } else {
-      // Advisors and managers see their own commissions
-      filtered = filtered.filter(c => c.advisorId === user?.id);
-    }
-
-    // Apply additional filters
+    // Apply filters
     if (filters.product !== 'all') {
       filtered = filtered.filter(c => c.productId === filters.product);
     }
 
-    if (filters.advisor !== 'all' && user?.role === 'manager') {
+    if (filters.advisor !== 'all') {
       filtered = filtered.filter(c => c.advisorId === filters.advisor);
     }
 
@@ -69,37 +60,6 @@ const Reports = () => {
   const totalAPE = filteredCommissions.reduce((sum, c) => sum + c.ape, 0);
   const averageCommission = filteredCommissions.length > 0 ? totalCommissions / filteredCommissions.length : 0;
 
-  const getBandingBreakdown = () => {
-    const breakdown: Record<string, { count: number; totalCommission: number; bonusRate: number }> = {};
-    
-    filteredCommissions.forEach(commission => {
-      const product = productsData.find(p => p.id === commission.productId);
-      if (product?.bands) {
-        product.bands.forEach(band => {
-          if (commission.ape >= band.threshold) {
-            const key = `£${band.threshold.toLocaleString()}+ threshold`;
-            if (!breakdown[key]) {
-              breakdown[key] = {
-                count: 0,
-                totalCommission: 0,
-                bonusRate: band.rateAdjustment
-              };
-            }
-            breakdown[key].count++;
-            breakdown[key].totalCommission += commission.commissionAmount;
-          }
-        });
-      }
-    });
-
-    return Object.entries(breakdown).map(([threshold, data]) => ({
-      threshold,
-      ...data
-    }));
-  };
-
-  const bandingBreakdown = getBandingBreakdown();
-
   const handleExportCSV = () => {
     if (!canExportCSV(user?.role || '')) {
       toast({
@@ -110,12 +70,13 @@ const Reports = () => {
       return;
     }
     
-    const csvHeaders = ['Policy Number', 'Product', 'APE', 'Commission', 'Status', 'Date'];
+    const csvHeaders = ['Policy Number', 'Product', 'Advisor', 'APE', 'Commission', 'Status', 'Date'];
     const csvData = filteredCommissions.map(c => {
       const product = productsData.find(p => p.id === c.productId);
       return [
         c.policyNumber,
         product?.name || c.productId,
+        `Advisor ${c.advisorId}`,
         c.ape,
         c.commissionAmount,
         c.status,
@@ -132,7 +93,7 @@ const Reports = () => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `commissions-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `admin-commissions-report-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -150,7 +111,7 @@ const Reports = () => {
         <div>
           <h1 className="text-3xl font-bold">Commission Reports</h1>
           <p className="text-muted-foreground">
-            {user?.role === 'referral' ? 'View commission reports (read-only)' : 'Detailed commission tracking and analysis'}
+            Administrative commission tracking and analysis
           </p>
         </div>
         {canExportCSV(user?.role || '') && (
@@ -175,7 +136,6 @@ const Reports = () => {
             totalCommissions={totalCommissions}
             totalAPE={totalAPE}
             averageCommission={averageCommission}
-            bandingBreakdown={bandingBreakdown}
             user={user}
           />
         </TabsContent>
@@ -195,7 +155,6 @@ const StandardReports = ({
   totalCommissions, 
   totalAPE, 
   averageCommission, 
-  bandingBreakdown, 
   user 
 }: any) => (
   <div className="space-y-6">
@@ -206,10 +165,10 @@ const StandardReports = ({
           <Filter className="h-5 w-5" />
           Filters
         </CardTitle>
-        <CardDescription>Filter reports by period, product, and role</CardDescription>
+        <CardDescription>Filter reports by period, product, and advisor</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <Label>Period</Label>
             <Select
@@ -248,43 +207,42 @@ const StandardReports = ({
             </Select>
           </div>
           
-          {user?.role === 'manager' && (
-            <>
-              <div>
-                <Label>Role Filter</Label>
-                <Select
-                  value={filters.role}
-                  onValueChange={(value) => setFilters((prev: any) => ({ ...prev, role: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="advisor">Advisors</SelectItem>
-                    <SelectItem value="introducer">Introducers</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Advisor Filter</Label>
-                <Select
-                  value={filters.advisor || 'all'}
-                  onValueChange={(value) => setFilters((prev: any) => ({ ...prev, advisor: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Advisors</SelectItem>
-                    <SelectItem value="1">John Smith</SelectItem>
-                    <SelectItem value="2">Sarah Johnson</SelectItem>
-                    <SelectItem value="3">Mike Davis</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </>
-          )}
+          <div>
+            <Label>Advisor</Label>
+            <Select
+              value={filters.advisor}
+              onValueChange={(value) => setFilters((prev: any) => ({ ...prev, advisor: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Advisors</SelectItem>
+                <SelectItem value="1">John Smith</SelectItem>
+                <SelectItem value="2">Sarah Johnson</SelectItem>
+                <SelectItem value="3">Mike Davis</SelectItem>
+                <SelectItem value="4">Emma Wilson</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Role</Label>
+            <Select
+              value={filters.role}
+              onValueChange={(value) => setFilters((prev: any) => ({ ...prev, role: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="advisor">Advisors</SelectItem>
+                <SelectItem value="introducer">Introducers</SelectItem>
+                <SelectItem value="manager">Managers</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -338,7 +296,7 @@ const StandardReports = ({
     <Card className="bg-gradient-card border-border/50">
       <CardHeader>
         <CardTitle>Commission Details</CardTitle>
-        <CardDescription>Detailed breakdown of commission payments</CardDescription>
+        <CardDescription>Detailed breakdown of all commission payments</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -347,6 +305,7 @@ const StandardReports = ({
               <TableRow>
                 <TableHead>Policy Number</TableHead>
                 <TableHead>Product</TableHead>
+                <TableHead>Advisor</TableHead>
                 <TableHead>APE</TableHead>
                 <TableHead>Receipts</TableHead>
                 <TableHead>Commission</TableHead>
@@ -363,6 +322,7 @@ const StandardReports = ({
                       {commission.policyNumber}
                     </TableCell>
                     <TableCell>{product?.name || commission.productId}</TableCell>
+                    <TableCell>Advisor {commission.advisorId}</TableCell>
                     <TableCell>£{commission.ape.toLocaleString()}</TableCell>
                     <TableCell>£{commission.actualReceipts.toLocaleString()}</TableCell>
                     <TableCell className="font-medium">
@@ -392,35 +352,7 @@ const StandardReports = ({
         </div>
       </CardContent>
     </Card>
-
-    {/* Banding Breakdown */}
-    {bandingBreakdown.length > 0 && (
-      <Card className="bg-gradient-card border-border/50">
-        <CardHeader>
-          <CardTitle>Performance Banding Breakdown</CardTitle>
-          <CardDescription>Commission bonuses based on performance thresholds</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {bandingBreakdown.map((band, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                <div>
-                  <p className="font-medium">{band.threshold}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {band.count} policies • +{(band.bonusRate * 100).toFixed(1)}% bonus rate
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">£{band.totalCommission.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">Total commission</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )}
   </div>
 );
 
-export default Reports;
+export default AdminReports;

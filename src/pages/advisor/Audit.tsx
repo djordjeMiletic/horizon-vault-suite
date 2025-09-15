@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Shield, Search, Filter, ChevronLeft, ChevronRight, Calendar, User, FileText, Eye } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/lib/auth';
+import { normalizeAction } from '@/lib/commission';
 
 // Import audit data
 import auditData from '@/mocks/seed/audit.json';
@@ -204,7 +205,7 @@ const Audit = () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant={getActionBadgeVariant(entry.action)}>
-                          {entry.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          {normalizeAction(entry.action)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -244,7 +245,7 @@ const Audit = () => {
                               <div>
                                 <h4 className="font-medium mb-2">Action</h4>
                                 <Badge variant={getActionBadgeVariant(entry.action)}>
-                                  {entry.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  {normalizeAction(entry.action)}
                                 </Badge>
                               </div>
 
