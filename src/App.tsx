@@ -79,165 +79,165 @@ const App = () => (
           <Route element={<AppLayout />}>
             {/* Advisor routes */}
             <Route path="/advisor/dashboard" element={
-              <ProtectedRoute allowedRoles={['advisor', 'manager']}>
+              <ProtectedRoute allowedRoles={['Advisor', 'Manager']}>
                 <AdvisorDashboard />
               </ProtectedRoute>
             } />
             <Route path="/advisor/reports" element={
-              <ProtectedRoute allowedRoles={['advisor', 'manager', 'referral']}>
+              <ProtectedRoute allowedRoles={['Advisor', 'Manager', 'ReferralPartner']}>
                 <AdvisorReports />
               </ProtectedRoute>
             } />
             <Route path="/advisor/analytics" element={
-              <ProtectedRoute allowedRoles={['advisor', 'manager']}>
+              <ProtectedRoute allowedRoles={['Advisor', 'Manager']}>
                 <AdvisorAnalytics />
               </ProtectedRoute>
             } />
             <Route path="/advisor/audit" element={
-              <ProtectedRoute allowedRoles={['advisor', 'manager']}>
+              <ProtectedRoute allowedRoles={['Advisor', 'Manager']}>
                 <AdvisorAudit />
               </ProtectedRoute>
             } />
             <Route path="/advisor/goals" element={
-              <ProtectedRoute allowedRoles={['advisor', 'manager']}>
+              <ProtectedRoute allowedRoles={['Advisor', 'Manager']}>
                 <AdvisorGoals />
               </ProtectedRoute>
             } />
 
             {/* Client routes */}
             <Route path="/client/cases" element={
-              <ProtectedRoute allowedRoles={['client']}>
+              <ProtectedRoute allowedRoles={['Client']}>
                 <ClientCases />
               </ProtectedRoute>
             } />
             <Route path="/client/documents" element={
-              <ProtectedRoute allowedRoles={['client']}>
+              <ProtectedRoute allowedRoles={['Client']}>
                 <ClientDocuments />
               </ProtectedRoute>
             } />
             <Route path="/client/messages" element={
-              <ProtectedRoute allowedRoles={['client']}>
+              <ProtectedRoute allowedRoles={['Client']}>
                 <ClientMessages />
               </ProtectedRoute>
             } />
             <Route path="/client/notifications" element={
-              <ProtectedRoute allowedRoles={['client']}>
+              <ProtectedRoute allowedRoles={['Client']}>
                 <ClientNotifications />
               </ProtectedRoute>
             } />
             <Route path="/client/appointments" element={
-              <ProtectedRoute allowedRoles={['client']}>
+              <ProtectedRoute allowedRoles={['Client']}>
                 <ClientAppointments />
               </ProtectedRoute>
             } />
             <Route path="/client/tickets" element={
-              <ProtectedRoute allowedRoles={['client']}>
+              <ProtectedRoute allowedRoles={['Client']}>
                 <ClientTickets />
               </ProtectedRoute>
             } />
             <Route path="/client/profile" element={
-              <ProtectedRoute allowedRoles={['client']}>
+              <ProtectedRoute allowedRoles={['Client']}>
                 <ClientProfile />
               </ProtectedRoute>
             } />
             <Route path="/client/compliance" element={
-              <ProtectedRoute allowedRoles={['client']}>
+              <ProtectedRoute allowedRoles={['Client']}>
                 <ClientCompliance />
               </ProtectedRoute>
             } />
 
             {/* Admin routes */}
             <Route path="/admin/compliance" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminCompliance />
               </ProtectedRoute>
             } />
             <Route path="/admin/payments" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminPayments />
               </ProtectedRoute>
             } />
             <Route path="/admin/leads" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminLeads />
               </ProtectedRoute>
             } />
             <Route path="/admin/referrals" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminReferrals />
               </ProtectedRoute>
             } />
             <Route path="/admin/pipeline" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminPipeline />
               </ProtectedRoute>
             } />
             <Route path="/admin/tickets" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminTickets />
               </ProtectedRoute>
             } />
             <Route path="/admin/audit" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminAudit />
               </ProtectedRoute>
             } />
             <Route path="/admin/notifications" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminNotifications />
               </ProtectedRoute>
             } />
             <Route path="/admin/products" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminProducts />
               </ProtectedRoute>
             } />
             <Route path="/admin/reports" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <AdminReports />
               </ProtectedRoute>
             } />
 
             {/* HR routes - accessible by managers through advisor portal */}
             <Route path="/advisor/recruitment" element={
-              <ProtectedRoute allowedRoles={['manager']}>
+              <ProtectedRoute allowedRoles={['Manager']}>
                 <HRJobs />
               </ProtectedRoute>
             } />
             <Route path="/advisor/applicants" element={
-              <ProtectedRoute allowedRoles={['manager']}>
+              <ProtectedRoute allowedRoles={['Manager']}>
                 <HRApplications />
               </ProtectedRoute>
             } />
             <Route path="/advisor/interviews" element={
-              <ProtectedRoute allowedRoles={['manager']}>
+              <ProtectedRoute allowedRoles={['Manager']}>
                 <HRInterviews />
               </ProtectedRoute>
             } />
             <Route path="/advisor/onboarding" element={
-              <ProtectedRoute allowedRoles={['manager']}>
+              <ProtectedRoute allowedRoles={['Manager']}>
                 <HROnboarding />
               </ProtectedRoute>
             } />
 
             {/* Legacy HR routes - kept for backwards compatibility */}
             <Route path="/hr/jobs" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <HRJobs />
               </ProtectedRoute>
             } />
             <Route path="/hr/applications" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <HRApplications />
               </ProtectedRoute>
             } />
             <Route path="/hr/interviews" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <HRInterviews />
               </ProtectedRoute>
             } />
             <Route path="/hr/onboarding" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['Administrator']}>
                 <HROnboarding />
               </ProtectedRoute>
             } />

@@ -1,14 +1,14 @@
 import { Outlet, useLocation, Navigate } from 'react-router-dom';
-import { useAuth } from '@/lib/auth';
+import { useSession } from '@/state/SessionContext';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 export const AppLayout = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useSession();
   const location = useLocation();
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -18,29 +18,29 @@ export const AppLayout = () => {
   const isHRRoute = location.pathname.startsWith('/hr');
 
   // Role-based access control
-  if (isAdvisorRoute && !['advisor', 'manager', 'referral'].includes(user?.role || '')) {
+  if (isAdvisorRoute && !['Advisor', 'Manager', 'ReferralPartner'].includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
   
-  if (isClientRoute && user?.role !== 'client') {
+  if (isClientRoute && user.role !== 'Client') {
     return <Navigate to="/unauthorized" replace />;
   }
   
-  if (isAdminRoute && !['admin'].includes(user?.role || '')) {
+  if (isAdminRoute && user.role !== 'Administrator') {
     return <Navigate to="/unauthorized" replace />;
   }
   
-  if (isHRRoute && !['admin', 'manager'].includes(user?.role || '')) {
+  if (isHRRoute && !['Administrator', 'Manager'].includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen>
       <div className="min-h-screen flex w-full bg-background">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Topbar />
-          <main className="flex-1 p-2 sm:p-4 lg:p-6 overflow-x-hidden">
+          <main className="flex-1 p-2 sm:p-4 lg:p-6 overflow-x-hidden animate-fade-in">
             <div className="w-full overflow-hidden">
               <Outlet />
             </div>

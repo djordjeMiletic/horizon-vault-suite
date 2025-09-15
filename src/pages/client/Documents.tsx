@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   ResponsiveTableDesktop,
@@ -18,105 +18,165 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useClientDocumentStore, useCaseStore } from '@/lib/stores';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Download, FileText, Search, Pen } from 'lucide-react';
 import { format } from 'date-fns';
 import SignatureModal from '@/components/SignatureModal';
+import { useSession } from '@/state/SessionContext';
+import { uploadDocument, listDocuments, createSignatureRequest, completeSignatureRequest } from '@/services/documents';
+import type { DocumentDto, Paginated, SignatureRequestDto } from '@/types/api';
 
 const Documents = () => {
-  const { documents, addDocument, updateDocument } = useClientDocumentStore();
-  const { cases, updateCase } = useCaseStore();
+  const { user } = useSession();
+  const [documents, setDocuments] = useState<Paginated<DocumentDto>>({
+    items: [],
+    page: 1,
+    pageSize: 10,
+    totalCount: 0
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({ name: '', caseId: '', type: 'Identity' });
-  const [signatureModal, setSignatureModal] = useState<{ open: boolean; document: any }>({ open: false, document: null });
+  const [signatureModal, setSignatureModal] = useState<{ open: boolean; document: DocumentDto | null }>({ open: false, document: null });
   const { toast } = useToast();
 
-  const filteredDocuments = documents.filter(doc => 
-    doc.name.toLowerCase().includes(filter.toLowerCase()) ||
-    doc.caseId.toLowerCase().includes(filter.toLowerCase())
+  // Load documents
+  useEffect(() => {
+    const loadDocuments = async () => {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        const data = await listDocuments({ ownerEmail: user.email, page: 1, pageSize: 50 });
+        setDocuments(data);
+      } catch (error) {
+        console.error('Failed to load documents:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load documents',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDocuments();
+  }, [user, toast]);
+
+  const filteredDocuments = documents.items.filter(doc => 
+    doc.fileName.toLowerCase().includes(filter.toLowerCase()) ||
+    (doc.caseId && doc.caseId.toLowerCase().includes(filter.toLowerCase()))
   );
 
-  const handleUpload = () => {
-    if (!uploadForm.name || !uploadForm.caseId) return;
+  const handleUpload = async (file: File) => {
+    if (!uploadForm.name || !user) return;
     
     setIsUploading(true);
     
-    setTimeout(() => {
-      const newDoc = {
-        caseId: uploadForm.caseId,
-        name: uploadForm.name,
-        version: 1,
-        uploadedBy: 'Jennifer Lee',
-        uploadedById: '5',
-        sizeKb: Math.floor(Math.random() * 1000) + 100,
-        type: uploadForm.type as 'Identity' | 'Medical' | 'Financial' | 'Travel',
-        status: 'Pending' as const
-      };
+    try {
+      const uploadedDoc = await uploadDocument(file, {
+        ownerEmail: user.email,
+        caseId: uploadForm.caseId || undefined,
+        tags: uploadForm.type
+      });
+
+      // Reload documents
+      const data = await listDocuments({ ownerEmail: user.email, page: 1, pageSize: 50 });
+      setDocuments(data);
       
-      addDocument(newDoc);
-      setIsUploading(false);
       setUploadForm({ name: '', caseId: '', type: 'Identity' });
       
       toast({
         title: "Document uploaded",
-        description: "Your document has been uploaded and is being processed.",
+        description: "Your document has been uploaded successfully.",
       });
-    }, 1500);
-  };
-
-  const requiresSignature = (doc: any) => {
-    return ['Medical', 'Financial'].includes(doc.type) && doc.status === 'Processed' && !doc.signedAt;
-  };
-
-  const handleSignDocument = () => {
-    if (!signatureModal.document) return;
-
-    const updatedDoc = {
-      ...signatureModal.document,
-      signedAt: new Date().toISOString(),
-      signedBy: 'client@client.com',
-      status: 'Signed' as const
-    };
-
-    // Update document in store
-    updateDocument(updatedDoc);
-    
-    // Add to case timeline if case exists
-    const relatedCase = cases.find(c => c.id === signatureModal.document.caseId);
-    if (relatedCase) {
-      const updatedCase = {
-        ...relatedCase,
-        timeline: [
-          ...relatedCase.timeline,
-          {
-            id: `timeline-${Date.now()}`,
-            at: new Date().toISOString(),
-            by: 'Jennifer Lee',
-            event: 'Document Signed',
-            details: `${signatureModal.document.name} digitally signed by client`
-          }
-        ]
-      };
-      updateCase(updatedCase);
-    }
-
-    setSignatureModal({ open: false, document: null });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Processed': return 'default';
-      case 'Signed': return 'default';
-      case 'Pending': return 'secondary';
-      case 'Superseded': return 'outline';
-      default: return 'secondary';
+    } catch (error) {
+      console.error('Failed to upload document:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload document. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  if (!documents.length) {
+  const requiresSignature = (doc: DocumentDto) => {
+    return !doc.signedAt && doc.tags && ['Medical', 'Financial'].includes(doc.tags);
+  };
+
+  const handleSignDocument = async () => {
+    if (!signatureModal.document || !user) return;
+
+    try {
+      // Create signature request
+      const signatureRequest = await createSignatureRequest(signatureModal.document.id, user.email);
+      
+      // Complete signature (in real app, this would be after user signs)
+      await completeSignatureRequest(signatureRequest.id, 'Signed');
+      
+      // Reload documents to show updated status
+      const data = await listDocuments({ ownerEmail: user.email, page: 1, pageSize: 50 });
+      setDocuments(data);
+
+      toast({
+        title: "Document signed",
+        description: "Document has been digitally signed successfully.",
+      });
+
+      setSignatureModal({ open: false, document: null });
+    } catch (error) {
+      console.error('Failed to sign document:', error);
+      toast({
+        title: "Signing failed",
+        description: "Failed to sign document. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDownload = (doc: DocumentDto) => {
+    // In a real app, this would use the downloadUrl
+    window.open(doc.downloadUrl, '_blank');
+  };
+
+  const getStatusColor = (doc: DocumentDto) => {
+    if (doc.signedAt) return 'default';
+    if (requiresSignature(doc)) return 'secondary';
+    return 'outline';
+  };
+
+  const getStatusText = (doc: DocumentDto) => {
+    if (doc.signedAt) return 'Signed';
+    if (requiresSignature(doc)) return 'Requires Signature';
+    return 'Uploaded';
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 p-3 sm:p-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">My Documents</h1>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-muted-foreground">Loading documents...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (documents.items.length === 0 && !isLoading) {
     return (
       <div className="space-y-6 p-3 sm:p-6">
         <div className="flex justify-between items-center">
@@ -152,7 +212,7 @@ const Documents = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="caseId">Case ID</Label>
+                    <Label htmlFor="caseId">Case ID (Optional)</Label>
                     <Input
                       id="caseId"
                       value={uploadForm.caseId}
@@ -174,9 +234,25 @@ const Documents = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button onClick={handleUpload} disabled={isUploading} className="w-full">
-                    {isUploading ? 'Uploading...' : 'Upload'}
-                  </Button>
+                  <div>
+                    <Label htmlFor="file">File</Label>
+                    <Input
+                      id="file"
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleUpload(file);
+                        }
+                      }}
+                      disabled={isUploading}
+                    />
+                  </div>
+                  {isUploading && (
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Uploading...</p>
+                    </div>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
@@ -187,12 +263,12 @@ const Documents = () => {
   }
 
   return (
-    <div className="space-y-6 p-3 sm:p-6">
+    <div className="space-y-6 p-3 sm:p-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">My Documents</h1>
         <Dialog>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="hover-scale">
               <Upload className="mr-2 h-4 w-4" />
               Upload Document
             </Button>
@@ -212,7 +288,7 @@ const Documents = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="caseId">Case ID</Label>
+                <Label htmlFor="caseId">Case ID (Optional)</Label>
                 <Input
                   id="caseId"
                   value={uploadForm.caseId}
@@ -234,9 +310,25 @@ const Documents = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleUpload} disabled={isUploading} className="w-full">
-                {isUploading ? 'Uploading...' : 'Upload'}
-              </Button>
+              <div>
+                <Label htmlFor="file">File</Label>
+                <Input
+                  id="file"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleUpload(file);
+                    }
+                  }}
+                  disabled={isUploading}
+                />
+              </div>
+              {isUploading && (
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Uploading...</p>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -244,7 +336,7 @@ const Documents = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Documents</CardTitle>
+          <CardTitle>Documents ({documents.totalCount})</CardTitle>
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
@@ -264,7 +356,6 @@ const Documents = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Case</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Version</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Uploaded</TableHead>
                   <TableHead>Size</TableHead>
@@ -274,24 +365,24 @@ const Documents = () => {
               </TableHeader>
               <TableBody>
                 {filteredDocuments.map((doc) => (
-                  <TableRow key={doc.id}>
-                    <TableCell className="font-medium">{doc.name}</TableCell>
-                    <TableCell>{doc.caseId}</TableCell>
-                    <TableCell>{doc.type}</TableCell>
-                    <TableCell>v{doc.version}</TableCell>
+                  <TableRow key={doc.id} className="animate-fade-in">
+                    <TableCell className="font-medium">{doc.originalName}</TableCell>
+                    <TableCell>{doc.caseId || 'N/A'}</TableCell>
+                    <TableCell>{doc.tags || 'General'}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusColor(doc.status)}>
-                        {doc.status}
+                      <Badge variant={getStatusColor(doc)}>
+                        {getStatusText(doc)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{format(new Date(doc.uploadedAt), 'MMM d, yyyy')}</TableCell>
-                    <TableCell>{doc.sizeKb} KB</TableCell>
+                    <TableCell>{format(new Date(doc.createdAt), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>{formatFileSize(doc.sizeBytes)}</TableCell>
                     <TableCell>
                       {requiresSignature(doc) ? (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setSignatureModal({ open: true, document: doc })}
+                          className="hover-scale"
                         >
                           <Pen className="h-4 w-4 mr-1" />
                           Sign
@@ -303,7 +394,12 @@ const Documents = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDownload(doc)}
+                        className="hover-scale"
+                      >
                         <Download className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -315,30 +411,27 @@ const Documents = () => {
 
           {/* Mobile Cards */}
           <ResponsiveTableMobile>
-            {filteredDocuments.map((doc) => (
-              <ResponsiveTableCard key={doc.id}>
+            {filteredDocuments.map((doc, index) => (
+              <ResponsiveTableCard key={doc.id} className="animate-fade-in">
                 <ResponsiveTableField label="Name">
-                  <span className="font-medium">{doc.name}</span>
+                  <span className="font-medium">{doc.originalName}</span>
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Case">
-                  {doc.caseId}
+                  {doc.caseId || 'N/A'}
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Type">
-                  {doc.type}
-                </ResponsiveTableField>
-                <ResponsiveTableField label="Version">
-                  v{doc.version}
+                  {doc.tags || 'General'}
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Status">
-                  <Badge variant={getStatusColor(doc.status)}>
-                    {doc.status}
+                  <Badge variant={getStatusColor(doc)}>
+                    {getStatusText(doc)}
                   </Badge>
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Uploaded">
-                  {format(new Date(doc.uploadedAt), 'MMM d, yyyy')}
+                  {format(new Date(doc.createdAt), 'MMM d, yyyy')}
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Size">
-                  {doc.sizeKb} KB
+                  {formatFileSize(doc.sizeBytes)}
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Sign">
                   {requiresSignature(doc) ? (
@@ -346,6 +439,7 @@ const Documents = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => setSignatureModal({ open: true, document: doc })}
+                      className="hover-scale"
                     >
                       <Pen className="h-4 w-4 mr-1" />
                       Sign
@@ -357,7 +451,12 @@ const Documents = () => {
                   )}
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Actions">
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleDownload(doc)}
+                    className="hover-scale"
+                  >
                     <Download className="h-4 w-4" />
                   </Button>
                 </ResponsiveTableField>
@@ -370,7 +469,7 @@ const Documents = () => {
       <SignatureModal
         open={signatureModal.open}
         onOpenChange={(open) => setSignatureModal({ open, document: signatureModal.document })}
-        documentName={signatureModal.document?.name || ''}
+        documentName={signatureModal.document?.originalName || ''}
         onSign={handleSignDocument}
       />
     </div>
