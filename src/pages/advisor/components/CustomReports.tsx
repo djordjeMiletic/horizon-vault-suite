@@ -143,7 +143,7 @@ const CustomReports = () => {
   };
 
   const handleExportCSV = () => {
-    if (!canExportCSV(user)) {
+    if (!canExportCSV(user?.role || '')) {
       toast({
         title: "Access Denied",
         description: "You don't have permission to export data",
