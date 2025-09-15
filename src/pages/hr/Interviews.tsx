@@ -318,7 +318,14 @@ const InterviewCreateDialog = ({
           </SelectTrigger>
           <SelectContent>
             {applicants
-              .filter(a => ['Screening', 'Interview'].includes(a.status) && a.id && a.id.trim() !== '')
+              .filter(a => 
+                ['Screening', 'Interview'].includes(a.status) && 
+                a.id && 
+                typeof a.id === 'string' && 
+                a.id.trim() !== '' &&
+                a.name &&
+                a.jobTitle
+              )
               .map(candidate => (
               <SelectItem key={candidate.id} value={candidate.id}>
                 {candidate.name} - {candidate.jobTitle}
@@ -532,7 +539,10 @@ const InterviewDetailsSheet = ({ interview, onStatusUpdate }) => {
           <div>
             <Label className="text-sm font-medium text-muted-foreground">Update Status</Label>
             <div className="mt-1 space-y-3">
-              <Select value={interview.status} onValueChange={handleStatusChange}>
+              <Select 
+                value={interview.status && interview.status.trim() !== '' ? interview.status : 'Scheduled'} 
+                onValueChange={handleStatusChange}
+              >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue />
                 </SelectTrigger>
