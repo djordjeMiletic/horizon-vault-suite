@@ -13,7 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { canExportCSV } from '@/lib/commission';
 import CustomReports from './components/CustomReports';
 
-import commissionsData from '@/mocks/seed/commissions.json';
+import paymentsData from '@/mocks/seed/payments.json';
 import productsData from '@/mocks/seed/products.json';
 
 const Reports = () => {
@@ -26,43 +26,73 @@ const Reports = () => {
     advisor: 'all'
   });
 
-  // Filter commissions based on current user and filters
-  const getFilteredCommissions = () => {
-    let filtered = commissionsData;
+  // Get unique advisors for filtering
+  const getAdvisors = () => {
+    const advisorEmails = [...new Set(paymentsData.map(p => p.advisorEmail))];
+    return advisorEmails.map(email => ({
+      email,
+      name: email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    }));
+  };
+
+  const advisors = getAdvisors();
+
+  // Calculate commission from payment data
+  const calculateCommission = (payment: any) => {
+    // Simple commission calculation - 3% of APE
+    return payment.ape * 0.03;
+  };
+
+  // Filter payments based on current user and filters
+  const getFilteredPayments = () => {
+    let filtered = paymentsData;
 
     // Role-based filtering
     if (user?.role === 'referral') {
-      // Referral partners see all commissions (read-only)
-      // In a real app, this would be restricted to their referrals only
-    } else {
-      // Advisors and managers see their own commissions
-      filtered = filtered.filter(c => c.advisorId === user?.id);
+      // Referral partners see all payments (read-only)
+    } else if (user?.role === 'advisor') {
+      // Advisors see their own payments by default
+      filtered = filtered.filter(p => p.advisorEmail === user?.email);
+    }
+    // Managers see all payments by default
+
+    // Apply advisor filter
+    if (filters.advisor !== 'all') {
+      filtered = filtered.filter(p => p.advisorEmail === filters.advisor);
     }
 
-    // Apply additional filters
+    // Apply product filter
     if (filters.product !== 'all') {
-      filtered = filtered.filter(c => c.productId === filters.product);
+      filtered = filtered.filter(p => p.productId === filters.product);
     }
 
-    if (filters.advisor !== 'all' && user?.role === 'manager') {
-      filtered = filtered.filter(c => c.advisorId === filters.advisor);
-    }
-
-    // Period filtering (simplified for demo)
+    // Period filtering
     if (filters.period === 'current-month') {
       const currentMonth = new Date().toISOString().slice(0, 7);
-      filtered = filtered.filter(c => c.month === currentMonth);
+      filtered = filtered.filter(p => p.date.slice(0, 7) === currentMonth);
     } else if (filters.period === 'last-month') {
       const lastMonth = new Date();
       lastMonth.setMonth(lastMonth.getMonth() - 1);
       const lastMonthStr = lastMonth.toISOString().slice(0, 7);
-      filtered = filtered.filter(c => c.month === lastMonthStr);
+      filtered = filtered.filter(p => p.date.slice(0, 7) === lastMonthStr);
+    } else if (filters.period === 'ytd') {
+      const currentYear = new Date().getFullYear().toString();
+      filtered = filtered.filter(p => p.date.startsWith(currentYear));
     }
 
     return filtered;
   };
 
-  const filteredCommissions = getFilteredCommissions();
+  const filteredPayments = getFilteredPayments();
+  
+  // Transform payments to commissions format for display
+  const filteredCommissions = filteredPayments.map(payment => ({
+    ...payment,
+    commissionAmount: calculateCommission(payment),
+    policyNumber: `${payment.productId.toUpperCase()}-${payment.id}`,
+    paymentDate: payment.date,
+    actualReceipts: payment.receipts
+  }));
 
   // Calculate totals
   const totalCommissions = filteredCommissions.reduce((sum, c) => sum + c.commissionAmount, 0);
@@ -176,6 +206,7 @@ const Reports = () => {
             totalAPE={totalAPE}
             averageCommission={averageCommission}
             bandingBreakdown={bandingBreakdown}
+            advisors={advisors}
             user={user}
           />
         </TabsContent>
@@ -196,6 +227,7 @@ const StandardReports = ({
   totalAPE, 
   averageCommission, 
   bandingBreakdown, 
+  advisors,
   user 
 }: any) => (
   <div className="space-y-6">
@@ -209,7 +241,7 @@ const StandardReports = ({
         <CardDescription>Filter reports by period, product, and role</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <Label>Period</Label>
             <Select
@@ -247,6 +279,29 @@ const StandardReports = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Advisor Filter - shown for managers and advisors, but not referral partners */}
+          {(user?.role === 'manager' || user?.role === 'advisor') && (
+            <div>
+              <Label>Advisor</Label>
+              <Select
+                value={filters.advisor || 'all'}
+                onValueChange={(value) => setFilters((prev: any) => ({ ...prev, advisor: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Advisors</SelectItem>
+                  {advisors.map(advisor => (
+                    <SelectItem key={advisor.email} value={advisor.email}>
+                      {advisor.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           
           {user?.role === 'manager' && (
             <>
@@ -263,23 +318,6 @@ const StandardReports = ({
                     <SelectItem value="all">All Roles</SelectItem>
                     <SelectItem value="advisor">Advisors</SelectItem>
                     <SelectItem value="introducer">Introducers</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Advisor Filter</Label>
-                <Select
-                  value={filters.advisor || 'all'}
-                  onValueChange={(value) => setFilters((prev: any) => ({ ...prev, advisor: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Advisors</SelectItem>
-                    <SelectItem value="1">John Smith</SelectItem>
-                    <SelectItem value="2">Sarah Johnson</SelectItem>
-                    <SelectItem value="3">Mike Davis</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -13,9 +13,39 @@ import paymentsData from '@/mocks/seed/payments.json';
 const Analytics = () => {
   const { user } = useAuth();
   const [dateRange, setDateRange] = useState('last6Months');
+  const [selectedAdvisor, setSelectedAdvisor] = useState('all');
 
-  // Get user payments and calculate with rolling data
-  const userPayments = paymentsData.filter(p => p.advisorEmail === user?.email);
+  // Get unique advisors for filtering
+  const getAdvisors = () => {
+    const advisorEmails = [...new Set(paymentsData.map(p => p.advisorEmail))];
+    return advisorEmails.map(email => ({
+      email,
+      name: email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    }));
+  };
+
+  const advisors = getAdvisors();
+
+  // Filter payments based on user role and selected advisor
+  const getFilteredPayments = () => {
+    let filtered = paymentsData;
+
+    // Role-based filtering
+    if (user?.role === 'advisor') {
+      // Advisors see their own data by default
+      filtered = filtered.filter(p => p.advisorEmail === user?.email);
+    }
+    // Managers see all advisors by default
+
+    // Apply advisor filter
+    if (selectedAdvisor !== 'all') {
+      filtered = filtered.filter(p => p.advisorEmail === selectedAdvisor);
+    }
+
+    return filtered;
+  };
+
+  const userPayments = getFilteredPayments();
 
   // Get date range based on selection  
   const { from, to } = getDateRange(dateRange as any);
@@ -94,17 +124,34 @@ const Analytics = () => {
           <h1 className="text-3xl font-bold">Analytics</h1>
           <p className="text-muted-foreground">Performance insights and trends</p>
         </div>
-        <Select value={dateRange} onValueChange={setDateRange}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="thisMonth">This Month</SelectItem>
-            <SelectItem value="last3Months">Last 3 Months</SelectItem>
-            <SelectItem value="last6Months">Last 6 Months</SelectItem>
-            <SelectItem value="ytd">YTD</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-4">
+          {(user?.role === 'manager' || user?.role === 'advisor') && (
+            <Select value={selectedAdvisor} onValueChange={setSelectedAdvisor}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select advisor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Advisors</SelectItem>
+                {advisors.map(advisor => (
+                  <SelectItem key={advisor.email} value={advisor.email}>
+                    {advisor.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="thisMonth">This Month</SelectItem>
+              <SelectItem value="last3Months">Last 3 Months</SelectItem>
+              <SelectItem value="last6Months">Last 6 Months</SelectItem>
+              <SelectItem value="ytd">YTD</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -117,6 +164,9 @@ const Analytics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">£{totalCommissions.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">
+              {selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name}
+            </p>
           </CardContent>
         </Card>
 
@@ -139,6 +189,9 @@ const Analytics = () => {
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
               Monthly Commissions
+              <span className="text-xs text-muted-foreground ml-auto">
+                {selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -191,6 +244,9 @@ const Analytics = () => {
             <CardTitle className="flex items-center gap-2">
               <PieChartIcon className="h-5 w-5" />
               Product Mix
+              <span className="text-xs text-muted-foreground ml-auto">
+                {selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
