@@ -105,6 +105,27 @@ const App = () => (
               </ProtectedRoute>
             } />
 
+            {/* Manager dashboard - uses advisor dashboard */}
+            <Route path="/manager/dashboard" element={
+              <ProtectedRoute allowedRoles={['Manager']}>
+                <AdvisorDashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin dashboard - redirect to compliance */}
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute allowedRoles={['Administrator']}>
+                <AdminCompliance />
+              </ProtectedRoute>
+            } />
+
+            {/* Referral dashboard - uses advisor reports */}
+            <Route path="/referral/dashboard" element={
+              <ProtectedRoute allowedRoles={['ReferralPartner']}>
+                <AdvisorReports />
+              </ProtectedRoute>
+            } />
+
             {/* Client routes */}
             <Route path="/client/dashboard" element={
               <ProtectedRoute allowedRoles={['Client']}>
