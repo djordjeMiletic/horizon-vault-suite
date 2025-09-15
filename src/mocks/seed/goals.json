@@ -1,90 +1,39 @@
-[
-  {
-    "id": "goal-2025-04",
-    "advisorId": "1",
-    "month": "2025-04",
-    "target": 50000,
-    "achieved": 42300,
-    "progress": 0.846,
-    "type": "Monthly APE",
-    "milestones": [
-      {
-        "id": "milestone-001",
-        "note": "Q2 Target Review",
-        "date": "2025-04-15",
-        "completed": true
-      }
-    ]
-  },
-  {
-    "id": "goal-2025-05",
-    "advisorId": "1",
-    "month": "2025-05",
-    "target": 50000,
-    "achieved": 51200,
-    "progress": 1.024,
-    "type": "Monthly APE",
-    "milestones": []
-  },
-  {
-    "id": "goal-2025-06",
-    "advisorId": "1",
-    "month": "2025-06",
-    "target": 52000,
-    "achieved": 48900,
-    "progress": 0.940,
-    "type": "Monthly APE",
-    "milestones": [
-      {
-        "id": "milestone-002",
-        "note": "Mid-year Performance Review",
-        "date": "2025-06-30",
-        "completed": true
-      }
-    ]
-  },
-  {
-    "id": "goal-2025-07",
-    "advisorId": "1",
-    "month": "2025-07",
-    "target": 52000,
-    "achieved": 53800,
-    "progress": 1.035,
-    "type": "Monthly APE",
-    "milestones": []
-  },
-  {
-    "id": "goal-2025-08",
-    "advisorId": "1",
-    "month": "2025-08",
-    "target": 55000,
-    "achieved": 49750,
-    "progress": 0.904,
-    "type": "Monthly APE",
-    "milestones": [
-      {
-        "id": "milestone-003",
-        "note": "Summer Campaign Launch",
-        "date": "2025-08-01",
-        "completed": true
-      }
-    ]
-  },
-  {
-    "id": "goal-2025-09",
-    "advisorId": "1",
-    "month": "2025-09",
-    "target": 55000,
-    "achieved": 52100,
-    "progress": 0.947,
-    "type": "Monthly APE",
-    "milestones": [
-      {
-        "id": "milestone-004",
-        "note": "Q3 Target Assessment",
-        "date": "2025-09-30",
-        "completed": false
-      }
+{
+  "advisors": [
+    {
+      "email": "advisor@advisor.com",
+      "monthlyTarget": 12000,
+      "history": [
+        {"month":"2025-04","achieved":9800},
+        {"month":"2025-05","achieved":11250},
+        {"month":"2025-06","achieved":12400},
+        {"month":"2025-07","achieved":10300},
+        {"month":"2025-08","achieved":11850},
+        {"month":"2025-09","achieved":12750}
+      ]
+    },
+    {
+      "email": "advisor2@advisor.com",
+      "monthlyTarget": 10000,
+      "history": [
+        {"month":"2025-04","achieved":8600},
+        {"month":"2025-05","achieved":9300},
+        {"month":"2025-06","achieved":10100},
+        {"month":"2025-07","achieved":9800},
+        {"month":"2025-08","achieved":10950},
+        {"month":"2025-09","achieved":11300}
+      ]
+    }
+  ],
+  "manager": {
+    "monthlyTarget": 22000,
+    "history": [
+      {"month":"2025-04","achieved":18400},
+      {"month":"2025-05","achieved":20550},
+      {"month":"2025-06","achieved":22500},
+      {"month":"2025-07","achieved":20100},
+      {"month":"2025-08","achieved":22800},
+      {"month":"2025-09","achieved":24050}
     ]
   }
-]
+}

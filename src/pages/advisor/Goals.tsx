@@ -7,8 +7,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Target, Plus, TrendingUp, Calendar } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import { useGoalStore } from '@/lib/stores';
+import { monthsBack, formatMonthForDisplay } from '@/lib/timeSeries';
 
 // Import mock data
 import goalsData from '@/mocks/seed/goals.json';
@@ -24,41 +25,45 @@ const Goals = () => {
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   
-  // Initialize with seed data and merge with store data
-  const seedGoals = goalsData.filter(g => g.advisorId === user?.id);
-  const currentGoal = goals.find(g => g.advisorId === user?.id && g.month === currentMonth) 
-    || seedGoals.find(g => g.month === currentMonth)
-    || {
-        id: `goal-${currentMonth}`,
-        advisorId: user?.id || '',
-        month: currentMonth,
-        target: 50000,
-        achieved: 0,
-        progress: 0,
-        type: 'Monthly APE',
-        milestones: []
-      };
+  // Get advisor data from new structure
+  const advisorGoalsData = goalsData.advisors.find(a => a.email === user?.email);
+  const isManager = user?.role === 'manager';
+  const goalsSource = isManager ? goalsData.manager : advisorGoalsData;
+  
+  // Current goal calculation
+  const currentGoal = goals.find(g => g.advisorId === user?.id && g.month === currentMonth) || {
+    id: `goal-${currentMonth}`,
+    advisorId: user?.id || '',
+    month: currentMonth,
+    target: goalsSource?.monthlyTarget || 50000,
+    achieved: goalsSource?.history?.find(h => h.month === currentMonth)?.achieved || 0,
+    progress: 0,
+    type: 'Monthly APE',
+    milestones: []
+  };
+  
+  // Calculate progress
+  currentGoal.progress = currentGoal.target > 0 ? currentGoal.achieved / currentGoal.target : 0;
 
-  // Get historical data for sparkline (last 6 months)
+  // Get historical data for line chart (last 6 months)
   const getHistoricalData = () => {
-    const months = [];
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-      const monthStr = date.toISOString().slice(0, 7);
+    const last6Months = monthsBack(6);
+    
+    return last6Months.map(monthStr => {
+      const historyItem = goalsSource?.history?.find(h => h.month === monthStr);
+      const target = goalsSource?.monthlyTarget || 0;
+      const achieved = historyItem?.achieved || 0;
       
-      const goal = [...seedGoals, ...goals].find(g => g.month === monthStr);
-      months.push({
-        month: date.toLocaleDateString('en-US', { month: 'short' }),
-        target: goal?.target || 0,
-        achieved: goal?.achieved || 0,
-        progress: goal?.progress || 0
-      });
-    }
-    return months;
+      return {
+        month: formatMonthForDisplay(monthStr),
+        target,
+        achieved,
+        progress: target > 0 ? achieved / target : 0
+      };
+    });
   };
 
-  const sparklineData = getHistoricalData();
+  const lineChartData = getHistoricalData();
 
   const handleUpdateTarget = () => {
     const newTarget = parseFloat(currentTarget);
@@ -171,19 +176,19 @@ const Goals = () => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Performance Sparkline */}
+        {/* Performance Line Chart */}
         <Card className="bg-gradient-card border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
               Target vs Achieved (6 Months)
             </CardTitle>
-            <CardDescription>Monthly performance comparison</CardDescription>
+            <CardDescription>Performance trend analysis</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sparklineData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <LineChart data={lineChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="month" 
@@ -207,19 +212,23 @@ const Goals = () => {
                       borderRadius: '6px'
                     }}
                   />
-                  <Bar 
+                  <Line 
+                    type="monotone" 
                     dataKey="target" 
-                    fill="hsl(var(--primary))" 
+                    stroke="#0A3D62" 
+                    strokeWidth={2}
+                    dot={{ fill: '#0A3D62', strokeWidth: 2, r: 4 }}
                     name="Target"
-                    radius={[2, 2, 0, 0]}
                   />
-                  <Bar 
+                  <Line 
+                    type="monotone" 
                     dataKey="achieved" 
-                    fill="hsl(var(--secondary))" 
+                    stroke="#60A3D9" 
+                    strokeWidth={2}
+                    dot={{ fill: '#60A3D9', strokeWidth: 2, r: 4 }}
                     name="Achieved"
-                    radius={[2, 2, 0, 0]}
                   />
-                </BarChart>
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>

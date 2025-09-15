@@ -178,10 +178,18 @@ const Dashboard = () => {
     .filter(n => n.userId === user?.id)
     .slice(0, 5);
 
-  // Current goals
-  const currentGoal = goalsData.find(g => 
-    g.advisorId === user?.id && g.month === currentMonth
-  );
+  // Current goals - adapt to new structure
+  const advisorGoalsData = goalsData.advisors?.find(a => a.email === user?.email);
+  const currentGoal = advisorGoalsData ? {
+    advisorId: user?.id,
+    month: currentMonth,
+    target: advisorGoalsData.monthlyTarget,
+    achieved: advisorGoalsData.history?.find(h => h.month === currentMonth)?.achieved || 0,
+    progress: advisorGoalsData.monthlyTarget > 0 
+      ? (advisorGoalsData.history?.find(h => h.month === currentMonth)?.achieved || 0) / advisorGoalsData.monthlyTarget 
+      : 0,
+    type: 'Monthly APE'
+  } : null;
 
   const kpiCards = [
     {

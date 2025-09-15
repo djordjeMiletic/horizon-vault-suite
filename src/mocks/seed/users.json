@@ -10,6 +10,16 @@
     "joinDate": "2022-03-15"
   },
   {
+    "id": "6",
+    "email": "advisor2@advisor.com",
+    "role": "advisor",
+    "name": "James Mitchell",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+    "phone": "+44 20 7946 0965",
+    "department": "Financial Advisory",
+    "joinDate": "2022-06-10"
+  },
+  {
     "id": "2", 
     "email": "manager@manager.com",
     "role": "manager",

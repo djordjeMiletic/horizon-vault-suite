@@ -1,0 +1,152 @@
+[
+  {
+    "id": "P-1001",
+    "date": "2024-04-18",
+    "advisorEmail": "advisor@advisor.com",
+    "productId": "royal-protect",
+    "provider": "Royal London",
+    "ape": 9000,
+    "receipts": 17000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1002",
+    "date": "2024-05-09",
+    "advisorEmail": "advisor2@advisor.com",
+    "productId": "metlife-secure",
+    "provider": "MetLife",
+    "ape": 12000,
+    "receipts": 26000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1003",
+    "date": "2024-06-21",
+    "advisorEmail": "advisor@advisor.com",
+    "productId": "guardian-life",
+    "provider": "Guardian",
+    "ape": 7500,
+    "receipts": 13000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1004",
+    "date": "2024-07-04",
+    "advisorEmail": "advisor2@advisor.com",
+    "productId": "royal-protect",
+    "provider": "Royal London",
+    "ape": 8000,
+    "receipts": 19000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1005",
+    "date": "2024-08-16",
+    "advisorEmail": "advisor@advisor.com",
+    "productId": "metlife-secure",
+    "provider": "MetLife",
+    "ape": 10000,
+    "receipts": 20500,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1006",
+    "date": "2024-09-03",
+    "advisorEmail": "advisor2@advisor.com",
+    "productId": "guardian-life",
+    "provider": "Guardian",
+    "ape": 6000,
+    "receipts": 12500,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1007",
+    "date": "2025-01-15",
+    "advisorEmail": "advisor@advisor.com",
+    "productId": "royal-protect",
+    "provider": "Royal London",
+    "ape": 11000,
+    "receipts": 21000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1008",
+    "date": "2025-02-20",
+    "advisorEmail": "advisor2@advisor.com",
+    "productId": "metlife-secure",
+    "provider": "MetLife",
+    "ape": 9500,
+    "receipts": 18500,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1009",
+    "date": "2025-03-10",
+    "advisorEmail": "advisor@advisor.com",
+    "productId": "guardian-life",
+    "provider": "Guardian",
+    "ape": 13000,
+    "receipts": 25000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1010",
+    "date": "2025-04-18",
+    "advisorEmail": "advisor@advisor.com",
+    "productId": "royal-protect",
+    "provider": "Royal London",
+    "ape": 9000,
+    "receipts": 17000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1012",
+    "date": "2025-05-09",
+    "advisorEmail": "advisor2@advisor.com",
+    "productId": "metlife-secure",
+    "provider": "MetLife",
+    "ape": 12000,
+    "receipts": 26000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1037",
+    "date": "2025-06-21",
+    "advisorEmail": "advisor@advisor.com",
+    "productId": "guardian-life",
+    "provider": "Guardian",
+    "ape": 7500,
+    "receipts": 13000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1058",
+    "date": "2025-07-04",
+    "advisorEmail": "advisor2@advisor.com",
+    "productId": "royal-protect",
+    "provider": "Royal London",
+    "ape": 8000,
+    "receipts": 19000,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1089",
+    "date": "2025-08-16",
+    "advisorEmail": "advisor@advisor.com",
+    "productId": "metlife-secure",
+    "provider": "MetLife",
+    "ape": 10000,
+    "receipts": 20500,
+    "status": "Approved"
+  },
+  {
+    "id": "P-1102",
+    "date": "2025-09-03",
+    "advisorEmail": "advisor2@advisor.com",
+    "productId": "guardian-life",
+    "provider": "Guardian",
+    "ape": 6000,
+    "receipts": 12500,
+    "status": "Approved"
+  }
+]

@@ -4,35 +4,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
 import { TrendingUp, PieChart as PieChartIcon, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { rollupMonthly, getDateRange, formatMonthForDisplay } from '@/lib/timeSeries';
 
 import commissionsData from '@/mocks/seed/commissions.json';
 import productsData from '@/mocks/seed/products.json';
+import paymentsData from '@/mocks/seed/payments.json';
 
 const Analytics = () => {
   const { user } = useAuth();
-  const [chartType, setChartType] = useState('monthly');
+  const [chartType, setChartType] = useState('last6Months');
+  const [dateRange, setDateRange] = useState('last6Months');
 
-  // Filter commissions for current user
-  const userCommissions = commissionsData.filter(c => c.advisorId === user?.id);
+  // Get user payments and calculate with rolling data
+  const userPayments = paymentsData.filter(p => p.advisorEmail === user?.email);
 
-  // Monthly commissions data
+  // Get date range based on selection  
+  const { from, to } = getDateRange(dateRange as any);
+
+  // Monthly commissions data using new utility
   const getMonthlyData = () => {
-    const monthlyData: Record<string, number> = {};
-    
-    userCommissions.forEach(commission => {
-      const month = commission.month;
-      if (!monthlyData[month]) {
-        monthlyData[month] = 0;
-      }
-      monthlyData[month] += commission.commissionAmount;
-    });
-
-    return Object.entries(monthlyData)
-      .map(([month, amount]) => ({
-        month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-        amount: Number(amount.toFixed(2))
-      }))
-      .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+    const rollups = rollupMonthly(userPayments, { from, to });
+    return rollups.map(rollup => ({
+      month: formatMonthForDisplay(rollup.month),
+      amount: Number(rollup.totalCommission.toFixed(2))
+    }));
   };
 
   // YTD data calculation
@@ -49,19 +44,27 @@ const Analytics = () => {
     });
   };
 
-  // Product mix data
+  // Product mix data using filtered payments
   const getProductMixData = () => {
     const productData: Record<string, number> = {};
-    const totalAmount = userCommissions.reduce((sum, c) => sum + c.commissionAmount, 0);
+    const filteredPayments = userPayments.filter(payment => {
+      const paymentMonth = payment.date.slice(0, 7);
+      return paymentMonth >= from && paymentMonth <= to;
+    });
     
-    userCommissions.forEach(commission => {
-      const product = productsData.find(p => p.id === commission.productId);
-      const productName = product?.name || commission.productId;
+    const totalAmount = filteredPayments.reduce((sum, p) => {
+      // Simple commission calculation
+      return sum + (p.ape * 0.03); // 3% commission rate
+    }, 0);
+    
+    filteredPayments.forEach(payment => {
+      const product = productsData.find(p => p.id === payment.productId);
+      const productName = product?.name || payment.productId;
       
       if (!productData[productName]) {
         productData[productName] = 0;
       }
-      productData[productName] += commission.commissionAmount;
+      productData[productName] += payment.ape * 0.03; // Commission calculation
     });
 
     return Object.entries(productData).map(([name, value]) => ({
@@ -80,7 +83,7 @@ const Analytics = () => {
   const COLORS = ['#0A3D62', '#60A3D9', '#D4AF37', '#F4F6F8', '#0A3D62CC'];
 
   // Calculate summary statistics
-  const totalCommissions = userCommissions.reduce((sum, c) => sum + c.commissionAmount, 0);
+  const totalCommissions = chartData.reduce((sum, d) => sum + d.amount, 0);
   const averageMonthly = chartData.length > 0 
     ? (chartType === 'monthly' ? chartData.reduce((sum, d) => sum + d.amount, 0) / chartData.length : totalCommissions)
     : 0;
@@ -92,15 +95,28 @@ const Analytics = () => {
           <h1 className="text-3xl font-bold">Analytics</h1>
           <p className="text-muted-foreground">Performance insights and trends</p>
         </div>
-        <Select value={chartType} onValueChange={setChartType}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="monthly">Monthly</SelectItem>
-            <SelectItem value="ytd">YTD</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="thisMonth">This Month</SelectItem>
+              <SelectItem value="last3Months">Last 3 Months</SelectItem>
+              <SelectItem value="last6Months">Last 6 Months</SelectItem>
+              <SelectItem value="ytd">YTD</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={chartType} onValueChange={setChartType}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="ytd">YTD</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Summary Cards */}

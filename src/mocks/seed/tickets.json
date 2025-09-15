@@ -1,0 +1,140 @@
+[
+  {
+    "id": "T-9101",
+    "subject": "Update on application status",
+    "from": "client@client.com",
+    "priority": "Medium",
+    "status": "Open",
+    "assignee": "admin@admin.com",
+    "createdAt": "2025-09-10T10:30:00Z",
+    "updatedAt": "2025-09-11T11:02:00Z",
+    "thread": [
+      {
+        "id": "msg-001",
+        "timestamp": "2025-09-10T10:30:00Z",
+        "from": "client@client.com",
+        "text": "Hi, could I get an update on my application submitted last month? I haven't heard back yet and I'm getting concerned about the timeline."
+      },
+      {
+        "id": "msg-002", 
+        "timestamp": "2025-09-11T11:02:00Z",
+        "from": "admin@admin.com",
+        "text": "Thank you for reaching out. I've checked your application status and it's currently in the final review stage. You should hear back within 3-5 business days."
+      }
+    ]
+  },
+  {
+    "id": "T-9102",
+    "subject": "Policy documentation missing",
+    "from": "client@client.com", 
+    "priority": "High",
+    "status": "In Progress",
+    "assignee": "advisor@advisor.com",
+    "createdAt": "2025-09-08T14:15:00Z",
+    "updatedAt": "2025-09-09T09:30:00Z",
+    "thread": [
+      {
+        "id": "msg-003",
+        "timestamp": "2025-09-08T14:15:00Z",
+        "from": "client@client.com",
+        "text": "I notice that some policy documents are missing from my portal. Specifically, I can't find the terms and conditions document."
+      },
+      {
+        "id": "msg-004",
+        "timestamp": "2025-09-09T09:30:00Z",
+        "from": "advisor@advisor.com",
+        "text": "I apologize for this oversight. I'm working with our documents team to get the missing files uploaded to your portal by end of day."
+      }
+    ]
+  },
+  {
+    "id": "T-9103",
+    "subject": "Premium payment question",
+    "from": "client@client.com",
+    "priority": "Low", 
+    "status": "Resolved",
+    "assignee": "admin@admin.com",
+    "createdAt": "2025-09-05T16:45:00Z",
+    "updatedAt": "2025-09-06T10:20:00Z",
+    "thread": [
+      {
+        "id": "msg-005",
+        "timestamp": "2025-09-05T16:45:00Z",
+        "from": "client@client.com",
+        "text": "When is my next premium payment due? I want to make sure I don't miss it."
+      },
+      {
+        "id": "msg-006",
+        "timestamp": "2025-09-06T10:20:00Z", 
+        "from": "admin@admin.com",
+        "text": "Your next premium payment of £450.00 is due on October 1st, 2025. You'll receive a reminder email 7 days before the due date."
+      }
+    ]
+  },
+  {
+    "id": "T-8001",
+    "subject": "Account access issues",
+    "from": "advisor2@advisor.com",
+    "priority": "Medium",
+    "status": "Open", 
+    "assignee": "admin@admin.com",
+    "createdAt": "2025-09-12T08:00:00Z",
+    "updatedAt": "2025-09-12T08:00:00Z",
+    "thread": [
+      {
+        "id": "msg-007",
+        "timestamp": "2025-09-12T08:00:00Z",
+        "from": "advisor2@advisor.com",
+        "text": "I'm having trouble accessing the commission reports section. Getting a 403 error when I try to load the page."
+      }
+    ]
+  },
+  {
+    "id": "T-8002",
+    "subject": "Commission calculation discrepancy",
+    "from": "manager@manager.com",
+    "priority": "High",
+    "status": "In Progress",
+    "assignee": "admin@admin.com", 
+    "createdAt": "2025-09-11T13:30:00Z",
+    "updatedAt": "2025-09-11T15:45:00Z",
+    "thread": [
+      {
+        "id": "msg-008",
+        "timestamp": "2025-09-11T13:30:00Z",
+        "from": "manager@manager.com",
+        "text": "There appears to be a discrepancy in the commission calculation for policy GL-2024-002. The amount seems lower than expected."
+      },
+      {
+        "id": "msg-009",
+        "timestamp": "2025-09-11T15:45:00Z",
+        "from": "admin@admin.com",
+        "text": "I'm reviewing the calculation now. Will provide an update with the detailed breakdown by tomorrow."
+      }
+    ]
+  },
+  {
+    "id": "T-7001",
+    "subject": "New user onboarding request",
+    "from": "admin@admin.com",
+    "priority": "Normal",
+    "status": "Resolved",
+    "assignee": "admin@admin.com",
+    "createdAt": "2025-09-07T11:00:00Z",
+    "updatedAt": "2025-09-08T14:30:00Z",
+    "thread": [
+      {
+        "id": "msg-010",
+        "timestamp": "2025-09-07T11:00:00Z",
+        "from": "admin@admin.com",
+        "text": "Need to set up access for new advisor joining next week. Role: advisor, department: Financial Advisory."
+      },
+      {
+        "id": "msg-011",
+        "timestamp": "2025-09-08T14:30:00Z",
+        "from": "admin@admin.com", 
+        "text": "User account created and welcome email sent. Onboarding completed."
+      }
+    ]
+  }
+]
