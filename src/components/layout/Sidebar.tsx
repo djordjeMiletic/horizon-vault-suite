@@ -120,7 +120,7 @@ export const Sidebar = () => {
 
   return (
     <SidebarComponent
-      className={`${collapsed ? 'w-14' : 'w-60'} bg-primary border-primary/20 hidden lg:flex`}
+      className={`${collapsed ? 'w-14' : 'w-60'} bg-primary border-primary/20 hidden xl:flex`}
       collapsible="icon"
     >
       <SidebarContent>

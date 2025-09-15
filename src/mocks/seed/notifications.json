@@ -178,5 +178,55 @@
     "timestamp": "2025-09-11T14:20:00Z", 
     "read": false,
     "priority": "low"
+  },
+  {
+    "id": "AN-1",
+    "userId": "admin",
+    "type": "compliance",
+    "title": "Compliance document approved",
+    "message": "Risk assessment document RAS-2025-09 has been reviewed and approved by the compliance team.",
+    "timestamp": "2025-09-10T09:14:00Z",
+    "read": false,
+    "priority": "normal"
+  },
+  {
+    "id": "AN-2",
+    "userId": "admin",
+    "type": "user",
+    "title": "New advisor account created",
+    "message": "New advisor account has been created for Michael Carter. Welcome package sent to michael.carter@advisor.com.",
+    "timestamp": "2025-09-12T11:30:00Z",
+    "read": false,
+    "priority": "normal"
+  },
+  {
+    "id": "AN-3",
+    "userId": "admin",
+    "type": "payment",
+    "title": "Payment cycle 2025-08 closed successfully",
+    "message": "Payment cycle 2025-08 has been finalized and all commission payments have been processed successfully.",
+    "timestamp": "2025-09-13T16:05:00Z",
+    "read": true,
+    "priority": "normal"
+  },
+  {
+    "id": "AN-4",
+    "userId": "admin",
+    "type": "system",
+    "title": "Database backup completed",
+    "message": "Weekly database backup has been completed successfully. All data is secure and recoverable.",
+    "timestamp": "2025-09-14T03:00:00Z",
+    "read": false,
+    "priority": "low"
+  },
+  {
+    "id": "AN-5",
+    "userId": "admin",
+    "type": "compliance",
+    "title": "New regulatory update available",
+    "message": "FCA has published new regulatory guidelines for 2025. Please review and implement necessary changes.",
+    "timestamp": "2025-09-15T08:45:00Z",
+    "read": false,
+    "priority": "high"
   }
 ]

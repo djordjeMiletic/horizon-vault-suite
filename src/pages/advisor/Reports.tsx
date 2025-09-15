@@ -511,7 +511,7 @@ const StandardReports = ({
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground whitespace-nowrap">
                 Page {currentPage} of {totalPages}
               </div>
               <Pagination>

@@ -12,7 +12,7 @@ import paymentsData from '@/mocks/seed/payments.json';
 
 const Analytics = () => {
   const { user } = useAuth();
-  const [dateRange, setDateRange] = useState('last6Months');
+  const [dateRange, setDateRange] = useState('last3Months');
   const [selectedAdvisor, setSelectedAdvisor] = useState('all');
 
   // Get unique advisors for filtering
