@@ -41,12 +41,17 @@ import AdminPipeline from "./pages/admin/Pipeline";
 import AdminTickets from "./pages/admin/Tickets";
 import AdminAudit from "./pages/admin/Audit";
 import AdminNotifications from "./pages/admin/Notifications";
+import AdminProducts from "./pages/admin/Products";
 
 // HR pages
 import HRJobs from "./pages/hr/Jobs";
 import HRApplications from "./pages/hr/Applications";
 import HRInterviews from "./pages/hr/Interviews";
 import HROnboarding from "./pages/hr/Onboarding";
+
+// Public pages
+import PublicJobs from "./pages/public/Jobs";
+import PublicInquiries from "./pages/public/Inquiries";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +69,10 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          
+          {/* Public application routes */}
+          <Route path="/public/jobs" element={<PublicJobs />} />
+          <Route path="/public/inquiries" element={<PublicInquiries />} />
 
           {/* Protected routes with layout */}
           <Route element={<AppLayout />}>
@@ -175,6 +184,11 @@ const App = () => (
             <Route path="/admin/notifications" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminNotifications />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/products" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminProducts />
               </ProtectedRoute>
             } />
 

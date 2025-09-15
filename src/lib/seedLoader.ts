@@ -9,7 +9,9 @@ import {
   useJobStore,
   useApplicantStore,
   useInterviewStore,
-  useOnboardingStore
+  useOnboardingStore,
+  useProductStore,
+  useCommissionStore
 } from './stores';
 
 // Import seed data
@@ -24,6 +26,8 @@ import jobsData from '@/mocks/seed/jobs.json';
 import applicantsData from '@/mocks/seed/applicants.json';
 import interviewsData from '@/mocks/seed/interviews.json';
 import onboardingData from '@/mocks/seed/onboarding.json';
+import productsData from '@/mocks/seed/products.json';
+import commissionsData from '@/mocks/seed/commissions.json';
 
 let isInitialized = false;
 
@@ -93,6 +97,18 @@ export const initializeSeedData = () => {
   const onboardingStore = useOnboardingStore.getState();
   (onboardingData as any[]).forEach(record => {
     onboardingStore.onboarding.push(record as any);
+  });
+
+  // Initialize products
+  const productStore = useProductStore.getState();
+  (productsData as any[]).forEach(product => {
+    productStore.products.push(product as any);
+  });
+
+  // Initialize commissions
+  const commissionStore = useCommissionStore.getState();
+  (commissionsData as any[]).forEach(commission => {
+    commissionStore.commissions.push(commission as any);
   });
 
   isInitialized = true;

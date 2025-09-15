@@ -340,7 +340,7 @@ interface CaseStore {
 interface ClientDocumentStore {
   documents: ClientDocument[];
   addDocument: (document: Omit<ClientDocument, 'id' | 'uploadedAt'>) => void;
-  updateDocument: (id: string, updates: Partial<ClientDocument>) => void;
+  updateDocument: (document: ClientDocument) => void;
 }
 
 interface MessageStore {
@@ -547,11 +547,9 @@ export const useClientDocumentStore = create<ClientDocumentStore>((set) => ({
         },
       ],
     })),
-  updateDocument: (id, updates) =>
+  updateDocument: (document) =>
     set((state) => ({
-      documents: state.documents.map((d) =>
-        d.id === id ? { ...d, ...updates } : d
-      ),
+      documents: state.documents.map((d) => (d.id === document.id ? document : d)),
     })),
 }));
 
@@ -875,3 +873,105 @@ export const useGoalStore = create<GoalStore>((set) => ({
       ),
     })),
 }));
+
+export const useProductStore = create<ProductStore>((set) => ({
+  products: [],
+  addProduct: (product) =>
+    set((state) => ({
+      products: [
+        ...state.products,
+        {
+          ...product,
+          id: `prod-${Date.now()}`,
+          active: true,
+        },
+      ],
+    })),
+  updateProduct: (product) =>
+    set((state) => ({
+      products: state.products.map((p) => (p.id === product.id ? product : p)),
+    })),
+  toggleActive: (id) =>
+    set((state) => ({
+      products: state.products.map((p) =>
+        p.id === id ? { ...p, active: !p.active } : p
+      ),
+    })),
+}));
+
+export const useCommissionStore = create<CommissionStore>((set) => ({
+  commissions: [],
+  addCommission: (commission) =>
+    set((state) => ({
+      commissions: [
+        ...state.commissions,
+        {
+          ...commission,
+          id: `comm-${Date.now()}`,
+        },
+      ],
+    })),
+  updateCommission: (commission) =>
+    set((state) => ({
+      commissions: state.commissions.map((c) =>
+        c.id === commission.id ? commission : c
+      ),
+    })),
+}));
+
+// Missing interfaces for new stores
+export interface ProductStore {
+  products: Product[];
+  addProduct: (product: Omit<Product, 'id'>) => void;
+  updateProduct: (product: Product) => void;
+  toggleActive: (id: string) => void;
+}
+
+export interface CommissionStore {
+  commissions: Commission[];
+  addCommission: (commission: Omit<Commission, 'id'>) => void;
+  updateCommission: (commission: Commission) => void;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  provider: string;
+  type: string;
+  commissionRate: number;
+  margin: number;
+  description: string;
+  features: string[];
+  commissionExample: {
+    ape: number;
+    rate: string;
+    commission: number;
+    note: string;
+  };
+  bands: Array<{
+    threshold: number;
+    rateAdjustment: number;
+  }>;
+  active?: boolean;
+}
+
+export interface Commission {
+  id: string;
+  advisorId: string;
+  productId: string;
+  clientId: string;
+  policyNumber: string;
+  ape: number;
+  actualReceipts: number;
+  paymentType: string;
+  commissionAmount: number;
+  paymentDate: string;
+  status: string;
+  month: string;
+  distributionRoles: {
+    advisor: number;
+    introducer: number;
+    manager: number;
+    executiveSalesManager: number;
+  };
+}

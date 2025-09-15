@@ -19,16 +19,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useClientDocumentStore } from '@/lib/stores';
+import { useClientDocumentStore, useCaseStore } from '@/lib/stores';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Download, FileText, Search } from 'lucide-react';
+import { Upload, Download, FileText, Search, Pen } from 'lucide-react';
 import { format } from 'date-fns';
+import SignatureModal from '@/components/SignatureModal';
 
 const Documents = () => {
-  const { documents, addDocument } = useClientDocumentStore();
+  const { documents, addDocument, updateDocument } = useClientDocumentStore();
+  const { cases, updateCase } = useCaseStore();
   const [filter, setFilter] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({ name: '', caseId: '', type: 'Identity' });
+  const [signatureModal, setSignatureModal] = useState<{ open: boolean; document: any }>({ open: false, document: null });
   const { toast } = useToast();
 
   const filteredDocuments = documents.filter(doc => 
@@ -64,9 +67,49 @@ const Documents = () => {
     }, 1500);
   };
 
+  const requiresSignature = (doc: any) => {
+    return ['Medical', 'Financial'].includes(doc.type) && doc.status === 'Processed' && !doc.signedAt;
+  };
+
+  const handleSignDocument = () => {
+    if (!signatureModal.document) return;
+
+    const updatedDoc = {
+      ...signatureModal.document,
+      signedAt: new Date().toISOString(),
+      signedBy: 'client@client.com',
+      status: 'Signed' as const
+    };
+
+    // Update document in store
+    updateDocument(updatedDoc);
+    
+    // Add to case timeline if case exists
+    const relatedCase = cases.find(c => c.id === signatureModal.document.caseId);
+    if (relatedCase) {
+      const updatedCase = {
+        ...relatedCase,
+        timeline: [
+          ...relatedCase.timeline,
+          {
+            id: `timeline-${Date.now()}`,
+            at: new Date().toISOString(),
+            by: 'Jennifer Lee',
+            event: 'Document Signed',
+            details: `${signatureModal.document.name} digitally signed by client`
+          }
+        ]
+      };
+      updateCase(updatedCase);
+    }
+
+    setSignatureModal({ open: false, document: null });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Processed': return 'default';
+      case 'Signed': return 'default';
       case 'Pending': return 'secondary';
       case 'Superseded': return 'outline';
       default: return 'secondary';
@@ -225,6 +268,7 @@ const Documents = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Uploaded</TableHead>
                   <TableHead>Size</TableHead>
+                  <TableHead>Sign</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -242,6 +286,22 @@ const Documents = () => {
                     </TableCell>
                     <TableCell>{format(new Date(doc.uploadedAt), 'MMM d, yyyy')}</TableCell>
                     <TableCell>{doc.sizeKb} KB</TableCell>
+                    <TableCell>
+                      {requiresSignature(doc) ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSignatureModal({ open: true, document: doc })}
+                        >
+                          <Pen className="h-4 w-4 mr-1" />
+                          Sign
+                        </Button>
+                      ) : doc.signedAt ? (
+                        <Badge variant="default">Signed</Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">N/A</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm">
                         <Download className="h-4 w-4" />
@@ -280,6 +340,22 @@ const Documents = () => {
                 <ResponsiveTableField label="Size">
                   {doc.sizeKb} KB
                 </ResponsiveTableField>
+                <ResponsiveTableField label="Sign">
+                  {requiresSignature(doc) ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSignatureModal({ open: true, document: doc })}
+                    >
+                      <Pen className="h-4 w-4 mr-1" />
+                      Sign
+                    </Button>
+                  ) : doc.signedAt ? (
+                    <Badge variant="default">Signed</Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">N/A</span>
+                  )}
+                </ResponsiveTableField>
                 <ResponsiveTableField label="Actions">
                   <Button variant="ghost" size="sm">
                     <Download className="h-4 w-4" />
@@ -290,6 +366,13 @@ const Documents = () => {
           </ResponsiveTableMobile>
         </CardContent>
       </Card>
+
+      <SignatureModal
+        open={signatureModal.open}
+        onOpenChange={(open) => setSignatureModal({ open, document: signatureModal.document })}
+        documentName={signatureModal.document?.name || ''}
+        onSign={handleSignDocument}
+      />
     </div>
   );
 };
