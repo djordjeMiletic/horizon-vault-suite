@@ -19,7 +19,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/responsive-table';
-import { productsService as productsAPI } from '@/services/products';
+import { productsService as productsAPI, type Product } from '@/services/products';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Search } from 'lucide-react';
@@ -28,7 +28,7 @@ const AdminProducts = () => {
   const queryClient = useQueryClient();
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: productsAPI.getAll
+    queryFn: () => productsAPI.getPublicProducts()
   });
 
   const createProductMutation = useMutation({

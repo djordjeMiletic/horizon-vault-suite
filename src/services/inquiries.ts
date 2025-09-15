@@ -36,7 +36,7 @@ export async function getInquiries(params?: {
 }
 
 export async function createInquiry(payload: CreateInquiryPayload): Promise<Inquiry> {
-  const { data } = await api.post("/inquiries", payload);
+  const { data } = await api.post("/public/inquiries", payload);
   return data;
 }
 

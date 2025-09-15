@@ -20,7 +20,7 @@ const Payments = () => {
   const queryClient = useQueryClient();
   const { data: cycles = [] } = useQuery({
     queryKey: ['paymentCycles'],
-    queryFn: paymentCyclesService.getCycles
+    queryFn: () => paymentCyclesService.getCycles()
   });
   
   const updateItemMutation = useMutation({
@@ -136,16 +136,9 @@ const Payments = () => {
     }
 
     const newCycle = {
-      cycle: newCycleData.cycle,
-      status: 'Draft' as const,
-      totals: {
-        payments: 0,
-        approved: 0,
-        pending: 0,
-        rejected: 0,
-        exceptions: 0
-      },
-      items: []
+      name: newCycleData.cycle,
+      startDate: new Date().toISOString().split('T')[0], // Current date as fallback
+      endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0] // End of current month
     };
 
     addCycleMutation.mutate(newCycle);
@@ -204,7 +197,8 @@ const Payments = () => {
     }
   };
 
-  const currentCycle = selectedCycle ? cycles.find(c => c.id === selectedCycle) : null;
+  const cyclesArray = Array.isArray(cycles) ? cycles : cycles?.items || [];
+  const currentCycle = selectedCycle ? cyclesArray.find(c => c.id === selectedCycle) : null;
   
   // Calculate counts for proposed vs final statuses
   const proposedCounts = currentCycle?.items.reduce((acc, item: any) => {
@@ -284,7 +278,7 @@ const Payments = () => {
 
       {!selectedCycle ? (
         <div className="grid gap-4">
-          {cycles.map((cycle) => (
+          {cyclesArray.map((cycle) => (
             <Card key={cycle.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedCycle(cycle.id)}>
               <CardHeader>
                 <div className="flex justify-between items-start">

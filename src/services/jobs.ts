@@ -38,7 +38,7 @@ export async function getJobs(params?: {
 }
 
 export async function getPublicJobs(): Promise<Job[]> {
-  const { data } = await api.get("/jobs/public");
+  const { data } = await api.get("/public/jobs");
   return Array.isArray(data) ? data : data?.items ?? [];
 }
 

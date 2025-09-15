@@ -10,7 +10,7 @@ export async function addPayment(payload: {
   notes?: string; 
   advisorEmail: string;
 }): Promise<PaymentWithCommissionDto> {
-  const { data } = await api.post("/payments", payload);
+  const { data } = await api.post("/Payments", payload);
   return data;
 }
 
@@ -21,7 +21,7 @@ export async function getPayments(params: {
   page?: number; 
   pageSize?: number;
 }): Promise<Paginated<PaymentDto>> {
-  const { data } = await api.get("/payments", { params });
+  const { data } = await api.get("/Payments", { params });
   return data;
 }
 
@@ -32,7 +32,7 @@ export async function getCommissionDetails(params: {
   page?: number; 
   pageSize?: number;
 }): Promise<Paginated<CommissionDetailsRowDto>> {
-  const { data } = await api.get("/reports/commission-details", { params });
+  const { data } = await api.get("/Reports/commission-details", { params });
   return data;
 }
 
