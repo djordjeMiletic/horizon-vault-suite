@@ -11,7 +11,11 @@ import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, PoundSterling, Users, Bell, Calendar, ChevronRight, Plus, FileUp, Ticket, CreditCard } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useState } from 'react';
-import { usePaymentStore, useTicketStore, useDocumentStore, useNotificationStore, usePaymentDataStore, useGoalsDataStore, useNotificationDataStore } from '@/lib/stores';
+import { usePaymentStore, useTicketStore, useDocumentStore, useNotificationStore } from '@/lib/stores';
+import { paymentsService as paymentsAPI } from '@/services/payments';
+import { goalsService as goalsAPI } from '@/services/goals';
+import { notificationsService as notificationsAPI } from '@/services/notifications';
+import { useQuery } from '@tanstack/react-query';
 import { computeCommission } from '@/lib/commission';
 import AddPaymentModal from '@/components/AddPaymentModal';
 import { rollupMonthly, getCurrentMonth } from '@/lib/timeSeries';
@@ -24,12 +28,31 @@ const Dashboard = () => {
   const { addDocument } = useDocumentStore();
   const { addNotification } = useNotificationStore();
   
-  // Use new data stores
-  const { payments, getPaymentsByAdvisor } = usePaymentDataStore();
-  const { getAdvisorGoals, getManagerGoals } = useGoalsDataStore();
-  const { notifications, getNotificationsByRecipient } = useNotificationDataStore();
-
   const isManager = user?.role === 'manager';
+  
+  // Use API services
+  const { data: payments = [] } = useQuery({
+    queryKey: ['payments'],
+    queryFn: paymentsAPI.getAll
+  });
+  
+  const { data: advisorGoals } = useQuery({
+    queryKey: ['advisorGoals', user?.email],
+    queryFn: () => goalsAPI.getAdvisorGoals(user?.email || ''),
+    enabled: !!user?.email && !isManager
+  });
+  
+  const { data: managerGoals } = useQuery({
+    queryKey: ['managerGoals'],
+    queryFn: goalsAPI.getManagerGoals,
+    enabled: isManager
+  });
+  
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications', user?.email],
+    queryFn: () => notificationsAPI.getByRecipient(user?.email || ''),
+    enabled: !!user?.email
+  });
 
   // Modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -184,13 +207,13 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
   const getKPIData = () => {
     if (isManager) {
       // Manager sees aggregated data from all advisors
-      const relevantPayments = payments;
+      const relevantPayments = (payments as any[]) || [];
       const commissionData = relevantPayments.map(p => {
-        const result = calculateCommission(p.ape, p.receipts, p.productId);
+        const result = calculateCommission(p.ape || 0, p.receipts || 0, p.productId || 'PRD-01');
         return {
           commission: result.split.Advisor,
           date: p.date,
-          advisorEmail: p.advisorEmail
+          advisorEmail: p.advisorEmail || ''
         };
       });
       
@@ -222,10 +245,11 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
       const avgPayment = paymentsLast30Days > 0 ? totalYTD / paymentsLast30Days : 0;
       
       // Recent payments (last 5) - format for display
-      const recentPayments = relevantPayments
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      const recentPayments = (relevantPayments || [])
+        .filter((p: any) => p.status === 'Approved')
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 5)
-        .map(p => {
+        .map((p: any) => {
           const result = calculateCommission(p.ape, p.receipts, p.productId);
           return {
             id: p.id,
@@ -238,14 +262,13 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
         });
         
       // Manager goals
-      const managerGoals = getManagerGoals();
       const currentGoal = managerGoals ? {
         advisorId: user?.id,
         month: currentMonth,
-        target: managerGoals.monthlyTarget,
-        achieved: managerGoals.history?.find(h => h.month === currentMonth)?.achieved || 0,
-        progress: managerGoals.monthlyTarget > 0 
-          ? (managerGoals.history?.find(h => h.month === currentMonth)?.achieved || 0) / managerGoals.monthlyTarget 
+        target: (managerGoals as any)?.monthlyTarget || 0,
+        achieved: (managerGoals as any)?.history?.find((h: any) => h.month === currentMonth)?.achieved || 0,
+        progress: ((managerGoals as any)?.monthlyTarget || 0) > 0 
+          ? ((managerGoals as any)?.history?.find((h: any) => h.month === currentMonth)?.achieved || 0) / ((managerGoals as any)?.monthlyTarget || 0)
           : 0,
         type: 'Team Monthly Target'
       } : null;
@@ -253,9 +276,9 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
       return { totalYTD, momChange, paymentsLast30Days, avgPayment, recentPayments, currentGoal };
     } else {
       // Advisor sees only their own data
-      const advisorPayments = getPaymentsByAdvisor(user?.email || '');
-      const commissionData = advisorPayments.map(p => {
-        const result = calculateCommission(p.ape, p.receipts, p.productId);
+      const advisorPayments = (payments as any[]).filter((p: any) => p.advisorEmail === user?.email);
+      const commissionData = advisorPayments.map((p: any) => {
+        const result = calculateCommission(p.ape || 0, p.receipts || 0, p.productId || 'PRD-01');
         return {
           commission: result.split.Advisor,
           date: p.date
@@ -306,14 +329,13 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
         });
         
       // Advisor goals
-      const advisorGoals = getAdvisorGoals(user?.email || '');
       const currentGoal = advisorGoals ? {
         advisorId: user?.id,
         month: currentMonth,
-        target: advisorGoals.monthlyTarget,
-        achieved: advisorGoals.history?.find(h => h.month === currentMonth)?.achieved || 0,
-        progress: advisorGoals.monthlyTarget > 0 
-          ? (advisorGoals.history?.find(h => h.month === currentMonth)?.achieved || 0) / advisorGoals.monthlyTarget 
+        target: (advisorGoals as any)?.monthlyTarget || 0,
+        achieved: (advisorGoals as any)?.history?.find((h: any) => h.month === currentMonth)?.achieved || 0,
+        progress: ((advisorGoals as any)?.monthlyTarget || 0) > 0 
+          ? ((advisorGoals as any)?.history?.find((h: any) => h.month === currentMonth)?.achieved || 0) / ((advisorGoals as any)?.monthlyTarget || 0)
           : 0,
         type: 'Monthly APE'
       } : null;
@@ -325,9 +347,9 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
   const { totalYTD, momChange, paymentsLast30Days, avgPayment, recentPayments, currentGoal } = getKPIData();
 
   // User notifications - format for display
-  const userNotifications = getNotificationsByRecipient(user?.email || '')
+  const userNotifications = ((notifications as any[]) || [])
     .slice(0, 5)
-    .map(n => ({
+    .map((n: any) => ({
       ...n,
       message: n.title,
       timestamp: n.createdAt

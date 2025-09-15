@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useOnboardingStore } from '@/lib/stores';
+import { onboardingService } from '@/services/onboarding';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,108 +13,166 @@ import { Label } from '@/components/ui/label';
 import { Search, Users, Eye, CheckCircle, Clock, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Define task interface for proper typing
-interface OnboardingTask {
-  id: string;
-  title: string;
-  description: string;
-  category: 'HR Documentation' | 'Regulatory' | 'Training' | 'IT Setup' | 'Orientation';
-  status: 'Pending' | 'In Progress' | 'Completed';
-  assignedTo?: string;
-  completedAt?: string;
-  completedBy?: string;
-  dueDate: string;
-}
-
 const Onboarding = () => {
-  const { onboarding, updateTask, completeTask } = useOnboardingStore();
+  const queryClient = useQueryClient();
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['onboardingTasks'],
+    queryFn: onboardingService.getTasks
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) => 
+      onboardingService.updateTask(id, updates),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['onboardingTasks'] })
+  });
+
+  const completeTaskMutation = useMutation({
+    mutationFn: onboardingService.completeTask,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['onboardingTasks'] })
+  });
+
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
 
-  const handleTaskComplete = (recordId: string, taskId: string, completed: boolean) => {
+  const employees = [...new Set(tasks.map((task: any) => task.assignee))];
+  
+  const filteredTasks = tasks.filter((task: any) =>
+    task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    task.assignee.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    task.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleToggleComplete = (taskId: string, completed: boolean) => {
     if (completed) {
-      completeTask(recordId, taskId, 'HR Team');
-      toast({
-        title: 'Task Completed',
-        description: 'Task has been marked as completed'
-      });
+      completeTaskMutation.mutate(taskId);
     } else {
-      updateTask(recordId, taskId, { 
-        status: 'Pending',
-        completedAt: undefined,
-        completedBy: undefined
-      });
-      toast({
-        title: 'Task Updated',
-        description: 'Task has been marked as pending'
+      updateTaskMutation.mutate({ 
+        id: taskId, 
+        updates: { status: 'In Progress', completedDate: null } 
       });
     }
+    
+    toast({
+      title: completed ? "Task completed" : "Task reopened",
+      description: `Task has been ${completed ? 'marked as complete' : 'reopened'}.`,
+    });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Not Started': return 'bg-gray-100 text-gray-800';
-      case 'In Progress': return 'bg-blue-100 text-blue-800';
-      case 'Completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Completed': return 'default';
+      case 'In Progress': return 'secondary';
+      case 'Overdue': return 'destructive';
+      case 'Not Started': return 'outline';
+      default: return 'outline';
     }
   };
 
-  const getTaskStatusColor = (status: string) => {
-    switch (status) {
-      case 'Pending': return 'bg-gray-100 text-gray-800';
-      case 'In Progress': return 'bg-yellow-100 text-yellow-800';
-      case 'Completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'High': return 'destructive';
+      case 'Medium': return 'secondary';
+      case 'Low': return 'outline';
+      default: return 'outline';
     }
   };
 
-  const filteredOnboarding = onboarding.filter(record =>
-    record.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.assignedHR.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (onboarding.length === 0) {
-    return (
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Onboarding</h1>
-            <p className="text-muted-foreground">Manage new hire onboarding process</p>
-          </div>
-        </div>
-        
-        <Card className="p-8 text-center">
-          <div className="space-y-4">
-            <Users className="h-12 w-12 mx-auto text-muted-foreground" />
-            <h3 className="text-lg font-medium">No onboarding candidates</h3>
-            <p className="text-muted-foreground">New hire onboarding records will appear here</p>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  const getEmployeeProgress = (employee: string) => {
+    const employeeTasks = tasks.filter((task: any) => task.assignee === employee);
+    const completedTasks = employeeTasks.filter((task: any) => task.status === 'Completed');
+    return employeeTasks.length > 0 ? (completedTasks.length / employeeTasks.length) * 100 : 0;
+  };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Onboarding</h1>
-          <p className="text-muted-foreground">Manage new hire onboarding process</p>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Onboarding Management</h1>
       </div>
 
+      {/* Employee Overview */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {employees.map((employee: string) => {
+          const employeeTasks = tasks.filter((task: any) => task.assignee === employee);
+          const completedTasks = employeeTasks.filter((task: any) => task.status === 'Completed');
+          const progress = getEmployeeProgress(employee);
+          
+          return (
+            <Card key={employee} className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium">{employee}</h3>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setSelectedEmployee(employee)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="w-[400px] sm:w-[540px]">
+                    <SheetHeader>
+                      <SheetTitle>{employee} - Onboarding Tasks</SheetTitle>
+                    </SheetHeader>
+                    <div className="space-y-4 mt-6">
+                      {employeeTasks.map((task: any) => (
+                        <div key={task.id} className="border rounded p-3">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-sm">{task.title}</h4>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {task.description}
+                              </p>
+                            </div>
+                            <Checkbox
+                              checked={task.status === 'Completed'}
+                              onCheckedChange={(checked) => 
+                                handleToggleComplete(task.id, !!checked)
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <Badge variant={getStatusColor(task.status)}>
+                              {task.status}
+                            </Badge>
+                            <Badge variant={getPriorityColor(task.priority)}>
+                              {task.priority}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Due: {new Date(task.dueDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>{completedTasks.length} of {employeeTasks.length} completed</span>
+                  <span>{progress.toFixed(0)}%</span>
+                </div>
+                <Progress value={progress} />
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Tasks Table */}
       <Card>
-        <div className="p-4">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-medium">All Tasks</h2>
+            <div className="flex items-center space-x-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, job title, or HR representative..."
+                placeholder="Search tasks..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="w-64"
               />
             </div>
           </div>
@@ -121,50 +180,48 @@ const Onboarding = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Job Title</TableHead>
-                <TableHead>Start Date</TableHead>
-                <TableHead>Progress</TableHead>
+                <TableHead className="w-[50px]">Complete</TableHead>
+                <TableHead>Task</TableHead>
+                <TableHead>Employee</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Priority</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>HR Assigned</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Due Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOnboarding.map((record) => (
-                <TableRow key={record.id} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell className="font-medium">{record.candidateName}</TableCell>
-                  <TableCell>{record.jobTitle}</TableCell>
+              {filteredTasks.map((task: any) => (
+                <TableRow key={task.id}>
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {new Date(record.startDate).toLocaleDateString()}
-                    </div>
+                    <Checkbox
+                      checked={task.status === 'Completed'}
+                      onCheckedChange={(checked) => 
+                        handleToggleComplete(task.id, !!checked)
+                      }
+                    />
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={record.progress} className="w-16" />
-                      <span className="text-sm text-muted-foreground">{record.progress}%</span>
+                    <div>
+                      <div className="font-medium">{task.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {task.description}
+                      </div>
                     </div>
                   </TableCell>
+                  <TableCell className="font-medium">{task.assignee}</TableCell>
+                  <TableCell>{task.category}</TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(record.status)}>
-                      {record.status}
+                    <Badge variant={getPriorityColor(task.priority)}>
+                      {task.priority}
                     </Badge>
                   </TableCell>
-                  <TableCell>{record.assignedHR}</TableCell>
                   <TableCell>
-                    <Sheet>
-                      <SheetTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </SheetTrigger>
-                      <OnboardingDetailsSheet
-                        record={record}
-                        onTaskComplete={handleTaskComplete}
-                      />
-                    </Sheet>
+                    <Badge variant={getStatusColor(task.status)}>
+                      {task.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(task.dueDate).toLocaleDateString()}
                   </TableCell>
                 </TableRow>
               ))}
@@ -174,163 +231,6 @@ const Onboarding = () => {
       </Card>
     </div>
   );
-};
-
-const OnboardingDetailsSheet = ({ record, onTaskComplete }: {
-  record: any;
-  onTaskComplete: (recordId: string, taskId: string, completed: boolean) => void;
-}) => {
-  const groupedTasks: Record<string, OnboardingTask[]> = record.tasks.reduce((groups: Record<string, OnboardingTask[]>, task: OnboardingTask) => {
-    if (!groups[task.category]) {
-      groups[task.category] = [];
-    }
-    groups[task.category].push(task);
-    return groups;
-  }, {});
-
-  const categoryIcons = {
-    'HR Documentation': Users,
-    'Regulatory': CheckCircle,
-    'Training': Clock,
-    'IT Setup': Users,
-    'Orientation': Calendar
-  };
-
-  return (
-    <SheetContent className="w-[600px] sm:w-[800px] overflow-y-auto">
-      <SheetHeader>
-        <SheetTitle>{record.candidateName} - Onboarding</SheetTitle>
-      </SheetHeader>
-      <div className="space-y-6 py-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label className="text-sm font-medium text-muted-foreground">Candidate</Label>
-            <p className="mt-1 font-medium">{record.candidateName}</p>
-          </div>
-          <div>
-            <Label className="text-sm font-medium text-muted-foreground">Job Title</Label>
-            <p className="mt-1">{record.jobTitle}</p>
-          </div>
-          <div>
-            <Label className="text-sm font-medium text-muted-foreground">Start Date</Label>
-            <p className="mt-1">{new Date(record.startDate).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <Label className="text-sm font-medium text-muted-foreground">HR Assigned</Label>
-            <p className="mt-1">{record.assignedHR}</p>
-          </div>
-          <div>
-            <Label className="text-sm font-medium text-muted-foreground">Overall Progress</Label>
-            <div className="mt-1 flex items-center gap-2">
-              <Progress value={record.progress} className="flex-1" />
-              <span className="text-sm font-medium">{record.progress}%</span>
-            </div>
-          </div>
-          <div>
-            <Label className="text-sm font-medium text-muted-foreground">Status</Label>
-            <div className="mt-1">
-              <Badge className={getStatusColor(record.status)}>
-                {record.status}
-              </Badge>
-            </div>
-          </div>
-        </div>
-
-        {record.notes && (
-          <div>
-            <Label className="text-sm font-medium text-muted-foreground">Notes</Label>
-            <p className="mt-1 text-sm p-3 bg-muted rounded-md">{record.notes}</p>
-          </div>
-        )}
-
-        <div>
-          <Label className="text-sm font-medium text-muted-foreground">Onboarding Tasks</Label>
-          <div className="mt-2 space-y-4">
-            {Object.entries(groupedTasks).map(([category, tasks]) => {
-              const IconComponent = categoryIcons[category] || Users;
-              const completedTasks = tasks.filter(t => t.status === 'Completed').length;
-              const progress = Math.round((completedTasks / tasks.length) * 100);
-
-              return (
-                <Card key={category} className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <IconComponent className="h-5 w-5" />
-                      <h4 className="font-medium">{category}</h4>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Progress value={progress} className="w-20" />
-                      <span className="text-sm text-muted-foreground">
-                        {completedTasks}/{tasks.length}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {tasks.map((task) => (
-                      <div key={task.id} className="flex items-start gap-3 p-3 border rounded-md">
-                        <Checkbox
-                          checked={task.status === 'Completed'}
-                          onCheckedChange={(checked) => 
-                            onTaskComplete(record.id, task.id, checked as boolean)
-                          }
-                          className="mt-0.5"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h5 className="font-medium text-sm">{task.title}</h5>
-                            <Badge className={getTaskStatusColor(task.status)} variant="outline">
-                              {task.status}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {task.description}
-                          </p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              Due: {new Date(task.dueDate).toLocaleDateString()}
-                            </div>
-                            {task.assignedTo && (
-                              <div>Assigned to: {task.assignedTo}</div>
-                            )}
-                            {task.completedAt && (
-                              <div>
-                                Completed: {new Date(task.completedAt).toLocaleDateString()} 
-                                by {task.completedBy}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </SheetContent>
-  );
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Not Started': return 'bg-gray-100 text-gray-800';
-    case 'In Progress': return 'bg-blue-100 text-blue-800';
-    case 'Completed': return 'bg-green-100 text-green-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-};
-
-const getTaskStatusColor = (status: string) => {
-  switch (status) {
-    case 'Pending': return 'bg-gray-100 text-gray-800';
-    case 'In Progress': return 'bg-yellow-100 text-yellow-800';
-    case 'Completed': return 'bg-green-100 text-green-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
 };
 
 export default Onboarding;

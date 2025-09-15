@@ -19,12 +19,28 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/responsive-table';
-import { useProductStore } from '@/lib/stores';
+import { productsService as productsAPI } from '@/services/products';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Search } from 'lucide-react';
 
 const AdminProducts = () => {
-  const { products, addProduct, updateProduct, toggleActive } = useProductStore();
+  const queryClient = useQueryClient();
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: productsAPI.getAll
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: productsAPI.create,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] })
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) => productsAPI.update(id, updates),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] })
+  });
+
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,7 +59,7 @@ const AdminProducts = () => {
   });
 
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -67,16 +83,16 @@ const AdminProducts = () => {
   const handleEdit = (product: any) => {
     setEditingProduct(product);
     setForm({
-      name: product.name,
+      name: product.productName,
       provider: product.provider,
       type: product.type,
       commissionRate: (product.commissionRate * 100).toString(),
       margin: (product.margin * 100).toString(),
       description: product.description,
-      features: product.features.join(', '),
-      apeExample: product.commissionExample.ape.toString(),
-      commissionExample: product.commissionExample.commission.toString(),
-      bands: product.bands.map((b: any) => `${b.threshold}:${b.rateAdjustment * 100}`).join(', ')
+      features: product.features?.join(', ') || '',
+      apeExample: product.commissionExample?.ape?.toString() || '',
+      commissionExample: product.commissionExample?.commission?.toString() || '',
+      bands: product.bands?.map((b: any) => `${b.threshold}:${b.rateAdjustment * 100}`).join(', ') || ''
     });
     setIsModalOpen(true);
   };
@@ -92,7 +108,7 @@ const AdminProducts = () => {
     }
 
     const productData = {
-      name: form.name,
+      productName: form.name,
       provider: form.provider,
       type: form.type,
       commissionRate: parseFloat(form.commissionRate) / 100,
@@ -117,16 +133,16 @@ const AdminProducts = () => {
     };
 
     if (editingProduct) {
-      updateProduct({ ...editingProduct, ...productData });
+      updateProductMutation.mutate({ id: editingProduct.id, updates: productData });
       toast({
-        title: "Product updated",
-        description: `${productData.name} has been updated successfully.`,
+        title: "Product updated", 
+        description: `${productData.productName} has been updated successfully.`,
       });
     } else {
-      addProduct(productData);
+      createProductMutation.mutate(productData);
       toast({
         title: "Product created",
-        description: `${productData.name} has been created successfully.`,
+        description: `${productData.productName} has been created successfully.`,
       });
     }
 
@@ -135,7 +151,7 @@ const AdminProducts = () => {
   };
 
   const handleToggleActive = (id: string, currentStatus: boolean) => {
-    toggleActive(id);
+    updateProductMutation.mutate({ id, updates: { active: !currentStatus } });
     toast({
       title: currentStatus ? "Product deactivated" : "Product activated",
       description: `Product has been ${currentStatus ? 'deactivated' : 'activated'} successfully.`,
@@ -307,9 +323,9 @@ const AdminProducts = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
+                 {filteredProducts.map((product) => (
+                   <TableRow key={product.id}>
+                     <TableCell className="font-medium">{product.productName}</TableCell>
                     <TableCell>{product.provider}</TableCell>
                     <TableCell>{product.type}</TableCell>
                     <TableCell>{(product.commissionRate * 100).toFixed(1)}%</TableCell>
@@ -343,10 +359,10 @@ const AdminProducts = () => {
           {/* Mobile Cards */}
           <ResponsiveTableMobile>
             {filteredProducts.map((product) => (
-              <ResponsiveTableCard key={product.id}>
-                <ResponsiveTableField label="Name">
-                  <span className="font-medium">{product.name}</span>
-                </ResponsiveTableField>
+               <ResponsiveTableCard key={product.id}>
+                 <ResponsiveTableField label="Name">
+                   <span className="font-medium">{product.productName}</span>
+                 </ResponsiveTableField>
                 <ResponsiveTableField label="Provider">
                   {product.provider}
                 </ResponsiveTableField>

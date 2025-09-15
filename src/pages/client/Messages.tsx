@@ -6,13 +6,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useMessageStore } from '@/lib/stores';
+import { messagesService } from '@/services/messages';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Send, MessageSquare, User } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Messages = () => {
-  const { threads, addMessage } = useMessageStore();
+  const queryClient = useQueryClient();
+  const { data: threads = [] } = useQuery({
+    queryKey: ['messageThreads'],
+    queryFn: messagesService.getThreads
+  });
+
+  const addMessageMutation = useMutation({
+    mutationFn: ({ threadId, message }: { threadId: string; message: any }) => 
+      messagesService.addMessage(threadId, message),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['messageThreads'] })
+  });
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const { toast } = useToast();
@@ -30,7 +41,7 @@ const Messages = () => {
       read: true
     };
 
-    addMessage(selectedThread, message);
+    addMessageMutation.mutate({ threadId: selectedThread, message });
     setNewMessage('');
     
     toast({
