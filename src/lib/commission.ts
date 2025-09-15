@@ -6,9 +6,10 @@ export interface Payment {
   ape: number;
   receipts: number;
   status: 'Paid' | 'Pending' | 'Processing';
-  advisorId?: string;
-  policyNumber: string;
-  clientId: string;
+  advisorEmail?: string;
+  policyNumber?: string;
+  clientId?: string;
+  notes?: string;
 }
 
 export interface Policy {
@@ -26,6 +27,8 @@ export interface Policy {
 
 export interface CommissionResult {
   methodUsed: 'APE' | 'Receipts';
+  productRatePct: number;
+  marginPct: number;
   commissionBase: number;
   poolAmount: number;
   split: {
@@ -72,10 +75,44 @@ export function computeCommission(payment: Payment, policy: Policy): CommissionR
   
   return {
     methodUsed,
+    productRatePct: policy.productRatePct,
+    marginPct: policy.marginPct,
     commissionBase,
     poolAmount,
     split
   };
+}
+
+// Audit logging helper
+export interface AuditEntry {
+  id: string;
+  timestamp: string;
+  actor: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  action: string;
+  entity: {
+    type: string;
+    id: string;
+    name: string;
+  };
+  details: string;
+  metadata: any;
+}
+
+// Get product name helper
+export function getProductName(productId: string): string {
+  const names: Record<string, string> = {
+    'royal-protect': 'Royal Protect',
+    'guardian-life': 'Guardian Life',
+    'metlife-secure': 'MetLife Secure',
+    'aviva-protection': 'Aviva Protection',
+    'zurich-income': 'Zurich Income'
+  };
+  return names[productId] || productId;
 }
 
 // Role-based access helper

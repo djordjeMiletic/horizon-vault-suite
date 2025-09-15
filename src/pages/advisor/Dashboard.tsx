@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { useState } from 'react';
 import { usePaymentStore, useTicketStore, useDocumentStore, useNotificationStore, usePaymentDataStore, useGoalsDataStore, useNotificationDataStore } from '@/lib/stores';
 import { computeCommission } from '@/lib/commission';
+import AddPaymentModal from '@/components/AddPaymentModal';
 import { rollupMonthly, getCurrentMonth } from '@/lib/timeSeries';
 
 const Dashboard = () => {
@@ -548,72 +549,14 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
       </Card>
 
       {/* Add Payment Modal */}
-      <Modal open={showPaymentModal} onOpenChange={setShowPaymentModal}>
-        <ModalHeader>
-          <ModalTitle>Add Payment</ModalTitle>
-          <ModalDescription>Create a new commission payment record</ModalDescription>
-        </ModalHeader>
-        <ModalContent>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="policyNumber">Policy Number *</Label>
-              <Input
-                id="policyNumber"
-                value={paymentForm.policyNumber}
-                onChange={(e) => setPaymentForm(prev => ({ ...prev, policyNumber: e.target.value }))}
-                placeholder="e.g., RP-2024-001"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="product">Product *</Label>
-              <Input
-                id="product"
-                value={paymentForm.product}
-                onChange={(e) => setPaymentForm(prev => ({ ...prev, product: e.target.value }))}
-                placeholder="e.g., Life Insurance Premium"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="type">Type</Label>
-                <Select value={paymentForm.type} onValueChange={(value: 'APE' | 'Receipts') => setPaymentForm(prev => ({ ...prev, type: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="APE">APE</SelectItem>
-                    <SelectItem value="Receipts">Receipts</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="amount">Amount *</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="date">Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={paymentForm.date}
-                onChange={(e) => setPaymentForm(prev => ({ ...prev, date: e.target.value }))}
-              />
-            </div>
-          </div>
-        </ModalContent>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setShowPaymentModal(false)}>Cancel</Button>
-          <Button onClick={handleAddPayment}>Add Payment</Button>
-        </ModalFooter>
-      </Modal>
+      <AddPaymentModal 
+        open={showPaymentModal} 
+        onOpenChange={setShowPaymentModal}
+        onPaymentAdded={() => {
+          // Refresh data or trigger analytics update
+          toast({ title: "Success", description: "Payment added successfully" });
+        }}
+      />
 
       {/* Request Approval Modal */}
       <Modal open={showApprovalModal} onOpenChange={setShowApprovalModal}>
