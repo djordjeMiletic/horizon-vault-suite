@@ -23,6 +23,7 @@ import AdvisorAudit from "./pages/advisor/Audit";
 import AdvisorGoals from "./pages/advisor/Goals";
 
 // Client pages
+import ClientDashboard from "./pages/client/Dashboard";
 import ClientCases from "./pages/client/Cases";
 import ClientDocuments from "./pages/client/Documents";
 import ClientMessages from "./pages/client/Messages";
@@ -105,6 +106,11 @@ const App = () => (
             } />
 
             {/* Client routes */}
+            <Route path="/client/dashboard" element={
+              <ProtectedRoute allowedRoles={['Client']}>
+                <ClientDashboard />
+              </ProtectedRoute>
+            } />
             <Route path="/client/cases" element={
               <ProtectedRoute allowedRoles={['Client']}>
                 <ClientCases />
