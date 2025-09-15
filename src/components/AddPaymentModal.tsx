@@ -203,10 +203,10 @@ const AddPaymentModal = ({ open, onOpenChange, onPaymentAdded }: AddPaymentModal
                 value={paymentForm.productId} 
                 onValueChange={(value) => setPaymentForm(prev => ({ ...prev, productId: value }))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Select product" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[200] bg-white border shadow-lg">
                   {(policiesData as Policy[]).map((policy) => (
                     <SelectItem key={policy.productId} value={policy.productId}>
                       {getProductName(policy.productId)}
@@ -222,10 +222,10 @@ const AddPaymentModal = ({ open, onOpenChange, onPaymentAdded }: AddPaymentModal
                 value={paymentForm.provider} 
                 onValueChange={(value) => setPaymentForm(prev => ({ ...prev, provider: value }))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Select provider" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[200] bg-white border shadow-lg">
                   {providers.map((provider) => (
                     <SelectItem key={provider} value={provider}>
                       {provider}
@@ -269,10 +269,10 @@ const AddPaymentModal = ({ open, onOpenChange, onPaymentAdded }: AddPaymentModal
                   value={paymentForm.advisor} 
                   onValueChange={(value) => setPaymentForm(prev => ({ ...prev, advisor: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Select advisor" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200] bg-white border shadow-lg">
                     {advisors.map((advisor) => (
                       <SelectItem key={advisor.email} value={advisor.email}>
                         {advisor.displayName}
