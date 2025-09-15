@@ -18,10 +18,11 @@ const Analytics = () => {
   // Get unique advisors for filtering
   const getAdvisors = () => {
     const advisorEmails = [...new Set(paymentsData.map(p => p.advisorEmail))];
-    return advisorEmails.map(email => ({
-      email,
-      name: email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-    }));
+    return advisorEmails.map(email => {
+      if (email === 'advisor@advisor.com') return { email, name: 'Sarah Johnson' };
+      if (email === 'advisor2@advisor.com') return { email, name: 'Michael Carter' };
+      return { email, name: email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase()) };
+    });
   };
 
   const advisors = getAdvisors();

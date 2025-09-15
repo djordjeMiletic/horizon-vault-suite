@@ -40,7 +40,7 @@ export const AppLayout = () => {
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Topbar />
-          <main className="flex-1 p-3 sm:p-6 overflow-x-auto">
+          <main className="flex-1 p-2 sm:p-4 lg:p-6 overflow-x-hidden">
             <Outlet />
           </main>
         </div>
