@@ -148,6 +148,7 @@ const Jobs = () => {
                 updateRequirement={updateRequirement}
                 removeRequirement={removeRequirement}
                 handleCreateJob={handleCreateJob}
+                onCancel={() => setIsCreateDialogOpen(false)}
               />
             </Dialog>
           </div>
@@ -177,6 +178,7 @@ const Jobs = () => {
             updateRequirement={updateRequirement}
             removeRequirement={removeRequirement}
             handleCreateJob={handleCreateJob}
+            onCancel={() => setIsCreateDialogOpen(false)}
           />
         </Dialog>
       </div>
@@ -293,7 +295,7 @@ const Jobs = () => {
   );
 };
 
-const JobCreateDialog = ({ newJob, setNewJob, addRequirement, updateRequirement, removeRequirement, handleCreateJob }) => (
+const JobCreateDialog = ({ newJob, setNewJob, addRequirement, updateRequirement, removeRequirement, handleCreateJob, onCancel }) => (
   <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
     <DialogHeader>
       <DialogTitle>Create New Job Posting</DialogTitle>
@@ -389,7 +391,7 @@ const JobCreateDialog = ({ newJob, setNewJob, addRequirement, updateRequirement,
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={() => { setNewJob({ title: '', department: '', location: '', description: '', requirements: [''] }); setIsCreateDialogOpen(false); }}>Cancel</Button>
+        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
         <Button type="button" onClick={handleCreateJob}>Create Job</Button>
       </div>
     </div>

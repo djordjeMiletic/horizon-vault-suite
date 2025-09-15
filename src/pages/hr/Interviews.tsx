@@ -196,6 +196,7 @@ const Interviews = () => {
                 updateQuestion={updateQuestion}
                 removeQuestion={removeQuestion}
                 handleCreateInterview={handleCreateInterview}
+                onCancel={() => setIsCreateDialogOpen(false)}
               />
             </Dialog>
           </div>
@@ -227,6 +228,7 @@ const Interviews = () => {
             updateQuestion={updateQuestion}
             removeQuestion={removeQuestion}
             handleCreateInterview={handleCreateInterview}
+            onCancel={() => setIsCreateDialogOpen(false)}
           />
         </Dialog>
       </div>
@@ -322,7 +324,8 @@ const InterviewCreateDialog = ({
   addQuestion, 
   updateQuestion, 
   removeQuestion, 
-  handleCreateInterview 
+  handleCreateInterview,
+  onCancel 
 }) => (
   <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
     <DialogHeader>
@@ -472,7 +475,7 @@ const InterviewCreateDialog = ({
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={() => { setNewInterview({ candidateId: '', candidateName: '', jobId: '', jobTitle: '', interviewerId: '1', interviewerName: 'John Smith', scheduledAt: '', duration: 60, type: 'Initial Interview', location: '', notes: '', interviewQuestions: [''] }); setIsCreateDialogOpen(false); }}>Cancel</Button>
+        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
         <Button type="button" onClick={handleCreateInterview}>Schedule Interview</Button>
       </div>
     </div>
