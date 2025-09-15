@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,58 +6,79 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useJobStore, useApplicantStore } from '@/lib/stores';
 import { useToast } from '@/hooks/use-toast';
-import { MapPin, Calendar, Users, Briefcase } from 'lucide-react';
+import { MapPin, Calendar, Users, Briefcase, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { getPublicJobs, type Job } from '@/services/jobs';
+import { createApplication } from '@/services/applications';
 
 const PublicJobs = () => {
-  const { jobs } = useJobStore();
-  const { addApplicant } = useApplicantStore();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [applicationForm, setApplicationForm] = useState({
     name: '',
     email: '',
     phone: '',
-    cv: '',
+    cv: null as File | null,
     coverLetter: ''
   });
-  const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
-  const openJobs = jobs.filter(job => job.status === 'Open');
-
-  const handleApply = () => {
-    if (!applicationForm.name || !applicationForm.email || !selectedJob) return;
-
-    const newApplicant = {
-      name: applicationForm.name,
-      email: applicationForm.email,
-      phone: applicationForm.phone,
-      appliedFor: selectedJob.id,
-      jobTitle: selectedJob.title,
-      status: 'New' as const,
-      appliedAt: new Date().toISOString(),
-      cv: applicationForm.cv || '/documents/cv-placeholder.pdf',
-      notes: applicationForm.coverLetter,
-      timeline: [
-        {
-          id: `timeline-${Date.now()}`,
-          at: new Date().toISOString(),
-          action: 'Application Submitted',
-          by: 'Applicant',
-          details: 'Application submitted via public website'
-        }
-      ]
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await getPublicJobs();
+        setJobs(data.filter(job => job.status === 'Open'));
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load job listings",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
     };
 
-    addApplicant(newApplicant);
-    setApplicationForm({ name: '', email: '', phone: '', cv: '', coverLetter: '' });
-    setSelectedJob(null);
+    fetchJobs();
+  }, [toast]);
 
-    toast({
-      title: "Application submitted!",
-      description: "Thank you for your interest. We'll be in touch soon.",
-    });
+  const handleApply = async () => {
+    if (!applicationForm.name || !applicationForm.email || !selectedJob) return;
+
+    try {
+      await createApplication({
+        name: applicationForm.name,
+        email: applicationForm.email,
+        phone: applicationForm.phone,
+        jobId: selectedJob.id,
+        cv: applicationForm.cv || undefined,
+        coverLetter: applicationForm.coverLetter
+      });
+
+      setApplicationForm({ 
+        name: '', 
+        email: '', 
+        phone: '', 
+        cv: null, 
+        coverLetter: '' 
+      });
+      setSelectedJob(null);
+
+      toast({
+        title: "Application submitted!",
+        description: "Thank you for your interest. We'll be in touch soon.",
+      });
+    } catch (error) {
+      console.error('Failed to submit application:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit application",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -74,7 +95,12 @@ const PublicJobs = () => {
 
       {/* Jobs Section */}
       <div className="container mx-auto px-4 py-12">
-        {openJobs.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            Loading job listings...
+          </div>
+        ) : jobs.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
@@ -86,7 +112,7 @@ const PublicJobs = () => {
           </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {openJobs.map((job) => (
+            {jobs.map((job) => (
               <Card key={job.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
@@ -162,9 +188,12 @@ const PublicJobs = () => {
                           <Label htmlFor="cv">CV/Resume</Label>
                           <Input
                             id="cv"
-                            value={applicationForm.cv}
-                            onChange={(e) => setApplicationForm({...applicationForm, cv: e.target.value})}
-                            placeholder="Upload CV (mock field)"
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null;
+                              setApplicationForm({...applicationForm, cv: file});
+                            }}
                           />
                         </div>
                         <div>

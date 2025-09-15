@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useApplicantStore, useJobStore } from '@/lib/stores';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,57 +19,87 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Search, Users, Eye, FileText, Plus } from 'lucide-react';
+import { Search, Users, Eye, FileText, Plus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getApplications, updateApplicationStatus, addApplicationNote, type Applicant } from '@/services/applications';
+import { getJobs } from '@/services/jobs';
 
 const Applications = () => {
-  const { applicants, updateApplicant, addTimelineEntry } = useApplicantStore();
-  const { jobs } = useJobStore();
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [jobFilter, setJobFilter] = useState('All');
 
-  const handleStatusUpdate = (applicantId: string, newStatus: string) => {
-    const applicant = applicants.find(a => a.id === applicantId);
-    if (!applicant) return;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [applicationsData, jobsData] = await Promise.all([
+          getApplications(),
+          getJobs()
+        ]);
+        
+        setApplicants(applicationsData.items || []);
+        setJobs(jobsData.items || []);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load applications",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    updateApplicant(applicantId, { status: newStatus as any });
-    
-    addTimelineEntry(applicantId, {
-      at: new Date().toISOString(),
-      action: `Status Updated to ${newStatus}`,
-      by: 'HR Team',
-      details: `Application status changed from ${applicant.status} to ${newStatus}`
-    });
+    fetchData();
+  }, [toast]);
 
-    toast({
-      title: 'Status Updated',
-      description: `Applicant status changed to ${newStatus}`
-    });
+  const handleStatusUpdate = async (applicantId: string, newStatus: string) => {
+    try {
+      const updatedApplicant = await updateApplicationStatus(applicantId, newStatus as any);
+      setApplicants(prev => 
+        prev.map(app => app.id === applicantId ? updatedApplicant : app)
+      );
+      
+      toast({
+        title: 'Status Updated',
+        description: `Application status changed to ${newStatus}`
+      });
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleAddNote = (applicantId: string, note: string) => {
+  const handleAddNote = async (applicantId: string, note: string) => {
     if (!note.trim()) return;
 
-    const applicant = applicants.find(a => a.id === applicantId);
-    if (!applicant) return;
+    try {
+      const updatedApplicant = await addApplicationNote(applicantId, note);
+      setApplicants(prev => 
+        prev.map(app => app.id === applicantId ? updatedApplicant : app)
+      );
 
-    updateApplicant(applicantId, {
-      notes: applicant.notes ? `${applicant.notes}\n\n${note}` : note
-    });
-
-    addTimelineEntry(applicantId, {
-      at: new Date().toISOString(),
-      action: 'Note Added',
-      by: 'HR Team',
-      details: note
-    });
-
-    toast({
-      title: 'Note Added',
-      description: 'Note has been added to applicant profile'
-    });
+      toast({
+        title: 'Note Added',
+        description: 'Note has been added to applicant profile'
+      });
+    } catch (error) {
+      console.error('Failed to add note:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add note",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -95,6 +124,24 @@ const Applications = () => {
     
     return matchesSearch && matchesStatus && matchesJob;
   });
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Applications</h1>
+            <p className="text-muted-foreground">Manage job applications and candidate progress</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          Loading applications...
+        </div>
+      </div>
+    );
+  }
 
   if (applicants.length === 0) {
     return (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,17 +8,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Filter } from 'lucide-react';
+import { Download, Filter, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { canExportCSV } from '@/lib/commission';
 import CustomReports from '../advisor/components/CustomReports';
-
-import commissionsData from '@/mocks/seed/commissions.json';
-import productsData from '@/mocks/seed/products.json';
+import { getCommissionDetails } from '@/services/payments';
+import { getPolicies } from '@/services/policies';
 
 const AdminReports = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [commissions, setCommissions] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     period: 'all',
     product: 'all',
@@ -26,34 +28,70 @@ const AdminReports = () => {
     advisor: 'all'
   });
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [commissionsData, productsData] = await Promise.all([
+          getCommissionDetails({}),
+          getPolicies()
+        ]);
+        
+        setCommissions(commissionsData.items || []);
+        setProducts(productsData || []);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load reports data",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [toast]);
+
   // Get all commissions for admin view
   const getFilteredCommissions = () => {
-    let filtered = commissionsData;
+    let filtered = commissions;
 
     // Apply filters
     if (filters.product !== 'all') {
-      filtered = filtered.filter(c => c.productId === filters.product);
+      filtered = filtered.filter(c => c.product === filters.product);
     }
 
     if (filters.advisor !== 'all') {
-      filtered = filtered.filter(c => c.advisorId === filters.advisor);
+      filtered = filtered.filter(c => c.advisorEmail === filters.advisor);
     }
 
     // Period filtering (simplified for demo)
     if (filters.period === 'current-month') {
       const currentMonth = new Date().toISOString().slice(0, 7);
-      filtered = filtered.filter(c => c.month === currentMonth);
+      filtered = filtered.filter(c => c.date?.slice(0, 7) === currentMonth);
     } else if (filters.period === 'last-month') {
       const lastMonth = new Date();
       lastMonth.setMonth(lastMonth.getMonth() - 1);
       const lastMonthStr = lastMonth.toISOString().slice(0, 7);
-      filtered = filtered.filter(c => c.month === lastMonthStr);
+      filtered = filtered.filter(c => c.date?.slice(0, 7) === lastMonthStr);
     }
 
     return filtered;
   };
 
   const filteredCommissions = getFilteredCommissions();
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          Loading reports...
+        </div>
+      </div>
+    );
+  }
 
   // Calculate totals
   const totalCommissions = filteredCommissions.reduce((sum, c) => sum + c.commissionAmount, 0);

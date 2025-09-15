@@ -1,81 +1,65 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Progress } from "@/components/ui/progress";
-import { Star, MapPin, Phone, Mail, TrendingUp, Users, DollarSign, Plus } from "lucide-react";
+import { Star, MapPin, Phone, Mail, TrendingUp, Users, DollarSign, Plus, Loader2 } from "lucide-react";
+import { getReferralPartners, updateReferralPartnerStatus, type ReferralPartner } from "@/services/referrals";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock data - in real app this would come from a store
-const referralPartners = [
-  {
-    id: "R-001",
-    name: "Bright Partners",
-    company: "Bright Partners LLP", 
-    email: "contact@brightpartners.co.uk",
-    phone: "+44 20 7890 1234",
-    region: "London",
-    activeDeals: 3,
-    rating: 4.5,
-    status: "Active",
-    totalLeads: 15,
-    conversionRate: 60,
-    totalValue: 125000,
-    lastActivity: "2025-09-10T14:30:00Z",
-    notes: "Excellent conversion rate, specializes in corporate clients"
-  },
-  {
-    id: "R-002", 
-    name: "Northern Finance",
-    company: "Northern Finance Solutions",
-    email: "partnerships@northfin.com",
-    phone: "+44 161 555 7890",
-    region: "Manchester",
-    activeDeals: 1,
-    rating: 3.8,
-    status: "Active",
-    totalLeads: 8,
-    conversionRate: 45,
-    totalValue: 68000,
-    lastActivity: "2025-09-08T11:15:00Z", 
-    notes: "Good for SME clients in the North West region"
-  },
-  {
-    id: "R-003",
-    name: "Coastal Advisors", 
-    company: "Coastal Financial Advisors",
-    email: "info@coastaladvisors.co.uk",
-    phone: "+44 1273 555 4567",
-    region: "Brighton",
-    activeDeals: 0,
-    rating: 2.9,
-    status: "Inactive",
-    totalLeads: 12,
-    conversionRate: 25,
-    totalValue: 42000,
-    lastActivity: "2025-08-15T09:45:00Z",
-    notes: "Performance has declined, needs review meeting"
-  },
-  {
-    id: "R-004",
-    name: "Premium Connect",
-    company: "Premium Connect Ltd", 
-    email: "hello@premiumconnect.com",
-    phone: "+44 131 555 2468",
-    region: "Edinburgh",
-    activeDeals: 2,
-    rating: 4.2,
-    status: "Active",
-    totalLeads: 10,
-    conversionRate: 70,
-    totalValue: 89000,
-    lastActivity: "2025-09-11T16:20:00Z",
-    notes: "High-value referrals, strong relationship"
-  }
-];
 
 const Referrals = () => {
-  const [selectedPartner, setSelectedPartner] = useState<typeof referralPartners[0] | null>(null);
+  const [referralPartners, setReferralPartners] = useState<ReferralPartner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const data = await getReferralPartners();
+        setReferralPartners(data);
+      } catch (error) {
+        console.error('Failed to fetch referral partners:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load referral partners",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPartners();
+  }, [toast]);
+
+  const handleStatusToggle = async (partnerId: string, currentStatus: string) => {
+    const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+    
+    try {
+      await updateReferralPartnerStatus(partnerId, newStatus);
+      setReferralPartners(prev => 
+        prev.map(partner => 
+          partner.id === partnerId 
+            ? { ...partner, status: newStatus }
+            : partner
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: `Partner ${newStatus.toLowerCase()} successfully`
+      });
+    } catch (error) {
+      console.error('Failed to update partner status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update partner status",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     return status === "Active" 
@@ -110,6 +94,12 @@ const Referrals = () => {
         </Button>
       </div>
 
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          Loading referral partners...
+        </div>
+      ) : (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {referralPartners.map((partner) => (
           <Card key={partner.id} className="hover:shadow-lg transition-shadow">
@@ -223,6 +213,7 @@ const Referrals = () => {
                       <Button 
                         variant={partner.status === "Active" ? "destructive" : "default"}
                         className="flex-1"
+                        onClick={() => handleStatusToggle(partner.id, partner.status)}
                       >
                         {partner.status === "Active" ? "Deactivate" : "Activate"}
                       </Button>
@@ -237,6 +228,7 @@ const Referrals = () => {
           </Card>
         ))}
       </div>
+      )}
     </div>
   );
 };
