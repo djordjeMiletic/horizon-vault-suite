@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Target, Plus, TrendingUp, Calendar } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import { useGoalStore } from '@/lib/stores';
 
 // Import mock data
@@ -176,29 +176,51 @@ const Goals = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              6-Month Performance
+              Target vs Achieved (6 Months)
             </CardTitle>
-            <CardDescription>Achievement vs Target trend</CardDescription>
+            <CardDescription>Monthly performance comparison</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-32">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={sparklineData}>
-                  <Line 
-                    type="monotone" 
-                    dataKey="progress" 
-                    stroke="#60A3D9" 
-                    strokeWidth={2}
-                    dot={false}
+                <BarChart data={sparklineData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <XAxis dataKey="month" hide />
-                  <YAxis hide />
-                </LineChart>
+                  <YAxis 
+                    tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`}
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => [
+                      `£${value.toLocaleString()}`, 
+                      name === 'target' ? 'Target' : 'Achieved'
+                    ]}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="target" 
+                    fill="hsl(var(--primary))" 
+                    name="Target"
+                    radius={[2, 2, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="achieved" 
+                    fill="hsl(var(--secondary))" 
+                    name="Achieved"
+                    radius={[2, 2, 0, 0]}
+                  />
+                </BarChart>
               </ResponsiveContainer>
-            </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-2">
-              <span>{sparklineData[0]?.month || ''}</span>
-              <span>{sparklineData[sparklineData.length - 1]?.month || ''}</span>
             </div>
           </CardContent>
         </Card>

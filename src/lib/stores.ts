@@ -132,6 +132,9 @@ interface PaymentCycle {
     policyNumber: string;
     advisor: string;
     exceptionReason?: string;
+    proposedStatus?: string;
+    finalStatus?: string;
+    managerNote?: string;
   }>;
 }
 
