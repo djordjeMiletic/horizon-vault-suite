@@ -47,18 +47,19 @@ export const Sidebar = () => {
   ];
 
   const managerItems = [
-    { title: 'Dashboard', url: '/advisor/dashboard', icon: BarChart3 },
+    { title: 'Dashboard', url: '/manager/dashboard', icon: BarChart3 },
     { title: 'Reports', url: '/advisor/reports', icon: FileText },
     { title: 'Analytics', url: '/advisor/analytics', icon: BarChart3 },
     { title: 'Audit Log', url: '/advisor/audit', icon: Shield },
     { title: 'Goals', url: '/advisor/goals', icon: Target },
-    { title: 'Recruitment', url: '/advisor/recruitment', icon: Briefcase },
-    { title: 'Applicants', url: '/advisor/applicants', icon: UserPlus },
-    { title: 'Interviews', url: '/advisor/interviews', icon: Calendar },
-    { title: 'Onboarding', url: '/advisor/onboarding', icon: ClipboardList },
+    { title: 'Recruitment', url: '/hr/jobs', icon: Briefcase },
+    { title: 'Applicants', url: '/hr/applications', icon: UserPlus },
+    { title: 'Interviews', url: '/hr/interviews', icon: Calendar },
+    { title: 'Onboarding', url: '/hr/onboarding', icon: ClipboardList },
   ];
 
   const clientItems = [
+    { title: 'Dashboard', url: '/client/dashboard', icon: BarChart3 },
     { title: 'Cases', url: '/client/cases', icon: FolderOpen },
     { title: 'Documents', url: '/client/documents', icon: FileText },
     { title: 'Messages', url: '/client/messages', icon: MessageSquare },
@@ -70,6 +71,7 @@ export const Sidebar = () => {
   ];
 
   const adminItems = [
+    { title: 'Dashboard', url: '/admin/dashboard', icon: BarChart3 },
     { title: 'Compliance', url: '/admin/compliance', icon: Shield },
     { title: 'Payments', url: '/admin/payments', icon: CreditCard },
     { title: 'Leads', url: '/admin/leads', icon: Users },
