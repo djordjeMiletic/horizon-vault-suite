@@ -198,7 +198,29 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* HR routes */}
+            {/* HR routes - accessible by managers through advisor portal */}
+            <Route path="/advisor/recruitment" element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <HRJobs />
+              </ProtectedRoute>
+            } />
+            <Route path="/advisor/applicants" element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <HRApplications />
+              </ProtectedRoute>
+            } />
+            <Route path="/advisor/interviews" element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <HRInterviews />
+              </ProtectedRoute>
+            } />
+            <Route path="/advisor/onboarding" element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <HROnboarding />
+              </ProtectedRoute>
+            } />
+
+            {/* Legacy HR routes - kept for backwards compatibility */}
             <Route path="/hr/jobs" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <HRJobs />

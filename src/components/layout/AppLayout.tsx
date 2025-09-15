@@ -30,7 +30,7 @@ export const AppLayout = () => {
     return <Navigate to="/unauthorized" replace />;
   }
   
-  if (isHRRoute && !['admin'].includes(user?.role || '')) {
+  if (isHRRoute && !['admin', 'manager'].includes(user?.role || '')) {
     return <Navigate to="/unauthorized" replace />;
   }
 

@@ -46,6 +46,18 @@ export const Sidebar = () => {
     { title: 'Goals', url: '/advisor/goals', icon: Target },
   ];
 
+  const managerItems = [
+    { title: 'Dashboard', url: '/advisor/dashboard', icon: BarChart3 },
+    { title: 'Reports', url: '/advisor/reports', icon: FileText },
+    { title: 'Analytics', url: '/advisor/analytics', icon: BarChart3 },
+    { title: 'Audit Log', url: '/advisor/audit', icon: Shield },
+    { title: 'Goals', url: '/advisor/goals', icon: Target },
+    { title: 'Recruitment', url: '/advisor/recruitment', icon: Briefcase },
+    { title: 'Applicants', url: '/advisor/applicants', icon: UserPlus },
+    { title: 'Interviews', url: '/advisor/interviews', icon: Calendar },
+    { title: 'Onboarding', url: '/advisor/onboarding', icon: ClipboardList },
+  ];
+
   const clientItems = [
     { title: 'Cases', url: '/client/cases', icon: FolderOpen },
     { title: 'Documents', url: '/client/documents', icon: FileText },
@@ -83,6 +95,10 @@ export const Sidebar = () => {
       if (user?.role === 'referral') {
         return advisorItems.filter(item => item.url === '/advisor/reports');
       }
+      // Show manager items (with HR tabs) if user is manager
+      if (user?.role === 'manager') {
+        return managerItems;
+      }
       return advisorItems;
     }
     if (path.startsWith('/client')) return clientItems;
@@ -109,7 +125,8 @@ export const Sidebar = () => {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
-            {location.pathname.startsWith('/advisor') && 'Advisory Portal'}
+            {location.pathname.startsWith('/advisor') && 
+              (user?.role === 'manager' ? 'Manager Portal' : 'Advisory Portal')}
             {location.pathname.startsWith('/client') && 'Client Portal'}
             {location.pathname.startsWith('/admin') && 'Admin Portal'}
             {location.pathname.startsWith('/hr') && 'HR Portal'}
