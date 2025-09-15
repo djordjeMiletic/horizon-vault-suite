@@ -156,7 +156,7 @@ const CustomReports = () => {
       .filter(field => selectedFields.includes(field.id))
       .map(field => field.label);
       
-    const rows = transformedData.map(row => 
+    const csvData = transformedData.map(row => 
       selectedFields.map(fieldId => {
         const field = AVAILABLE_FIELDS.find(f => f.id === fieldId);
         const value = row[fieldId as keyof typeof row];
@@ -171,7 +171,12 @@ const CustomReports = () => {
       })
     );
 
-    exportToCsv([headers, ...rows], `custom-report-${Date.now()}.csv`);
+    const csvContent = [
+      headers,
+      ...csvData
+    ].map(row => 
+      Array.isArray(row) ? row.join(',') : String(row)
+    ).join('\n');
     
     toast({
       title: "Export Complete",
@@ -191,12 +196,13 @@ const CustomReports = () => {
 
     addTemplate({
       name: templateName,
-      fields: selectedFields,
+      selectedFields,
       filters: {
         dateRange,
-        productFilter,
-        statusFilter,
-      }
+        products: [],
+        status: []
+      },
+      createdBy: user?.email || 'unknown'
     });
 
     toast({

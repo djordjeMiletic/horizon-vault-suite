@@ -33,7 +33,10 @@ const Dashboard = () => {
   // Use API services
   const { data: payments = [] } = useQuery({
     queryKey: ['payments'],
-    queryFn: paymentsAPI.getAll
+    queryFn: async () => {
+      const result = await paymentsAPI.getAll();
+      return Array.isArray(result) ? result : result.items || [];
+    }
   });
   
   const { data: advisorGoals } = useQuery({

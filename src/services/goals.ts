@@ -6,3 +6,9 @@ export async function getGoals(subjectType: "Advisor" | "Manager", ref: string) 
   const { data } = await api.get("/goals", { params: { subject, ref } });
   return data as GoalDto;
 }
+
+export const goalsService = {
+  getGoals,
+  getAdvisorGoals: (advisorEmail: string) => getGoals("Advisor", advisorEmail),
+  getManagerGoals: () => getGoals("Manager", "")
+};

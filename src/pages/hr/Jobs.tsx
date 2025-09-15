@@ -8,15 +8,31 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Users, Eye } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { 
+  ResponsiveTableDesktop,
+  ResponsiveTableMobile,
+  ResponsiveTableCard,
+  ResponsiveTableField,
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/responsive-table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Search, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Jobs = () => {
   const queryClient = useQueryClient();
-  const { data: jobs = [] } = useQuery({
+  const { data: jobsData = { items: [] } } = useQuery({
     queryKey: ['jobs'],
     queryFn: jobsService.getAll
   });
+
+  const jobs = Array.isArray(jobsData) ? jobsData : jobsData.items || [];
 
   const createJobMutation = useMutation({
     mutationFn: jobsService.create,
@@ -62,30 +78,33 @@ const Jobs = () => {
       return;
     }
 
-    createJobMutation.mutate({
-      ...newJob,
-      salaryMin: parseInt(newJob.salaryMin) || 0,
-      salaryMax: parseInt(newJob.salaryMax) || 0,
-      status: 'Open',
-      postedDate: new Date().toISOString(),
-      applications: 0
-    });
+    const jobData = {
+      title: newJob.title,
+      department: newJob.department,
+      location: newJob.location,
+      description: newJob.description,
+      requirements: newJob.requirements ? newJob.requirements.split(',').map(r => r.trim()) : []
+    };
 
-    setNewJob({
-      title: '',
-      department: 'Sales',
-      location: 'London', 
-      employmentType: 'Full-time',
-      salaryMin: '',
-      salaryMax: '',
-      description: '',
-      requirements: ''
-    });
-    setIsCreateDialogOpen(false);
+    createJobMutation.mutate(jobData, {
+      onSuccess: () => {
+        setNewJob({
+          title: '',
+          department: 'Sales',
+          location: 'London', 
+          employmentType: 'Full-time',
+          salaryMin: '',
+          salaryMax: '',
+          description: '',
+          requirements: ''
+        });
+        setIsCreateDialogOpen(false);
 
-    toast({
-      title: "Job created",
-      description: "New job posting has been created successfully.",
+        toast({
+          title: "Job created",
+          description: "New job posting has been created successfully.",
+        });
+      }
     });
   };
 
@@ -174,44 +193,6 @@ const Jobs = () => {
               </div>
 
               <div>
-                <Label htmlFor="employmentType">Employment Type</Label>
-                <Select value={newJob.employmentType} onValueChange={(value) => setNewJob({...newJob, employmentType: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Full-time">Full-time</SelectItem>
-                    <SelectItem value="Part-time">Part-time</SelectItem>
-                    <SelectItem value="Contract">Contract</SelectItem>
-                    <SelectItem value="Internship">Internship</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="salaryMin">Min Salary (£)</Label>
-                  <Input
-                    id="salaryMin"
-                    type="number"
-                    value={newJob.salaryMin}
-                    onChange={(e) => setNewJob({...newJob, salaryMin: e.target.value})}
-                    placeholder="30000"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="salaryMax">Max Salary (£)</Label>
-                  <Input
-                    id="salaryMax" 
-                    type="number"
-                    value={newJob.salaryMax}
-                    onChange={(e) => setNewJob({...newJob, salaryMax: e.target.value})}
-                    placeholder="60000"
-                  />
-                </div>
-              </div>
-
-              <div>
                 <Label htmlFor="description">Job Description *</Label>
                 <Textarea
                   id="description"
@@ -223,7 +204,7 @@ const Jobs = () => {
               </div>
 
               <div>
-                <Label htmlFor="requirements">Requirements</Label>
+                <Label htmlFor="requirements">Requirements (comma-separated)</Label>
                 <Textarea
                   id="requirements"
                   value={newJob.requirements}
@@ -263,8 +244,6 @@ const Jobs = () => {
                   <TableHead>Title</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Location</TableHead>
-                  <TableHead>Employment Type</TableHead>
-                  <TableHead>Salary</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Applications</TableHead>
                   <TableHead>Actions</TableHead>
@@ -276,10 +255,6 @@ const Jobs = () => {
                     <TableCell className="font-medium">{job.title}</TableCell>
                     <TableCell>{job.department}</TableCell>
                     <TableCell>{job.location}</TableCell>
-                    <TableCell>{job.employmentType}</TableCell>
-                    <TableCell>
-                      £{job.salaryMin?.toLocaleString()} - £{job.salaryMax?.toLocaleString()}
-                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Switch
@@ -291,7 +266,7 @@ const Jobs = () => {
                         </Badge>
                       </div>
                     </TableCell>
-                    <TableCell>{job.applications || 0}</TableCell>
+                    <TableCell>{job.applicantCount || 0}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -320,12 +295,6 @@ const Jobs = () => {
                 <ResponsiveTableField label="Location">
                   {job.location}
                 </ResponsiveTableField>
-                <ResponsiveTableField label="Employment Type">
-                  {job.employmentType}
-                </ResponsiveTableField>
-                <ResponsiveTableField label="Salary">
-                  £{job.salaryMin?.toLocaleString()} - £{job.salaryMax?.toLocaleString()}
-                </ResponsiveTableField>
                 <ResponsiveTableField label="Status">
                   <div className="flex items-center space-x-2">
                     <Switch
@@ -338,7 +307,7 @@ const Jobs = () => {
                   </div>
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Applications">
-                  {job.applications || 0}
+                  {job.applicantCount || 0}
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Actions">
                   <Button
@@ -373,22 +342,11 @@ const Jobs = () => {
                   <p className="text-sm font-medium">{selectedJob.location}</p>
                 </div>
                 <div>
-                  <Label>Employment Type</Label>
-                  <p className="text-sm font-medium">{selectedJob.employmentType}</p>
-                </div>
-                <div>
                   <Label>Status</Label>
                   <Badge variant={getStatusColor(selectedJob.status)}>
                     {selectedJob.status}
                   </Badge>
                 </div>
-              </div>
-              
-              <div>
-                <Label>Salary Range</Label>
-                <p className="text-sm font-medium">
-                  £{selectedJob.salaryMin?.toLocaleString()} - £{selectedJob.salaryMax?.toLocaleString()}
-                </p>
               </div>
 
               <div>
@@ -399,14 +357,21 @@ const Jobs = () => {
               {selectedJob.requirements && (
                 <div>
                   <Label>Requirements</Label>
-                  <p className="text-sm mt-1">{selectedJob.requirements}</p>
+                  <ul className="text-sm mt-1 list-disc list-inside">
+                    {Array.isArray(selectedJob.requirements) 
+                      ? selectedJob.requirements.map((req: string, index: number) => (
+                          <li key={index}>{req}</li>
+                        ))
+                      : <li>{selectedJob.requirements}</li>
+                    }
+                  </ul>
                 </div>
               )}
 
               <div>
                 <Label>Posted</Label>
                 <p className="text-sm font-medium">
-                  {new Date(selectedJob.postedDate).toLocaleDateString()}
+                  {new Date(selectedJob.postedAt || selectedJob.createdAt || Date.now()).toLocaleDateString()}
                 </p>
               </div>
             </div>

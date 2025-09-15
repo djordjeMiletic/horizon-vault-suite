@@ -58,10 +58,10 @@ const AdminProducts = () => {
     bands: ''
   });
 
-  const filteredProducts = products.filter(product =>
-    product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.type.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter((product: any) =>
+    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.provider?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.type?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const resetForm = () => {
@@ -83,16 +83,16 @@ const AdminProducts = () => {
   const handleEdit = (product: any) => {
     setEditingProduct(product);
     setForm({
-      name: product.productName,
-      provider: product.provider,
-      type: product.type,
-      commissionRate: (product.commissionRate * 100).toString(),
-      margin: (product.margin * 100).toString(),
-      description: product.description,
+      name: product.name || '',
+      provider: product.provider || '',
+      type: product.type || '',
+      commissionRate: ((product.commissionRate || 0) * 100).toString(),
+      margin: ((product.margin || 0) * 100).toString(),
+      description: product.description || '',
       features: product.features?.join(', ') || '',
       apeExample: product.commissionExample?.ape?.toString() || '',
       commissionExample: product.commissionExample?.commission?.toString() || '',
-      bands: product.bands?.map((b: any) => `${b.threshold}:${b.rateAdjustment * 100}`).join(', ') || ''
+      bands: product.bands?.map((b: any) => `${b.threshold}:${(b.rateAdjustment || 0) * 100}`).join(', ') || ''
     });
     setIsModalOpen(true);
   };
@@ -108,7 +108,7 @@ const AdminProducts = () => {
     }
 
     const productData = {
-      productName: form.name,
+      name: form.name,
       provider: form.provider,
       type: form.type,
       commissionRate: parseFloat(form.commissionRate) / 100,
@@ -136,13 +136,13 @@ const AdminProducts = () => {
       updateProductMutation.mutate({ id: editingProduct.id, updates: productData });
       toast({
         title: "Product updated", 
-        description: `${productData.productName} has been updated successfully.`,
+        description: `${productData.name} has been updated successfully.`,
       });
     } else {
       createProductMutation.mutate(productData);
       toast({
         title: "Product created",
-        description: `${productData.productName} has been created successfully.`,
+        description: `${productData.name} has been created successfully.`,
       });
     }
 
@@ -323,9 +323,9 @@ const AdminProducts = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                 {filteredProducts.map((product) => (
+                 {filteredProducts.map((product: any) => (
                    <TableRow key={product.id}>
-                     <TableCell className="font-medium">{product.productName}</TableCell>
+                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.provider}</TableCell>
                     <TableCell>{product.type}</TableCell>
                     <TableCell>{(product.commissionRate * 100).toFixed(1)}%</TableCell>
@@ -361,7 +361,7 @@ const AdminProducts = () => {
             {filteredProducts.map((product) => (
                <ResponsiveTableCard key={product.id}>
                  <ResponsiveTableField label="Name">
-                   <span className="font-medium">{product.productName}</span>
+                   <span className="font-medium">{product.name}</span>
                  </ResponsiveTableField>
                 <ResponsiveTableField label="Provider">
                   {product.provider}

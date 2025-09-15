@@ -35,3 +35,11 @@ export async function getCommissionDetails(params: {
   const { data } = await api.get("/reports/commission-details", { params });
   return data;
 }
+
+export const paymentsService = {
+  addPayment,
+  getPayments,
+  getCommissionDetails,
+  getAll: () => getPayments({}),
+  getByAdvisor: (advisorEmail: string) => getPayments({ advisorEmail })
+};

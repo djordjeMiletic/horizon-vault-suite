@@ -8,10 +8,14 @@ export interface PaymentCycleItem {
   amount: number;
   type: 'APE' | 'Receipts';
   product: string;
+  provider: string;
+  date: string;
+  commission: number;
   status: 'Pending' | 'Approved' | 'Rejected' | 'Exception';
   proposedStatus?: string;
   finalStatus?: string;
   notes?: string;
+  exceptionReason?: string;
 }
 
 export interface PaymentCycle {

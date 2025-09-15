@@ -63,3 +63,15 @@ export async function updateJobStatus(
 export async function deleteJob(id: string): Promise<void> {
   await api.delete(`/jobs/${id}`);
 }
+
+export const jobsService = {
+  getJobs,
+  getPublicJobs,
+  createJob,
+  updateJob,
+  updateJobStatus,
+  deleteJob,
+  getAll: () => getJobs(),
+  create: createJob,
+  update: updateJob
+};

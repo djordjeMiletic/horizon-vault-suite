@@ -59,3 +59,12 @@ export async function updateInquiryStatus(
 export async function deleteInquiry(id: string): Promise<void> {
   await api.delete(`/inquiries/${id}`);
 }
+
+export const inquiriesService = {
+  getInquiries,
+  createInquiry,
+  updateInquiry,
+  updateInquiryStatus,
+  deleteInquiry,
+  create: createInquiry
+};

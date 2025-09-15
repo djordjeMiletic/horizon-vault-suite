@@ -76,3 +76,15 @@ export async function toggleProductStatus(id: string, active: boolean): Promise<
 export async function deleteProduct(id: string): Promise<void> {
   await api.delete(`/products/${id}`);
 }
+
+export const productsService = {
+  getProducts,
+  getPublicProducts,
+  createProduct,
+  updateProduct,
+  toggleProductStatus,
+  deleteProduct,
+  getAll: () => getProducts(),
+  create: createProduct,
+  update: updateProduct
+};
