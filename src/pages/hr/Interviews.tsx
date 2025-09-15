@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useInterviewStore, useApplicantStore, useJobStore } from '@/lib/stores';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,17 +9,48 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Plus, Search, Eye, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getInterviews, createInterview, updateInterviewStatus, type Interview } from '@/services/interviews';
+import { getApplications, type Applicant } from '@/services/applications';
+import { getJobs, type Job } from '@/services/jobs';
 
 const Interviews = () => {
-  const { interviews, addInterview, updateInterview } = useInterviewStore();
-  const { applicants } = useApplicantStore();
-  const { jobs } = useJobStore();
+  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [interviewsData, applicantsData, jobsData] = await Promise.all([
+          getInterviews(),
+          getApplications(),
+          getJobs(),
+        ]);
+        setInterviews(interviewsData.items);
+        setApplicants(applicantsData.items);
+        setJobs(Array.isArray(jobsData) ? jobsData : jobsData.items);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch data",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [toast]);
   
   const [newInterview, setNewInterview] = useState({
     candidateId: '',
@@ -37,7 +67,7 @@ const Interviews = () => {
     interviewQuestions: ['']
   });
 
-  const handleCreateInterview = () => {
+  const handleCreateInterview = async () => {
     if (!newInterview.candidateId || !newInterview.scheduledAt || !newInterview.location) {
       toast({
         title: 'Error',
@@ -47,35 +77,44 @@ const Interviews = () => {
       return;
     }
 
-    const filteredQuestions = newInterview.interviewQuestions.filter(q => q.trim() !== '');
+    try {
+      const filteredQuestions = newInterview.interviewQuestions.filter(q => q.trim() !== '');
+      
+      const createdInterview = await createInterview({
+        ...newInterview,
+        interviewQuestions: filteredQuestions
+      });
 
-    addInterview({
-      ...newInterview,
-      status: 'Scheduled',
-      interviewQuestions: filteredQuestions
-    });
+      setInterviews(prev => [...prev, createdInterview]);
 
-    toast({
-      title: 'Success',
-      description: 'Interview scheduled successfully'
-    });
+      toast({
+        title: 'Success',
+        description: 'Interview scheduled successfully'
+      });
 
-    setNewInterview({
-      candidateId: '',
-      candidateName: '',
-      jobId: '',
-      jobTitle: '',
-      interviewerId: '1',
-      interviewerName: 'John Smith',
-      scheduledAt: '',
-      duration: 60,
-      type: 'Initial Interview',
-      location: '',
-      notes: '',
-      interviewQuestions: ['']
-    });
+      setNewInterview({
+        candidateId: '',
+        candidateName: '',
+        jobId: '',
+        jobTitle: '',
+        interviewerId: '1',
+        interviewerName: 'John Smith',
+        scheduledAt: '',
+        duration: 60,
+        type: 'Initial Interview',
+        location: '',
+        notes: '',
+        interviewQuestions: ['']
+      });
 
-    setIsCreateDialogOpen(false);
+      setIsCreateDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to schedule interview',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleCancelInterview = () => {
@@ -96,18 +135,22 @@ const Interviews = () => {
     setIsCreateDialogOpen(false);
   };
 
-  const handleStatusUpdate = (interviewId: string, newStatus: string, feedback?: string) => {
-    const updates: any = { status: newStatus };
-    if (feedback) {
-      updates.feedback = feedback;
+  const handleStatusUpdate = async (interviewId: string, newStatus: string, feedback?: string) => {
+    try {
+      const updatedInterview = await updateInterviewStatus(interviewId, newStatus as Interview['status'], feedback);
+      setInterviews(prev => prev.map(i => i.id === interviewId ? updatedInterview : i));
+      
+      toast({
+        title: 'Interview Updated',
+        description: `Interview status changed to ${newStatus}`
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update interview status',
+        variant: 'destructive'
+      });
     }
-
-    updateInterview(interviewId, updates);
-    
-    toast({
-      title: 'Interview Updated',
-      description: `Interview status changed to ${newStatus}`
-    });
   };
 
   const handleCandidateSelect = (candidateId: string) => {
@@ -164,6 +207,27 @@ const Interviews = () => {
     
     return matchesSearch && matchesStatus;
   });
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Interviews</h1>
+            <p className="text-muted-foreground">Schedule and manage candidate interviews</p>
+          </div>
+        </div>
+        
+        <Card className="p-8">
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (interviews.length === 0) {
     return (

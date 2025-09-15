@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Download, Save, FileText, Settings, Trash2, Search } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
@@ -15,11 +16,9 @@ import { canExportCSV, computeCommission } from '@/lib/commission';
 import { useReportTemplateStore } from '@/lib/reportTemplates';
 import { exportToCsv } from '@/lib/utils';
 import { getDateRange } from '@/lib/timeSeries';
-
-import commissionsData from '@/mocks/seed/commissions.json';
-import productsData from '@/mocks/seed/products.json';
-import policiesData from '@/mocks/seed/policies.json';
-import paymentsData from '@/mocks/seed/payments.json';
+import { getCommissionDetails } from '@/services/payments';
+import { getProducts } from '@/services/products';
+import { getPolicies } from '@/services/policies';
 
 const AVAILABLE_FIELDS = [
   { id: 'date', label: 'Date', type: 'date' },
@@ -47,462 +46,430 @@ const CustomReports = () => {
   const { toast } = useToast();
   const { templates, addTemplate, removeTemplate } = useReportTemplateStore();
 
-  // Set default selection on mount
-  const [selectedFields, setSelectedFields] = useState<string[]>(['date', 'advisor', 'product', 'provider', 'commissionBase', 'commissionPool']);
-  const [filters, setFilters] = useState({
-    dateRange: { from: '', to: '' },
-    products: [] as string[],
-    providers: [] as string[],
-    roles: [] as string[],
-    status: [] as string[],
-    advisors: [] as string[]
-  });
-  const [generatedData, setGeneratedData] = useState<any[]>([]);
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  // API Data State
+  const [commissionsData, setCommissionsData] = useState([]);
+  const [productsData, setProductsData] = useState([]);
+  const [policiesData, setPoliciesData] = useState([]);
+  const [paymentsData, setPaymentsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // UI State
+  const [selectedFields, setSelectedFields] = useState<string[]>(
+    AVAILABLE_FIELDS.slice(0, 8).map(f => f.id)
+  );
+  const [dateRange, setDateRange] = useState(() => getDateRange('ytd'));
+  const [productFilter, setProductFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [templateName, setTemplateName] = useState('');
-  const [showEmptyState, setShowEmptyState] = useState(true);
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
 
-  // Auto-load default template on first visit
+  // Fetch data on mount
   useEffect(() => {
-    const { from, to } = getDateRange('last3Months');
-    setFilters(prev => ({
-      ...prev,
-      dateRange: { from, to }
-    }));
-  }, []);
-
-  const buildReportData = () => {
-    try {
-      // Use payments data instead of commissions for broader coverage
-      let data = paymentsData.map(payment => {
-        const product = productsData.find(p => p.id === payment.productId);
-        
-        // Simple commission calculation
-        const commissionBase = payment.ape * 0.03; // 3% base rate
-        const commissionPool = commissionBase * 0.9; // 90% after margin
-
-        return {
-          id: payment.id || '',
-          date: payment.date || '',
-          product: product?.name || payment.productId || 'Unknown Product',
-          provider: payment.provider || 'Unknown',
-          policyId: `POL-${payment.id}` || 'N/A',
-          client: `Client-${Math.floor(Math.random() * 1000)}`,
-          advisor: payment.advisorEmail || 'Unknown Advisor',
-          role: 'Advisor',
-          ape: payment.ape || 0,
-          receipts: payment.receipts || 0,
-          methodUsed: payment.receipts > payment.ape ? 'Receipts' : 'APE',
-          productRatePct: 3.0,
-          marginPct: 10.0,
-          commissionBase,
-          commissionPool,
-          roleShareName: 'Advisor',
-          roleSharePct: 70.0,
-          roleShareAmount: commissionPool * 0.7,
-          status: payment.status || 'Approved'
-        };
-      });
-
-      // Apply filters with safety checks
-      if (filters.dateRange.from) {
-        data = data.filter(item => item.date && item.date >= filters.dateRange.from);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [commissions, products, policies] = await Promise.all([
+          getCommissionDetails({}),
+          getProducts(),
+          getPolicies(),
+        ]);
+        setCommissionsData(commissions.items);
+        setProductsData(products);
+        setPoliciesData(policies);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch report data",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
-      if (filters.dateRange.to) {
-        data = data.filter(item => item.date && item.date <= filters.dateRange.to);
-      }
-      if (filters.products.length > 0) {
-        data = data.filter(item => item.product && filters.products.includes(item.product));
-      }
-      if (filters.status.length > 0 && !filters.status.includes('all')) {
-        data = data.filter(item => item.status && filters.status.includes(item.status));
-      }
+    };
 
-      return data;
-    } catch (error) {
-      console.error('Error building report data:', error);
-      toast({
-        title: 'Error Generating Report',
-        description: 'There was an error processing the report data. Please try again.',
-        variant: 'destructive'
-      });
-      return [];
-    }
-  };
+    fetchData();
+  }, [toast]);
 
-  const handleGenerate = () => {
-    if (selectedFields.length === 0) {
-      toast({
-        title: 'No Fields Selected',
-        description: 'Please select at least one field to generate the report.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    try {
-      const data = buildReportData();
-      setGeneratedData(data);
-      setShowEmptyState(false);
+  // Calculate filtered commissions based on filters
+  const filteredCommissions = commissionsData.filter((commission: any) => {
+    const commissionDate = new Date(commission.date);
+    const inDateRange = commissionDate >= new Date(dateRange.from) && 
+                        commissionDate <= new Date(dateRange.to);
+    
+    const matchesProduct = productFilter === 'all' || commission.productId === productFilter;
+    
+    const matchesSearch = !searchTerm || 
+      Object.values(commission).some(value => 
+        String(value).toLowerCase().includes(searchTerm.toLowerCase())
+      );
       
-      toast({
-        title: 'Report Generated',
-        description: `Generated ${data.length} rows with ${selectedFields.length} columns.`
-      });
-    } catch (error) {
-      console.error('Error generating report:', error);
-      toast({
-        title: 'Generation Failed',
-        description: 'Unable to generate report. Please check your selections and try again.',
-        variant: 'destructive'
-      });
+    return inDateRange && matchesProduct && matchesSearch;
+  });
+
+  // Transform commission data for display
+  const transformedData = filteredCommissions.map((commission: any) => {
+    const product = productsData.find((p: any) => p.id === commission.productId);
+    const policy = policiesData.find((p: any) => p.id === commission.policyId);
+    
+    return {
+      date: commission.date,
+      product: product?.productName || commission.productId,
+      provider: commission.provider,
+      policyId: commission.policyNumber || commission.id,
+      client: commission.clientName || 'N/A',
+      advisor: `Advisor ${commission.advisorEmail}`,
+      role: 'Advisor',
+      ape: commission.ape || 0,
+      receipts: commission.receipts || 0,
+      methodUsed: commission.methodUsed,
+      productRatePct: commission.productRatePct,
+      marginPct: commission.marginPct,
+      commissionBase: commission.commissionBase,
+      commissionPool: commission.poolAmount,
+      roleShareName: 'Advisor Share',
+      roleSharePct: 100,
+      roleShareAmount: commission.advisorShare,
+      status: commission.status || 'Pending'
+    };
+  });
+
+  const handleFieldToggle = (fieldId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedFields(prev => [...prev, fieldId]);
+    } else {
+      setSelectedFields(prev => prev.filter(id => id !== fieldId));
     }
   };
 
   const handleExportCSV = () => {
-    const userRole = user?.role || 'guest';
-    if (!canExportCSV(userRole)) {
+    if (!canExportCSV(user)) {
       toast({
-        title: 'Export Not Available',
-        description: 'CSV export is not available for your role.',
-        variant: 'destructive'
+        title: "Access Denied",
+        description: "You don't have permission to export data",
+        variant: "destructive",
       });
       return;
     }
 
-    if (generatedData.length === 0) {
-      toast({
-        title: 'No Data to Export',
-        description: 'Please generate a report first.',
-        variant: 'destructive'
-      });
-      return;
-    }
+    const headers = AVAILABLE_FIELDS
+      .filter(field => selectedFields.includes(field.id))
+      .map(field => field.label);
+      
+    const rows = transformedData.map(row => 
+      selectedFields.map(fieldId => {
+        const field = AVAILABLE_FIELDS.find(f => f.id === fieldId);
+        const value = row[fieldId as keyof typeof row];
+        
+        if (field?.type === 'currency' && typeof value === 'number') {
+          return `£${value.toLocaleString()}`;
+        }
+        if (field?.type === 'percentage' && typeof value === 'number') {
+          return `${(value * 100).toFixed(2)}%`;
+        }
+        return String(value || '');
+      })
+    );
 
-    try {
-      // Prepare export data with selected fields only
-      const exportRows = generatedData.map(row => {
-        const exportRow: any = {};
-        selectedFields.forEach(field => {
-          const fieldInfo = AVAILABLE_FIELDS.find(f => f.id === field);
-          const value = row[field];
-          
-          if (fieldInfo?.type === 'currency' && typeof value === 'number') {
-            exportRow[fieldInfo.label] = value.toFixed(2);
-          } else if (fieldInfo?.type === 'percentage' && typeof value === 'number') {
-            exportRow[fieldInfo.label] = value.toFixed(2);
-          } else {
-            exportRow[fieldInfo?.label || field] = value || '';
-          }
-        });
-        return exportRow;
-      });
-
-      exportToCsv(`custom-report-${new Date().toISOString().slice(0, 10)}.csv`, exportRows);
-
-      toast({
-        title: 'Export Successful',
-        description: 'Custom report has been exported to CSV.'
-      });
-    } catch (error) {
-      console.error('Error exporting CSV:', error);
-      toast({
-        title: 'Export Failed',
-        description: 'Unable to export CSV. Please try again.',
-        variant: 'destructive'
-      });
-    }
+    exportToCsv([headers, ...rows], `custom-report-${Date.now()}.csv`);
+    
+    toast({
+      title: "Export Complete",
+      description: "Report exported successfully",
+    });
   };
 
   const handleSaveTemplate = () => {
     if (!templateName.trim()) {
       toast({
-        title: 'Template Name Required',
-        description: 'Please enter a name for your template.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Please enter a template name",
+        variant: "destructive",
       });
       return;
     }
 
     addTemplate({
       name: templateName,
-      selectedFields,
-      filters,
-      createdBy: user?.email || 'Unknown'
+      fields: selectedFields,
+      filters: {
+        dateRange,
+        productFilter,
+        statusFilter,
+      }
     });
 
     toast({
-      title: 'Template Saved',
-      description: `Template "${templateName}" has been saved.`
+      title: "Template Saved",
+      description: `Template "${templateName}" saved successfully`,
     });
 
     setTemplateName('');
-    setShowSaveDialog(false);
+    setIsTemplateDialogOpen(false);
   };
 
-  const handleLoadTemplate = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
-    if (template) {
-      setSelectedFields(template.selectedFields);
-      setFilters({
-        dateRange: template.filters.dateRange || { from: '', to: '' },
-        products: template.filters.products || [],
-        providers: template.filters.providers || [],
-        roles: template.filters.roles || [],
-        status: template.filters.status || [],
-        advisors: template.filters.advisors || []
-      });
-      toast({
-        title: 'Template Loaded',
-        description: `Template "${template.name}" has been loaded.`
-      });
+  const handleLoadTemplate = (template: any) => {
+    setSelectedFields(template.fields);
+    if (template.filters) {
+      setDateRange(template.filters.dateRange || dateRange);
+      setProductFilter(template.filters.productFilter || 'all');
+      setStatusFilter(template.filters.statusFilter || 'all');
     }
+    
+    toast({
+      title: "Template Loaded",
+      description: `Template "${template.name}" loaded successfully`,
+    });
   };
 
-  const formatCellValue = (value: any, fieldId: string) => {
-    const field = AVAILABLE_FIELDS.find(f => f.id === fieldId);
-    if (typeof value === 'number' && field) {
-      if (field.type === 'currency') {
-        return `£${value.toFixed(2)}`;
-      } else if (field.type === 'percentage') {
-        return `${value.toFixed(2)}%`;
-      }
-    }
-    return value;
+  const handleDeleteTemplate = (templateId: string) => {
+    removeTemplate(templateId);
+    toast({
+      title: "Template Deleted",
+      description: "Template deleted successfully",
+    });
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Custom Reports Builder</h2>
-          <p className="text-muted-foreground">Create custom commission reports with selected fields and filters</p>
-        </div>
-        <div className="flex gap-2">
-          <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Save className="h-4 w-4 mr-2" />
-                Save Template
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Save Report Template</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="templateName">Template Name</Label>
-                  <Input
-                    id="templateName"
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                    placeholder="Enter template name"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSaveTemplate}>
-                    Save Template
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          {canExportCSV(user?.role || '') && (
-            <Button onClick={handleExportCSV} disabled={generatedData.length === 0}>
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Field Selector */}
-        <Card className="lg:col-span-1">
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Select Fields
-            </CardTitle>
+            <Skeleton className="h-6 w-48" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {AVAILABLE_FIELDS.map(field => (
-                <div key={field.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={field.id}
-                    checked={selectedFields.includes(field.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedFields(prev => [...prev, field.id]);
-                      } else {
-                        setSelectedFields(prev => prev.filter(f => f !== field.id));
-                      }
-                    }}
-                  />
-                  <Label htmlFor={field.id} className="text-sm font-normal">
-                    {field.label}
-                  </Label>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-24" />
+              ))}
+            </div>
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
 
-        {/* Filters and Results */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Templates */}
-          {templates.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Saved Templates</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {templates.map(template => (
-                    <div key={template.id} className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleLoadTemplate(template.id)}
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        {template.name}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeTemplate(template.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Custom Report Builder
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Templates Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium">Report Templates</h3>
+                <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Template
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Save Report Template</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="templateName">Template Name</Label>
+                        <Input
+                          id="templateName"
+                          value={templateName}
+                          onChange={(e) => setTemplateName(e.target.value)}
+                          placeholder="Enter template name"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsTemplateDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSaveTemplate}>
+                          Save Template
+                        </Button>
+                      </div>
                     </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              
+              {templates.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  {templates.map((template) => (
+                    <Card key={template.id} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{template.name}</span>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleLoadTemplate(template)}
+                          >
+                            Load
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleDeleteTemplate(template.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </div>
 
-          {/* Filters */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Filters</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Filters */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Filters</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label>From Date</Label>
+                  <Label htmlFor="fromDate">From Date</Label>
                   <Input
+                    id="fromDate"
                     type="date"
-                    value={filters.dateRange.from}
-                    onChange={(e) => setFilters(prev => ({
-                      ...prev,
-                      dateRange: { ...prev.dateRange, from: e.target.value }
-                    }))}
+                    value={dateRange.from}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
                   />
                 </div>
                 <div>
-                  <Label>To Date</Label>
+                  <Label htmlFor="toDate">To Date</Label>
                   <Input
+                    id="toDate"
                     type="date"
-                    value={filters.dateRange.to}
-                    onChange={(e) => setFilters(prev => ({
-                      ...prev,
-                      dateRange: { ...prev.dateRange, to: e.target.value }
-                    }))}
+                    value={dateRange.to}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
                   />
                 </div>
                 <div>
-                  <Label>Status</Label>
-                  <Select
-                    value={filters.status.length > 0 ? filters.status[0] : 'all'}
-                    onValueChange={(value) => setFilters(prev => ({
-                      ...prev,
-                      status: value === 'all' ? [] : [value]
-                    }))}
-                  >
+                  <Label htmlFor="productFilter">Product</Label>
+                  <Select value={productFilter} onValueChange={setProductFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All Status" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="Paid">Paid</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Processing">Processing</SelectItem>
+                      <SelectItem value="all">All Products</SelectItem>
+                      {productsData.map((product: any) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.productName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="relative">
+                  <Label htmlFor="search">Search</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="search"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search records..."
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="mt-4">
-                <Button onClick={handleGenerate} className="w-full">
-                  Generate Report
-                </Button>
+            </div>
+
+            {/* Field Selection */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Select Fields</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {AVAILABLE_FIELDS.map((field) => (
+                  <div key={field.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={field.id}
+                      checked={selectedFields.includes(field.id)}
+                      onCheckedChange={(checked) => 
+                        handleFieldToggle(field.id, checked as boolean)
+                      }
+                    />
+                    <Label htmlFor={field.id} className="text-sm">
+                      {field.label}
+                    </Label>
+                  </div>
+                ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Empty State */}
-          {showEmptyState && generatedData.length === 0 && (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <Search className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Build Your Custom Report</h3>
-                <p className="text-muted-foreground mb-6 max-w-md">
-                  Select fields from the left panel, apply filters, and click Generate to create your custom commission report.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Default selection: Date, Advisor, Product, Provider, Commission Base, Commission Pool (Last 3 Months)
-                </p>
-              </CardContent>
-            </Card>
-          )}
+            {/* Actions */}
+            <div className="flex gap-4">
+              <Button onClick={handleExportCSV} disabled={selectedFields.length === 0}>
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV ({transformedData.length} records)
+              </Button>
+            </div>
 
-          {/* Results Table */}
-          {generatedData.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Report Results ({generatedData.length} rows)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto max-h-96">
+            {/* Preview Table */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">
+                Preview ({transformedData.length} records)
+              </h3>
+              {transformedData.length > 0 ? (
+                <div className="border rounded-lg overflow-auto max-h-96">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        {selectedFields.map(fieldId => {
-                          const field = AVAILABLE_FIELDS.find(f => f.id === fieldId);
-                          return (
-                            <TableHead key={fieldId}>{field?.label || fieldId}</TableHead>
-                          );
-                        })}
+                        {AVAILABLE_FIELDS
+                          .filter(field => selectedFields.includes(field.id))
+                          .map(field => (
+                            <TableHead key={field.id}>{field.label}</TableHead>
+                          ))
+                        }
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {generatedData.slice(0, 50).map((row, index) => (
+                      {transformedData.slice(0, 10).map((row, index) => (
                         <TableRow key={index}>
-                          {selectedFields.map(fieldId => (
-                            <TableCell key={fieldId}>
-                              {formatCellValue(row[fieldId], fieldId)}
-                            </TableCell>
-                          ))}
+                          {selectedFields.map(fieldId => {
+                            const field = AVAILABLE_FIELDS.find(f => f.id === fieldId);
+                            const value = row[fieldId as keyof typeof row];
+                            
+                            return (
+                              <TableCell key={fieldId}>
+                                {field?.type === 'currency' && typeof value === 'number' 
+                                  ? `£${value.toLocaleString()}`
+                                  : field?.type === 'percentage' && typeof value === 'number'
+                                  ? `${(value * 100).toFixed(2)}%`
+                                  : String(value || '')
+                                }
+                              </TableCell>
+                            );
+                          })}
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                  {generatedData.length > 50 && (
-                    <div className="text-center text-sm text-muted-foreground mt-2">
-                      Showing first 50 rows. Export CSV to see all {generatedData.length} rows.
+                  {transformedData.length > 10 && (
+                    <div className="p-4 text-center text-muted-foreground">
+                      Showing first 10 of {transformedData.length} records
                     </div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No data matches the current filters
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

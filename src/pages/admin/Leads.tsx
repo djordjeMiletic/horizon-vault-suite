@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,28 +19,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useLeadStore } from "@/lib/stores";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Phone, Mail, User } from "lucide-react";
-
-// Import Lead type
-interface Lead {
-  id: string;
-  createdAt: string;
-  source: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: 'New' | 'Qualified' | 'Contacted';
-  assignee: string | null;
-  assigneeName: string | null;
-  priority: 'Low' | 'Medium' | 'High';
-  estimatedValue: number;
-  notes: string;
-}
+import { getLeads, assignLead, updateLeadStatus, createLead, type Lead } from "@/services/leads";
 
 const Leads = () => {
-  const { leads, addLead, updateLead } = useLeadStore();
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -49,31 +35,58 @@ const Leads = () => {
     ? leads 
     : leads.filter(lead => lead.status === selectedStatus);
 
-  const handleAssignLead = (leadId: string, assignee: string, assigneeName: string) => {
-    const lead = leads.find(l => l.id === leadId);
-    if (lead) {
-      updateLead({ 
-        ...lead,
-        assignee, 
-        assigneeName,
-        status: "Contacted" 
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        setLoading(true);
+        const data = await getLeads();
+        setLeads(data.items);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch leads",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeads();
+  }, [toast]);
+
+  const handleAssignLead = async (leadId: string, assignee: string, assigneeName: string) => {
+    try {
+      const updatedLead = await assignLead(leadId, assignee, assigneeName);
+      setLeads(prev => prev.map(l => l.id === leadId ? updatedLead : l));
+      toast({
+        title: "Lead Assigned",
+        description: `Lead assigned to ${assigneeName}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to assign lead",
+        variant: "destructive",
       });
     }
-    toast({
-      title: "Lead Assigned",
-      description: `Lead assigned to ${assigneeName}`,
-    });
   };
 
-  const handleStatusUpdate = (leadId: string, status: string) => {
-    const lead = leads.find(l => l.id === leadId);
-    if (lead) {
-      updateLead({ ...lead, status: status as Lead['status'] });
+  const handleStatusUpdate = async (leadId: string, status: string) => {
+    try {
+      const updatedLead = await updateLeadStatus(leadId, status as Lead['status']);
+      setLeads(prev => prev.map(l => l.id === leadId ? updatedLead : l));
+      toast({
+        title: "Status Updated",
+        description: `Lead status changed to ${status}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive",
+      });
     }
-    toast({
-      title: "Status Updated",
-      description: `Lead status changed to ${status}`,
-    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -182,8 +195,16 @@ const Leads = () => {
           <CardDescription>{filteredLeads.length} leads found</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Desktop Table */}
-          <ResponsiveTableDesktop>
+          {loading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <ResponsiveTableDesktop>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -330,6 +351,8 @@ const Leads = () => {
               </ResponsiveTableCard>
             ))}
           </ResponsiveTableMobile>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
