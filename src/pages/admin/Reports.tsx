@@ -110,10 +110,10 @@ const AdminReports = () => {
     
     const csvHeaders = ['Policy Number', 'Product', 'Advisor', 'APE', 'Commission', 'Status', 'Date'];
     const csvData = filteredCommissions.map(c => {
-      const product = productsData.find(p => p.id === c.productId);
+      const product = products.find(p => p.id === c.productId);
       return [
         c.policyNumber,
-        product?.name || c.productId,
+        product?.productName || c.productId,
         `Advisor ${c.advisorId}`,
         c.ape,
         c.commissionAmount,
@@ -175,6 +175,7 @@ const AdminReports = () => {
             totalAPE={totalAPE}
             averageCommission={averageCommission}
             user={user}
+            products={products}
           />
         </TabsContent>
         
@@ -193,7 +194,8 @@ const StandardReports = ({
   totalCommissions, 
   totalAPE, 
   averageCommission, 
-  user 
+  user,
+  products 
 }: any) => (
   <div className="space-y-6">
     {/* Filters */}
@@ -236,9 +238,9 @@ const StandardReports = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Products</SelectItem>
-                {productsData.map(product => (
+                {products.map(product => (
                   <SelectItem key={product.id} value={product.id}>
-                    {product.name}
+                    {product.productName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -353,13 +355,13 @@ const StandardReports = ({
             </TableHeader>
             <TableBody>
               {filteredCommissions.map((commission) => {
-                const product = productsData.find(p => p.id === commission.productId);
+                const product = products.find(p => p.id === commission.productId);
                 return (
                   <TableRow key={commission.id}>
                     <TableCell className="font-medium">
                       {commission.policyNumber}
                     </TableCell>
-                    <TableCell>{product?.name || commission.productId}</TableCell>
+                    <TableCell>{product?.productName || commission.productId}</TableCell>
                     <TableCell>Advisor {commission.advisorId}</TableCell>
                     <TableCell>£{commission.ape.toLocaleString()}</TableCell>
                     <TableCell>£{commission.actualReceipts.toLocaleString()}</TableCell>
