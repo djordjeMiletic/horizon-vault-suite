@@ -24,3 +24,12 @@ export async function createSignatureRequest(documentId: string, signerEmail: st
 export async function completeSignatureRequest(id: string, status: "Signed" | "Declined") {
   await api.post(`/esignature/requests/${id}/complete`, { status });
 }
+
+export const documentsService = {
+  uploadDocument,
+  listDocuments,
+  createSignatureRequest,
+  completeSignatureRequest,
+  getAll: () => listDocuments({}),
+  getByOwner: (ownerEmail: string) => listDocuments({ ownerEmail })
+};

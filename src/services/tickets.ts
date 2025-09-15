@@ -15,3 +15,17 @@ export async function replyTicket(id: string, payload: { text: string }) {
   const { data } = await api.post(`/tickets/${id}/reply`, payload);
   return data;
 }
+
+export async function updateTicketStatus(id: string, status: string) {
+  const { data } = await api.patch(`/tickets/${id}`, { status });
+  return data;
+}
+
+export const ticketsService = {
+  getTickets,
+  createTicket, 
+  replyTicket,
+  updateTicketStatus,
+  getAll: () => getTickets({}),
+  getMine: () => getTickets({ mine: true })
+};

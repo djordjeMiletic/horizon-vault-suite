@@ -10,8 +10,13 @@ export async function markAllRead(scope: "current" | "admin" | "client" = "curre
   await api.post("/notifications/read-all", { scope });
 }
 
+export async function markAsRead(notificationId: string) {
+  await api.post(`/notifications/${notificationId}/read`);
+}
+
 export const notificationsService = {
   getNotifications,
   markAllRead,
+  markAsRead,
   getByRecipient: (email: string) => getNotifications("current")
 };
