@@ -69,6 +69,18 @@ const Jobs = () => {
       description: '',
       requirements: ['']
     });
+
+    setIsCreateDialogOpen(false);
+  };
+
+  const handleCancelJob = () => {
+    setNewJob({
+      title: '',
+      department: '',
+      location: '',
+      description: '',
+      requirements: ['']
+    });
     setIsCreateDialogOpen(false);
   };
 
@@ -377,7 +389,7 @@ const JobCreateDialog = ({ newJob, setNewJob, addRequirement, updateRequirement,
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline">Cancel</Button>
+        <Button type="button" variant="outline" onClick={() => { setNewJob({ title: '', department: '', location: '', description: '', requirements: [''] }); setIsCreateDialogOpen(false); }}>Cancel</Button>
         <Button type="button" onClick={handleCreateJob}>Create Job</Button>
       </div>
     </div>

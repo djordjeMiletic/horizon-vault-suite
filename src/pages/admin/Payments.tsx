@@ -9,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { usePaymentCycleStore } from "@/lib/stores";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { Download, Plus, Check, X, AlertTriangle, FileText, Activity, Flag, CheckSquare, MessageSquare } from "lucide-react";
 
 const Payments = () => {
-  const { cycles, updatePaymentItem } = usePaymentCycleStore();
+  const { cycles, updatePaymentItem, addCycle } = usePaymentCycleStore();
   const [selectedCycle, setSelectedCycle] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("summary");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -23,6 +24,8 @@ const Payments = () => {
   const [managerNote, setManagerNote] = useState("");
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<string | null>(null);
+  const [newCycleDialogOpen, setNewCycleDialogOpen] = useState(false);
+  const [newCycleData, setNewCycleData] = useState({ cycle: '', notes: '' });
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -92,6 +95,51 @@ const Payments = () => {
     setManagerNote("");
     setNoteDialogOpen(false);
     setCurrentItem(null);
+  };
+
+  const handleCreateCycle = () => {
+    if (!newCycleData.cycle.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a cycle date (YYYY-MM)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate format (YYYY-MM)
+    const cycleRegex = /^\d{4}-\d{2}$/;
+    if (!cycleRegex.test(newCycleData.cycle)) {
+      toast({
+        title: "Error",
+        description: "Cycle must be in YYYY-MM format",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newCycle = {
+      cycle: newCycleData.cycle,
+      status: 'Draft' as const,
+      totals: {
+        payments: 0,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+        exceptions: 0
+      },
+      items: []
+    };
+
+    addCycle(newCycle);
+    
+    toast({
+      title: "Cycle Created",
+      description: `Payment cycle ${newCycleData.cycle} created (demo)`
+    });
+    
+    setNewCycleData({ cycle: '', notes: '' });
+    setNewCycleDialogOpen(false);
   };
 
   const handleItemSelect = (itemId: string, checked: boolean) => {
@@ -170,10 +218,50 @@ const Payments = () => {
           <p className="text-muted-foreground">Manage commission payments and approvals</p>
         </div>
         {!selectedCycle && (
-          <Button disabled>
-            <Plus className="h-4 w-4 mr-2" />
-            New Cycle
-          </Button>
+          <Dialog open={newCycleDialogOpen} onOpenChange={setNewCycleDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                New Cycle
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Payment Cycle</DialogTitle>
+                <DialogDescription>
+                  Create a new payment cycle for processing commissions
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="cycle">Cycle (YYYY-MM) *</Label>
+                  <Input
+                    id="cycle"
+                    placeholder="2025-10"
+                    value={newCycleData.cycle}
+                    onChange={(e) => setNewCycleData(prev => ({ ...prev, cycle: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes (Optional)</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Add any notes about this cycle..."
+                    value={newCycleData.notes}
+                    onChange={(e) => setNewCycleData(prev => ({ ...prev, notes: e.target.value }))}
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button variant="outline" onClick={() => setNewCycleDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateCycle}>
+                    Create
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 

@@ -74,6 +74,25 @@ const Interviews = () => {
       notes: '',
       interviewQuestions: ['']
     });
+
+    setIsCreateDialogOpen(false);
+  };
+
+  const handleCancelInterview = () => {
+    setNewInterview({
+      candidateId: '',
+      candidateName: '',
+      jobId: '',
+      jobTitle: '',
+      interviewerId: '1',
+      interviewerName: 'John Smith',
+      scheduledAt: '',
+      duration: 60,
+      type: 'Initial Interview',
+      location: '',
+      notes: '',
+      interviewQuestions: ['']
+    });
     setIsCreateDialogOpen(false);
   };
 
@@ -453,7 +472,7 @@ const InterviewCreateDialog = ({
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline">Cancel</Button>
+        <Button type="button" variant="outline" onClick={() => { setNewInterview({ candidateId: '', candidateName: '', jobId: '', jobTitle: '', interviewerId: '1', interviewerName: 'John Smith', scheduledAt: '', duration: 60, type: 'Initial Interview', location: '', notes: '', interviewQuestions: [''] }); setIsCreateDialogOpen(false); }}>Cancel</Button>
         <Button type="button" onClick={handleCreateInterview}>Schedule Interview</Button>
       </div>
     </div>

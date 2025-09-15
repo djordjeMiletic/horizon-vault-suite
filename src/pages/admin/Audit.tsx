@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, User, FileText, Activity, Shield, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock audit data - in real app this would come from a store
 const auditLogs = [
@@ -52,39 +54,39 @@ const auditLogs = [
   },
   {
     id: "audit-004",
-    timestamp: "2024-03-15T15:10:00Z",
-    actor: "admin@company.com", 
+    timestamp: "2024-03-15T15:30:00Z",
+    actor: "mike.wilson@company.com",
     action: "Case Status Changed",
     entity: "Case CASE-001",
-    details: "Case status updated from 'In Progress' to 'Resolved'",
+    details: "Updated case status from Processing to Approved",
     metadata: {
       caseId: "CASE-001",
-      previousStatus: "In Progress",
-      newStatus: "Resolved"
+      fromStatus: "Processing",
+      toStatus: "Approved"
     }
   },
   {
-    id: "audit-005", 
-    timestamp: "2024-03-15T16:30:00Z",
-    actor: "john.smith@company.com",
+    id: "audit-005",
+    timestamp: "2024-03-15T16:45:00Z",
+    actor: "sarah.brown@company.com",
     action: "Ticket Created",
-    entity: "Ticket TICK-2024-001",
-    details: "New support ticket created for client technical issue",
+    entity: "Ticket TICK-2024-012",
+    details: "Created support ticket for client inquiry about coverage",
     metadata: {
-      ticketId: "TICK-2024-001",
-      priority: "High",
-      clientId: "1"
+      ticketId: "TICK-2024-012",
+      priority: "Medium",
+      category: "Coverage Inquiry"
     }
   },
   {
     id: "audit-006",
-    timestamp: "2024-03-15T17:15:00Z",
-    actor: "jane.doe@company.com",
-    action: "Ticket Closed", 
-    entity: "Ticket TICK-2024-001",
-    details: "Support ticket resolved and closed",
+    timestamp: "2024-03-15T17:00:00Z",
+    actor: "david.garcia@company.com", 
+    action: "Ticket Closed",
+    entity: "Ticket TICK-2024-008",
+    details: "Closed support ticket after successful resolution",
     metadata: {
-      ticketId: "TICK-2024-001",
+      ticketId: "TICK-2024-008",
       resolution: "Technical issue resolved via phone support"
     }
   }
@@ -96,6 +98,7 @@ const Audit = () => {
   const [selectedLog, setSelectedLog] = useState<any>(null);
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
+  const { toast } = useToast();
 
   const filteredLogs = auditLogs.filter(log => {
     const actionMatch = selectedAction === "all" || log.action === selectedAction;
@@ -105,6 +108,23 @@ const Audit = () => {
     
     return actionMatch && actorMatch && dateFromMatch && dateToMatch;
   });
+
+  const handleExportLogs = () => {
+    const exportData = filteredLogs.map(log => ({
+      Timestamp: new Date(log.timestamp).toLocaleString(),
+      Actor: log.actor,
+      Action: log.action,
+      Entity: log.entity,
+      Details: log.details
+    }));
+
+    exportToCsv('audit-logs.csv', exportData);
+    
+    toast({
+      title: "Export Complete",
+      description: "Audit logs exported successfully",
+    });
+  };
 
   const getActionBadge = (action: string) => {
     const actionTypes = {
@@ -137,7 +157,7 @@ const Audit = () => {
           <h1 className="text-3xl font-bold">Audit Trail</h1>
           <p className="text-muted-foreground">System activity and user action logs</p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleExportLogs}>
           <Download className="h-4 w-4 mr-2" />
           Export Logs
         </Button>
@@ -149,30 +169,30 @@ const Audit = () => {
           <CardDescription>Filter audit logs by date, action, or user</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-              <Label htmlFor="dateFrom">From Date</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>Date From</Label>
               <Input 
-                id="dateFrom" 
                 type="date" 
                 value={dateFrom} 
                 onChange={(e) => setDateFrom(e.target.value)}
               />
             </div>
-            <div>
-              <Label htmlFor="dateTo">To Date</Label>
+            
+            <div className="space-y-2">
+              <Label>Date To</Label>
               <Input 
-                id="dateTo" 
                 type="date" 
                 value={dateTo} 
                 onChange={(e) => setDateTo(e.target.value)}
               />
             </div>
-            <div>
-              <Label>Action Type</Label>
+            
+            <div className="space-y-2">
+              <Label>Action</Label>
               <Select value={selectedAction} onValueChange={setSelectedAction}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="All Actions" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Actions</SelectItem>
@@ -182,11 +202,12 @@ const Audit = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            
+            <div className="space-y-2">
               <Label>User</Label>
               <Select value={selectedActor} onValueChange={setSelectedActor}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="All Users" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Users</SelectItem>
@@ -196,19 +217,20 @@ const Audit = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSelectedAction("all");
-                  setSelectedActor("all");
-                  setDateFrom("");
-                  setDateTo("");
-                }}
-              >
-                Clear Filters
-              </Button>
-            </div>
+          </div>
+          
+          <div className="flex justify-end mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSelectedAction("all");
+                setSelectedActor("all");
+                setDateFrom("");
+                setDateTo("");
+              }}
+            >
+              Clear Filters
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -280,23 +302,23 @@ const Audit = () => {
                         </div>
                         <div>
                           <Label className="text-sm text-muted-foreground">Action</Label>
-                          <div className="mt-1">{getActionBadge(log.action)}</div>
+                          <p className="font-medium">{log.action}</p>
                         </div>
                         <div>
                           <Label className="text-sm text-muted-foreground">Entity</Label>
-                          <p className="font-medium font-mono">{log.entity}</p>
+                          <p className="font-medium">{log.entity}</p>
                         </div>
                       </div>
-
+                      
                       <div>
                         <Label className="text-sm text-muted-foreground">Description</Label>
-                        <p className="mt-1">{log.details}</p>
+                        <p className="text-sm mt-1">{log.details}</p>
                       </div>
-
+                      
                       <div>
                         <Label className="text-sm text-muted-foreground">Metadata</Label>
-                        <div className="mt-2 bg-muted rounded-lg p-4">
-                          <pre className="text-sm font-mono overflow-auto">
+                        <div className="mt-2 p-3 bg-muted/20 rounded-md">
+                          <pre className="text-xs font-mono whitespace-pre-wrap">
                             {JSON.stringify(log.metadata, null, 2)}
                           </pre>
                         </div>
