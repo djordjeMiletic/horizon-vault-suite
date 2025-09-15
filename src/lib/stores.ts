@@ -190,7 +190,9 @@ interface ClientDocument {
   uploadedById: string;
   sizeKb: number;
   type: string;
-  status: 'Pending' | 'Processed' | 'Superseded';
+  status: 'Pending' | 'Processed' | 'Superseded' | 'Signed';
+  signedAt?: string;
+  signedBy?: string;
 }
 
 interface MessageThread {
