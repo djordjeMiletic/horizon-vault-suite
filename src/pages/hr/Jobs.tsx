@@ -4,7 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  ResponsiveTableDesktop,
+  ResponsiveTableMobile,
+  ResponsiveTableCard,
+  ResponsiveTableField,
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/responsive-table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
@@ -172,54 +183,98 @@ const Jobs = () => {
             </div>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Applicants</TableHead>
-                <TableHead>Posted</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredJobs.map((job) => (
-                <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell className="font-medium">{job.title}</TableCell>
-                  <TableCell>{job.department}</TableCell>
-                  <TableCell>{job.location}</TableCell>
-                  <TableCell>
-                    <Badge variant={job.status === 'Open' ? 'default' : 'secondary'}>
-                      {job.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      {job.applicantCount}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(job.postedAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Sheet>
-                        <SheetTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </SheetTrigger>
-                        <JobDetailsSheet job={job} onToggleStatus={handleToggleStatus} />
-                      </Sheet>
-                    </div>
-                  </TableCell>
+          {/* Desktop Table */}
+          <ResponsiveTableDesktop>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Applicants</TableHead>
+                  <TableHead>Posted</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredJobs.map((job) => (
+                  <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell className="font-medium">{job.title}</TableCell>
+                    <TableCell>{job.department}</TableCell>
+                    <TableCell>{job.location}</TableCell>
+                    <TableCell>
+                      <Badge variant={job.status === 'Open' ? 'default' : 'secondary'}>
+                        {job.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        {job.applicantCount}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(job.postedAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Sheet>
+                          <SheetTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </SheetTrigger>
+                          <JobDetailsSheet job={job} onToggleStatus={handleToggleStatus} />
+                        </Sheet>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ResponsiveTableDesktop>
+
+          {/* Mobile Cards */}
+          <ResponsiveTableMobile>
+            {filteredJobs.map((job) => (
+              <ResponsiveTableCard key={job.id}>
+                <ResponsiveTableField label="Title">
+                  <span className="font-medium">{job.title}</span>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Department">
+                  {job.department}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Location">
+                  {job.location}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Status">
+                  <Badge variant={job.status === 'Open' ? 'default' : 'secondary'}>
+                    {job.status}
+                  </Badge>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Applicants">
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    {job.applicantCount}
+                  </div>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Posted">
+                  {new Date(job.postedAt).toLocaleDateString()}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Actions">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </SheetTrigger>
+                    <JobDetailsSheet job={job} onToggleStatus={handleToggleStatus} />
+                  </Sheet>
+                </ResponsiveTableField>
+              </ResponsiveTableCard>
+            ))}
+          </ResponsiveTableMobile>
         </div>
       </Card>
     </div>
@@ -227,12 +282,12 @@ const Jobs = () => {
 };
 
 const JobCreateDialog = ({ newJob, setNewJob, addRequirement, updateRequirement, removeRequirement, handleCreateJob }) => (
-  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
     <DialogHeader>
       <DialogTitle>Create New Job Posting</DialogTitle>
     </DialogHeader>
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="title">Job Title *</Label>
           <Input
@@ -330,12 +385,12 @@ const JobCreateDialog = ({ newJob, setNewJob, addRequirement, updateRequirement,
 );
 
 const JobDetailsSheet = ({ job, onToggleStatus }) => (
-  <SheetContent className="w-[500px] sm:w-[600px]">
+  <SheetContent className="w-full sm:w-[500px] lg:w-[600px]">
     <SheetHeader>
       <SheetTitle>{job.title}</SheetTitle>
     </SheetHeader>
     <div className="space-y-6 py-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label className="text-sm font-medium text-muted-foreground">Department</Label>
           <p className="mt-1">{job.department}</p>

@@ -2,7 +2,18 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  ResponsiveTableDesktop,
+  ResponsiveTableMobile,
+  ResponsiveTableCard,
+  ResponsiveTableField,
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/responsive-table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -107,7 +118,7 @@ const Leads = () => {
               <DialogDescription>Create a new lead entry</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name">Name</Label>
                   <Input id="name" placeholder="Lead name" />
@@ -117,7 +128,7 @@ const Leads = () => {
                   <Input id="email" type="email" placeholder="lead@example.com" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="phone">Phone</Label>
                   <Input id="phone" placeholder="+44 20 1234 5678" />
@@ -171,80 +182,154 @@ const Leads = () => {
           <CardDescription>{filteredLeads.length} leads found</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Value</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLeads.map((lead) => (
-                <TableRow key={lead.id}>
-                  <TableCell className="font-medium">{lead.name}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1 text-sm">
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {lead.email}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {lead.phone}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{lead.source}</TableCell>
-                  <TableCell>{getStatusBadge(lead.status)}</TableCell>
-                  <TableCell>{getPriorityBadge(lead.priority)}</TableCell>
-                  <TableCell>
-                    {lead.assigneeName ? (
-                      <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        {lead.assigneeName}
-                      </div>
-                    ) : (
-                      <Badge variant="outline">Unassigned</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>£{lead.estimatedValue.toLocaleString()}</TableCell>
-                  <TableCell>{new Date(lead.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Select onValueChange={(value) => handleStatusUpdate(lead.id, value)}>
-                        <SelectTrigger className="w-28">
-                          <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="New">New</SelectItem>
-                          <SelectItem value="Contacted">Contacted</SelectItem>
-                          <SelectItem value="Qualified">Qualified</SelectItem>
-                          <SelectItem value="Converted">Converted</SelectItem>
-                          <SelectItem value="Lost">Lost</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Select onValueChange={(value) => handleAssignLead(lead.id, value, "John Doe")}>
-                        <SelectTrigger className="w-28">
-                          <SelectValue placeholder="Assign" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">John Doe</SelectItem>
-                          <SelectItem value="2">Jane Smith</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </TableCell>
+          {/* Desktop Table */}
+          <ResponsiveTableDesktop>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Assigned To</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredLeads.map((lead) => (
+                  <TableRow key={lead.id}>
+                    <TableCell className="font-medium">{lead.name}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          {lead.email}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {lead.phone}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{lead.source}</TableCell>
+                    <TableCell>{getStatusBadge(lead.status)}</TableCell>
+                    <TableCell>{getPriorityBadge(lead.priority)}</TableCell>
+                    <TableCell>
+                      {lead.assigneeName ? (
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {lead.assigneeName}
+                        </div>
+                      ) : (
+                        <Badge variant="outline">Unassigned</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>£{lead.estimatedValue.toLocaleString()}</TableCell>
+                    <TableCell>{new Date(lead.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Select onValueChange={(value) => handleStatusUpdate(lead.id, value)}>
+                          <SelectTrigger className="w-28">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="New">New</SelectItem>
+                            <SelectItem value="Contacted">Contacted</SelectItem>
+                            <SelectItem value="Qualified">Qualified</SelectItem>
+                            <SelectItem value="Converted">Converted</SelectItem>
+                            <SelectItem value="Lost">Lost</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select onValueChange={(value) => handleAssignLead(lead.id, value, "John Doe")}>
+                          <SelectTrigger className="w-28">
+                            <SelectValue placeholder="Assign" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">John Doe</SelectItem>
+                            <SelectItem value="2">Jane Smith</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ResponsiveTableDesktop>
+
+          {/* Mobile Cards */}
+          <ResponsiveTableMobile>
+            {filteredLeads.map((lead) => (
+              <ResponsiveTableCard key={lead.id}>
+                <ResponsiveTableField label="Name">
+                  <span className="font-medium">{lead.name}</span>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Email">
+                  <div className="flex items-center gap-1 text-sm">
+                    <Mail className="h-3 w-3" />
+                    {lead.email}
+                  </div>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Phone">
+                  <div className="flex items-center gap-1 text-sm">
+                    <Phone className="h-3 w-3" />
+                    {lead.phone}
+                  </div>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Source">
+                  {lead.source}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Status">
+                  {getStatusBadge(lead.status)}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Priority">
+                  {getPriorityBadge(lead.priority)}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Assigned To">
+                  {lead.assigneeName ? (
+                    <div className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      {lead.assigneeName}
+                    </div>
+                  ) : (
+                    <Badge variant="outline">Unassigned</Badge>
+                  )}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Value">
+                  £{lead.estimatedValue.toLocaleString()}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Created">
+                  {new Date(lead.createdAt).toLocaleDateString()}
+                </ResponsiveTableField>
+                <div className="pt-2 space-y-2">
+                  <Select onValueChange={(value) => handleStatusUpdate(lead.id, value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Update Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="New">New</SelectItem>
+                      <SelectItem value="Contacted">Contacted</SelectItem>
+                      <SelectItem value="Qualified">Qualified</SelectItem>
+                      <SelectItem value="Converted">Converted</SelectItem>
+                      <SelectItem value="Lost">Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select onValueChange={(value) => handleAssignLead(lead.id, value, "John Doe")}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Assign Lead" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">John Doe</SelectItem>
+                      <SelectItem value="2">Jane Smith</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </ResponsiveTableCard>
+            ))}
+          </ResponsiveTableMobile>
         </CardContent>
       </Card>
     </div>

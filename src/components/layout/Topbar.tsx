@@ -93,23 +93,25 @@ export const Topbar = () => {
 
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-      <div className="h-full flex items-center justify-between px-6">
-        <div className="flex items-center space-x-4">
+      <div className="h-full flex items-center justify-between px-3 sm:px-6">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <SidebarTrigger className="md:hidden" />
           
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-accent rounded-lg flex items-center justify-center">
               <span className="text-background font-bold text-sm">EH</span>
             </div>
-            <span className="hidden md:block font-semibold text-lg">
+            <span className="hidden sm:block font-semibold text-lg">
               Event Horizon
             </span>
           </Link>
           
-          {getBreadcrumb()}
+          <div className="hidden sm:block">
+            {getBreadcrumb()}
+          </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Notification Bell */}
           <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
             <DropdownMenuTrigger asChild>
@@ -125,7 +127,7 @@ export const Topbar = () => {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-80" align="end">
+            <DropdownMenuContent className="w-80 sm:w-80" align="end">
               <div className="flex items-center justify-between p-3 border-b">
                 <h4 className="font-semibold">Notifications</h4>
                 <Button variant="ghost" size="sm" onClick={handleMarkAllRead}>

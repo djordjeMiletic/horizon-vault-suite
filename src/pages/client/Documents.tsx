@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  ResponsiveTableDesktop,
+  ResponsiveTableMobile,
+  ResponsiveTableCard,
+  ResponsiveTableField,
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/responsive-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -64,7 +75,7 @@ const Documents = () => {
 
   if (!documents.length) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-3 sm:p-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">My Documents</h1>
         </div>
@@ -133,8 +144,8 @@ const Documents = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-3 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">My Documents</h1>
         <Dialog>
           <DialogTrigger asChild>
@@ -191,53 +202,92 @@ const Documents = () => {
       <Card>
         <CardHeader>
           <CardTitle>Documents</CardTitle>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search documents..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="max-w-sm"
+              className="w-full sm:max-w-sm"
             />
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Case</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Uploaded</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredDocuments.map((doc) => (
-                <TableRow key={doc.id}>
-                  <TableCell className="font-medium">{doc.name}</TableCell>
-                  <TableCell>{doc.caseId}</TableCell>
-                  <TableCell>{doc.type}</TableCell>
-                  <TableCell>v{doc.version}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusColor(doc.status)}>
-                      {doc.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{format(new Date(doc.uploadedAt), 'MMM d, yyyy')}</TableCell>
-                  <TableCell>{doc.sizeKb} KB</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+          {/* Desktop Table */}
+          <ResponsiveTableDesktop>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Case</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Version</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Uploaded</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredDocuments.map((doc) => (
+                  <TableRow key={doc.id}>
+                    <TableCell className="font-medium">{doc.name}</TableCell>
+                    <TableCell>{doc.caseId}</TableCell>
+                    <TableCell>{doc.type}</TableCell>
+                    <TableCell>v{doc.version}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusColor(doc.status)}>
+                        {doc.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{format(new Date(doc.uploadedAt), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>{doc.sizeKb} KB</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm">
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ResponsiveTableDesktop>
+
+          {/* Mobile Cards */}
+          <ResponsiveTableMobile>
+            {filteredDocuments.map((doc) => (
+              <ResponsiveTableCard key={doc.id}>
+                <ResponsiveTableField label="Name">
+                  <span className="font-medium">{doc.name}</span>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Case">
+                  {doc.caseId}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Type">
+                  {doc.type}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Version">
+                  v{doc.version}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Status">
+                  <Badge variant={getStatusColor(doc.status)}>
+                    {doc.status}
+                  </Badge>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Uploaded">
+                  {format(new Date(doc.uploadedAt), 'MMM d, yyyy')}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Size">
+                  {doc.sizeKb} KB
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Actions">
+                  <Button variant="ghost" size="sm">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </ResponsiveTableField>
+              </ResponsiveTableCard>
+            ))}
+          </ResponsiveTableMobile>
         </CardContent>
       </Card>
     </div>

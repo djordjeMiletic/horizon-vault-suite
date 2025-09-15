@@ -4,7 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  ResponsiveTableDesktop,
+  ResponsiveTableMobile,
+  ResponsiveTableCard,
+  ResponsiveTableField,
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/responsive-table';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -117,8 +128,8 @@ const Applications = () => {
 
       <Card>
         <div className="p-4">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="relative flex-1">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by name, email, or job title..."
@@ -127,75 +138,119 @@ const Applications = () => {
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Statuses</SelectItem>
-                <SelectItem value="New">New</SelectItem>
-                <SelectItem value="Screening">Screening</SelectItem>
-                <SelectItem value="Interview">Interview</SelectItem>
-                <SelectItem value="Offer">Offer</SelectItem>
-                <SelectItem value="Rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={jobFilter} onValueChange={setJobFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Job" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Jobs</SelectItem>
-                {jobs.map(job => (
-                  <SelectItem key={job.id} value={job.id}>{job.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Statuses</SelectItem>
+                  <SelectItem value="New">New</SelectItem>
+                  <SelectItem value="Screening">Screening</SelectItem>
+                  <SelectItem value="Interview">Interview</SelectItem>
+                  <SelectItem value="Offer">Offer</SelectItem>
+                  <SelectItem value="Rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={jobFilter} onValueChange={setJobFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Job" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Jobs</SelectItem>
+                  {jobs.map(job => (
+                    <SelectItem key={job.id} value={job.id}>{job.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Applied For</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Applied Date</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredApplicants.map((applicant) => (
-                <TableRow key={applicant.id} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell className="font-medium">{applicant.name}</TableCell>
-                  <TableCell>{applicant.email}</TableCell>
-                  <TableCell>{applicant.jobTitle}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(applicant.status)}>
-                      {applicant.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(applicant.appliedAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <Sheet>
-                      <SheetTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </SheetTrigger>
-                      <ApplicantDetailsSheet
-                        applicant={applicant}
-                        onStatusUpdate={handleStatusUpdate}
-                        onAddNote={handleAddNote}
-                      />
-                    </Sheet>
-                  </TableCell>
+          {/* Desktop Table */}
+          <ResponsiveTableDesktop>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Applied For</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Applied Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredApplicants.map((applicant) => (
+                  <TableRow key={applicant.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell className="font-medium">{applicant.name}</TableCell>
+                    <TableCell>{applicant.email}</TableCell>
+                    <TableCell>{applicant.jobTitle}</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(applicant.status)}>
+                        {applicant.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(applicant.appliedAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Sheet>
+                        <SheetTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </SheetTrigger>
+                        <ApplicantDetailsSheet
+                          applicant={applicant}
+                          onStatusUpdate={handleStatusUpdate}
+                          onAddNote={handleAddNote}
+                        />
+                      </Sheet>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ResponsiveTableDesktop>
+
+          {/* Mobile Cards */}
+          <ResponsiveTableMobile>
+            {filteredApplicants.map((applicant) => (
+              <ResponsiveTableCard key={applicant.id}>
+                <ResponsiveTableField label="Name">
+                  <span className="font-medium">{applicant.name}</span>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Email">
+                  {applicant.email}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Applied For">
+                  {applicant.jobTitle}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Status">
+                  <Badge className={getStatusColor(applicant.status)}>
+                    {applicant.status}
+                  </Badge>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Applied Date">
+                  {new Date(applicant.appliedAt).toLocaleDateString()}
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Actions">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </SheetTrigger>
+                    <ApplicantDetailsSheet
+                      applicant={applicant}
+                      onStatusUpdate={handleStatusUpdate}
+                      onAddNote={handleAddNote}
+                    />
+                  </Sheet>
+                </ResponsiveTableField>
+              </ResponsiveTableCard>
+            ))}
+          </ResponsiveTableMobile>
         </div>
       </Card>
     </div>
@@ -211,12 +266,12 @@ const ApplicantDetailsSheet = ({ applicant, onStatusUpdate, onAddNote }) => {
   };
 
   return (
-    <SheetContent className="w-[500px] sm:w-[700px] overflow-y-auto">
+    <SheetContent className="w-full sm:w-[500px] lg:w-[700px] overflow-y-auto">
       <SheetHeader>
         <SheetTitle>{applicant.name}</SheetTitle>
       </SheetHeader>
       <div className="space-y-6 py-6">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-medium text-muted-foreground">Email</Label>
             <p className="mt-1">{applicant.email}</p>
