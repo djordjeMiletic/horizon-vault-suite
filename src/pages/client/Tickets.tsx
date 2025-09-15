@@ -246,11 +246,11 @@ const Tickets = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16">ID</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead className="hidden sm:table-cell">Priority</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">Last Update</TableHead>
+                  <TableHead className="w-16 whitespace-nowrap">ID</TableHead>
+                  <TableHead className="min-w-[200px]">Subject</TableHead>
+                  <TableHead className="hidden sm:table-cell whitespace-nowrap">Priority</TableHead>
+                  <TableHead className="whitespace-nowrap">Status</TableHead>
+                  <TableHead className="hidden md:table-cell whitespace-nowrap">Last Update</TableHead>
                   <TableHead className="w-20">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -259,25 +259,26 @@ const Tickets = () => {
                   .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime())
                   .map((ticket) => (
                     <TableRow key={ticket.id}>
-                      <TableCell className="font-mono text-sm">#{ticket.id}</TableCell>
+                      <TableCell className="font-mono text-sm whitespace-nowrap">#{ticket.id}</TableCell>
                       <TableCell className="font-medium">{ticket.subject}</TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant={getPriorityColor(ticket.priority)} className="gap-1">
+                        <Badge variant={getPriorityColor(ticket.priority)} className="gap-1 whitespace-nowrap">
                           {getPriorityIcon(ticket.priority)}
                           {ticket.priority}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusColor(ticket.status)}>
+                        <Badge variant={getStatusColor(ticket.status)} className="whitespace-nowrap">
                           {ticket.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">{ticket.lastUpdate}</TableCell>
+                      <TableCell className="hidden md:table-cell whitespace-nowrap">{ticket.lastUpdate}</TableCell>
                       <TableCell>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setSelectedTicket(ticket.id)}
+                          aria-label="View ticket details"
                         >
                           <MessageSquare className="h-4 w-4" />
                         </Button>

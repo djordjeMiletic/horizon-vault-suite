@@ -13,11 +13,14 @@ const Notifications = () => {
   const [selectedType, setSelectedType] = useState<string>("all");
   const { toast } = useToast();
 
+  // Filter admin-specific notifications
+  const adminNotifications = notifications.filter(n => n.userId === "admin" || n.id.startsWith("AN-"));
+  
   const filteredNotifications = selectedType === "all" 
-    ? notifications 
-    : notifications.filter(notif => notif.type === selectedType);
+    ? adminNotifications 
+    : adminNotifications.filter(notif => notif.type === selectedType);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = adminNotifications.filter(n => !n.read).length;
 
   const handleMarkAsRead = (id: string) => {
     markAsRead(id);
@@ -38,6 +41,7 @@ const Notifications = () => {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "commission":
+      case "payment":
         return <DollarSign className="h-5 w-5 text-green-600" />;
       case "compliance":
         return <Shield className="h-5 w-5 text-orange-600" />;
@@ -47,6 +51,10 @@ const Notifications = () => {
         return <Calendar className="h-5 w-5 text-purple-600" />;
       case "message":
         return <MessageCircle className="h-5 w-5 text-teal-600" />;
+      case "user":
+        return <Bell className="h-5 w-5 text-blue-600" />;
+      case "system":
+        return <AlertTriangle className="h-5 w-5 text-gray-600" />;
       default:
         return <Bell className="h-5 w-5 text-muted-foreground" />;
     }
@@ -72,11 +80,14 @@ const Notifications = () => {
       case "contact": return "Contact";
       case "appointment": return "Appointment";
       case "message": return "Message";
+      case "payment": return "Payment";
+      case "user": return "User";
+      case "system": return "System";
       default: return "Notification";
     }
   };
 
-  const uniqueTypes = Array.from(new Set(notifications.map(n => n.type)));
+  const uniqueTypes = Array.from(new Set(adminNotifications.map(n => n.type)));
 
   return (
     <div className="p-6 space-y-6">

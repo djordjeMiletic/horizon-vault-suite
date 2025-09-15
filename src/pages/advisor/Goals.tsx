@@ -77,7 +77,8 @@ const Goals = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Mobile and tablet: vertical stack */}
+      <div className="lg:hidden space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -118,30 +119,100 @@ const Goals = () => {
           <CardContent>
             <div className="overflow-hidden">
               <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => [`£${Number(value).toLocaleString()}`, '']} />
-                <Line 
-                  type="monotone" 
-                  dataKey="target" 
-                  stroke="hsl(var(--muted-foreground))" 
-                  strokeDasharray="5 5"
-                  name="Target"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="achieved" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                  name="Achieved"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`£${Number(value).toLocaleString()}`, '']} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="target" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    strokeDasharray="5 5"
+                    name="Target"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="achieved" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    name="Achieved"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Desktop: two-column layout */}
+      <div className="hidden lg:block">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Current Goal
+              </CardTitle>
+              <CardDescription>{currentGoal.type}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Target</span>
+                  <span className="text-lg font-semibold">£{currentGoal.target?.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Achieved</span>
+                  <span className="text-lg font-semibold text-primary">£{currentGoal.achieved?.toLocaleString()}</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Progress</span>
+                    <span className="text-sm font-medium">{Math.round(currentGoal.progress * 100)}%</span>
+                  </div>
+                  <Progress value={currentGoal.progress * 100} className="h-2" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Performance Trend
+              </CardTitle>
+              <CardDescription>Target vs Achieved - Last 6 Months</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-hidden">
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`£${Number(value).toLocaleString()}`, '']} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="target" 
+                      stroke="hsl(var(--muted-foreground))" 
+                      strokeDasharray="5 5"
+                      name="Target"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="achieved" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      name="Achieved"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
