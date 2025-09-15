@@ -30,16 +30,25 @@ const Analytics = () => {
   const getFilteredPayments = () => {
     let filtered = paymentsData;
 
-    // Role-based filtering
+    // Role-based data scoping
     if (user?.role === 'advisor') {
-      // Advisors see their own data by default
+      // Advisors ONLY see their own data - ignore advisor filter entirely
       filtered = filtered.filter(p => p.advisorEmail === user?.email);
-    }
-    // Managers see all advisors by default
-
-    // Apply advisor filter
-    if (selectedAdvisor !== 'all') {
-      filtered = filtered.filter(p => p.advisorEmail === selectedAdvisor);
+    } else if (user?.role === 'manager') {
+      // Managers see all advisors by default, can filter with advisor selection
+      // Apply advisor filter only for managers
+      if (selectedAdvisor !== 'all') {
+        if (Array.isArray(selectedAdvisor)) {
+          // Multi-select support
+          filtered = filtered.filter(p => selectedAdvisor.includes(p.advisorEmail));
+        } else {
+          // Single select
+          filtered = filtered.filter(p => p.advisorEmail === selectedAdvisor);
+        }
+      }
+    } else if (user?.role === 'referral') {
+      // Referral partners see all data (read-only)
+      // In production, this would be scoped to their referrals only
     }
 
     return filtered;
@@ -122,10 +131,16 @@ const Analytics = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground">Performance insights and trends</p>
+          <p className="text-muted-foreground">
+            {user?.role === 'advisor' && 'Your performance insights and trends'}
+            {user?.role === 'manager' && 'Team performance insights and trends'}  
+            {user?.role === 'referral' && 'Performance insights and trends (read-only)'}
+            {user?.role === 'admin' && 'Performance insights and trends'}
+          </p>
         </div>
         <div className="flex gap-4">
-          {(user?.role === 'manager' || user?.role === 'advisor') && (
+          {/* Advisor Filter - ONLY shown for managers */}
+          {user?.role === 'manager' && (
             <Select value={selectedAdvisor} onValueChange={setSelectedAdvisor}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Select advisor" />
@@ -165,7 +180,8 @@ const Analytics = () => {
           <CardContent>
             <div className="text-2xl font-bold">£{totalCommissions.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name}
+              {user?.role === 'advisor' ? 'Your data' : 
+               (selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name)}
             </p>
           </CardContent>
         </Card>
@@ -190,7 +206,8 @@ const Analytics = () => {
               <TrendingUp className="h-5 w-5" />
               Monthly Commissions
               <span className="text-xs text-muted-foreground ml-auto">
-                {selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name}
+                {user?.role === 'advisor' ? 'Your data' : 
+                 (selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name)}
               </span>
             </CardTitle>
           </CardHeader>
@@ -245,7 +262,8 @@ const Analytics = () => {
               <PieChartIcon className="h-5 w-5" />
               Product Mix
               <span className="text-xs text-muted-foreground ml-auto">
-                {selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name}
+                {user?.role === 'advisor' ? 'Your data' : 
+                 (selectedAdvisor === 'all' ? 'All advisors' : advisors.find(a => a.email === selectedAdvisor)?.name)}
               </span>
             </CardTitle>
           </CardHeader>

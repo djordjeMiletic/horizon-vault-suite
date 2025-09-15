@@ -47,18 +47,27 @@ const Reports = () => {
   const getFilteredPayments = () => {
     let filtered = paymentsData;
 
-    // Role-based filtering
-    if (user?.role === 'referral') {
-      // Referral partners see all payments (read-only)
-    } else if (user?.role === 'advisor') {
-      // Advisors see their own payments by default
+    // Role-based data scoping
+    if (user?.role === 'advisor') {
+      // Advisors ONLY see their own data - no exceptions
       filtered = filtered.filter(p => p.advisorEmail === user?.email);
+    } else if (user?.role === 'referral') {
+      // Referral partners see all payments (read-only)
+      // In production, this would be scoped to their referrals only
+    } else if (user?.role === 'manager') {
+      // Managers see all advisors by default, can filter with advisor selection
+      // No initial filtering - they see everything unless advisor filter is applied
     }
-    // Managers see all payments by default
 
-    // Apply advisor filter
-    if (filters.advisor !== 'all') {
-      filtered = filtered.filter(p => p.advisorEmail === filters.advisor);
+    // Apply advisor filter (only relevant for managers)
+    if (user?.role === 'manager' && filters.advisor !== 'all') {
+      if (Array.isArray(filters.advisor)) {
+        // Multi-select support
+        filtered = filtered.filter(p => filters.advisor.includes(p.advisorEmail));
+      } else {
+        // Single select fallback
+        filtered = filtered.filter(p => p.advisorEmail === filters.advisor);
+      }
     }
 
     // Apply product filter
@@ -180,10 +189,14 @@ const Reports = () => {
         <div>
           <h1 className="text-3xl font-bold">Commission Reports</h1>
           <p className="text-muted-foreground">
-            {user?.role === 'referral' ? 'View commission reports (read-only)' : 'Detailed commission tracking and analysis'}
+            {user?.role === 'advisor' && 'Your commission tracking and analysis'}
+            {user?.role === 'manager' && 'Team commission tracking and analysis'}  
+            {user?.role === 'referral' && 'View commission reports (read-only)'}
+            {user?.role === 'admin' && 'Detailed commission tracking and analysis'}
           </p>
         </div>
-        {canExportCSV(user?.role || '') && (
+        {/* Show export button only for roles that can export, and hide for referral partners */}
+        {canExportCSV(user?.role || '') && user?.role !== 'referral' && (
           <Button onClick={handleExportCSV} className="flex items-center gap-2">
             <Download className="h-4 w-4" />
             Export CSV
@@ -241,7 +254,7 @@ const StandardReports = ({
         <CardDescription>Filter reports by period, product, and role</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label>Period</Label>
             <Select
@@ -280,27 +293,29 @@ const StandardReports = ({
             </Select>
           </div>
 
-          {/* Advisor Filter - shown for managers and advisors, but not referral partners */}
-          {(user?.role === 'manager' || user?.role === 'advisor') && (
-            <div>
-              <Label>Advisor</Label>
-              <Select
-                value={filters.advisor || 'all'}
-                onValueChange={(value) => setFilters((prev: any) => ({ ...prev, advisor: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Advisors</SelectItem>
-                  {advisors.map(advisor => (
-                    <SelectItem key={advisor.email} value={advisor.email}>
-                      {advisor.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Advisor Filter - ONLY shown for managers */}
+          {user?.role === 'manager' && (
+            <>
+              <div>
+                <Label>Advisor</Label>
+                <Select
+                  value={filters.advisor || 'all'}
+                  onValueChange={(value) => setFilters((prev: any) => ({ ...prev, advisor: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Advisors</SelectItem>
+                    {advisors.map(advisor => (
+                      <SelectItem key={advisor.email} value={advisor.email}>
+                        {advisor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
           )}
           
           {user?.role === 'manager' && (
