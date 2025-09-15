@@ -287,7 +287,6 @@ const Reports = () => {
                       <TableHead>Method Used</TableHead>
                       <TableHead className="text-right">Product Rate</TableHead>
                       <TableHead className="text-right">Pool Amount</TableHead>
-                      <TableHead>Role Shares</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -328,15 +327,6 @@ const Reports = () => {
                             <TableCell className="text-right">{commission.productRatePct}%</TableCell>
                             <TableCell className="text-right font-medium">£{commission.poolAmount.toFixed(2)}</TableCell>
                             <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => toggleRowExpansion(payment.id)}
-                              >
-                                View Split
-                              </Button>
-                            </TableCell>
-                            <TableCell>
                               <Badge 
                                 variant={
                                   payment.status === 'Approved' ? 'default' : 
@@ -349,7 +339,7 @@ const Reports = () => {
                           </TableRow>
                           {isExpanded && (
                             <TableRow>
-                              <TableCell colSpan={user?.role === 'manager' ? 12 : 11}>
+                              <TableCell colSpan={user?.role === 'manager' ? 11 : 10}>
                                 <div className="p-4 bg-muted/30 rounded-lg">
                                   <h4 className="font-medium mb-3">Commission Split Breakdown</h4>
                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -390,7 +380,7 @@ const Reports = () => {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground whitespace-nowrap">
                     Page {currentPage} of {totalPages}
                   </div>
                   <Pagination>

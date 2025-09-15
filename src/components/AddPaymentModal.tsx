@@ -43,17 +43,16 @@ const AddPaymentModal = ({ open, onOpenChange, onPaymentAdded }: AddPaymentModal
   const [commissionPreview, setCommissionPreview] = useState<any>(null);
 
   const advisors = [
-    { email: 'advisor@advisor.com', name: 'Sarah Johnson' },
-    { email: 'advisor2@advisor.com', name: 'Michael Carter' }
+    { email: 'advisor@advisor.com', name: 'Sarah Johnson', displayName: 'Sarah Johnson — sarah.johnson@event-horizon.test' },
+    { email: 'advisor2@advisor.com', name: 'Michael Carter', displayName: 'Michael Carter — michael.carter@event-horizon.test' }
   ];
 
   const providers = [
     'Royal London',
+    'MetLife', 
     'Guardian',
-    'MetLife',
     'Aviva',
-    'Zurich',
-    'Other'
+    'Aegon'
   ];
 
   // Calculate commission preview when inputs change
@@ -276,7 +275,7 @@ const AddPaymentModal = ({ open, onOpenChange, onPaymentAdded }: AddPaymentModal
                   <SelectContent>
                     {advisors.map((advisor) => (
                       <SelectItem key={advisor.email} value={advisor.email}>
-                        {advisor.name}
+                        {advisor.displayName}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -106,10 +106,10 @@ export interface AuditEntry {
 // Get product name helper
 export function getProductName(productId: string): string {
   const names: Record<string, string> = {
-    'royal-protect': 'Royal Protect',
-    'guardian-life': 'Guardian Life',
-    'metlife-secure': 'MetLife Secure',
-    'aviva-protection': 'Aviva Protection',
+    'royal-protect': 'Term Life (PRD-TERM)',
+    'guardian-life': 'Critical Illness (PRD-CI)', 
+    'metlife-secure': 'Whole of Life (PRD-WOL)',
+    'aviva-protection': 'Income Protection (PRD-IP)',
     'zurich-income': 'Zurich Income'
   };
   return names[productId] || productId;
