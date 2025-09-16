@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,31 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Shield, TrendingUp, Clock, Users, Heart, Umbrella, Star } from 'lucide-react';
-import { getPublicProducts, type Product } from '@/services/products';
+
+import productsData from '@/mocks/seed/products.json';
 import bannerImage from '@/assets/products-banner.jpg';
 
 const Products = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const data = await getPublicProducts();
-        setProducts(data);
-      } catch (error) {
-        console.error('Failed to fetch products:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -88,29 +69,8 @@ const Products = () => {
             <span className="text-foreground">Products</span>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="bg-card border-border">
-                  <CardHeader className="p-6 md:p-8">
-                    <Skeleton className="h-8 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <div className="flex space-x-2 mt-4">
-                      <Skeleton className="h-6 w-16" />
-                      <Skeleton className="h-6 w-16" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6 md:p-8 pt-0">
-                    <Skeleton className="h-4 w-full mb-4" />
-                    <Skeleton className="h-4 w-3/4 mb-6" />
-                    <Skeleton className="h-11 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-              {products.map((product) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+            {productsData.map((product) => (
               <Card key={product.id} className="bg-card border-border hover:shadow-card transition-all duration-300">
                 <CardHeader className="p-6 md:p-8">
                   <div className="flex items-start justify-between">
@@ -224,9 +184,8 @@ const Products = () => {
                   </Dialog>
                 </CardContent>
               </Card>
-              ))}
-            </div>
-          )}
+            ))}
+          </div>
 
           
           {/* Additional Content Sections */}

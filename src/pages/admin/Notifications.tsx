@@ -1,65 +1,41 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNotificationStore } from "@/lib/stores";
 import { useToast } from "@/hooks/use-toast";
 import { Bell, CheckCheck, AlertTriangle, DollarSign, Shield, Phone, Calendar, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { getNotifications, markAllRead } from "@/services/notifications";
-import type { NotificationDto } from "@/types/api";
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState<NotificationDto[]>([]);
+  const { notifications, markAsRead, markAllAsRead } = useNotificationStore();
   const [selectedType, setSelectedType] = useState<string>("all");
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Load notifications
-  useEffect(() => {
-    const loadNotifications = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getNotifications('admin');
-        setNotifications(data);
-      } catch (error) {
-        console.error('Failed to load notifications:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load notifications',
-          variant: 'destructive'
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadNotifications();
-  }, [toast]);
-
+  // Filter admin-specific notifications
+  const adminNotifications = notifications.filter(n => n.userId === "admin" || n.id.startsWith("AN-"));
+  
   const filteredNotifications = selectedType === "all" 
-    ? notifications 
-    : notifications.filter(notif => notif.type === selectedType);
+    ? adminNotifications 
+    : adminNotifications.filter(notif => notif.type === selectedType);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = adminNotifications.filter(n => !n.read).length;
 
-  const handleMarkAllAsRead = async () => {
-    try {
-      await markAllRead('admin');
-      // Update local state
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      toast({
-        title: "All notifications marked as read",
-        description: `${unreadCount} notifications updated`,
-      });
-    } catch (error) {
-      console.error('Failed to mark all as read:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to mark notifications as read',
-        variant: 'destructive'
-      });
-    }
+  const handleMarkAsRead = (id: string) => {
+    markAsRead(id);
+    toast({
+      title: "Notification marked as read",
+      description: "Notification status updated",
+    });
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllAsRead("admin"); // Use admin as the userId for admin notifications
+    toast({
+      title: "All notifications marked as read",
+      description: `${unreadCount} notifications updated`,
+    });
   };
 
   const getTypeIcon = (type: string) => {
@@ -73,204 +49,152 @@ const Notifications = () => {
         return <Phone className="h-5 w-5 text-blue-600" />;
       case "appointment":
         return <Calendar className="h-5 w-5 text-purple-600" />;
+      case "message":
+        return <MessageCircle className="h-5 w-5 text-teal-600" />;
+      case "user":
+        return <Bell className="h-5 w-5 text-blue-600" />;
+      case "system":
+        return <AlertTriangle className="h-5 w-5 text-gray-600" />;
       default:
-        return <MessageCircle className="h-5 w-5 text-gray-600" />;
+        return <Bell className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "commission":
-      case "payment":
-        return "bg-green-100 text-green-800";
-      case "compliance":
-        return "bg-orange-100 text-orange-800";
-      case "contact":
-        return "bg-blue-100 text-blue-800";
-      case "appointment":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority?.toLowerCase()) {
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
       case "high":
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case "medium":
-        return <Bell className="h-4 w-4 text-yellow-500" />;
+        return <Badge variant="destructive" className="ml-2">High</Badge>;
+      case "normal":
+        return <Badge variant="outline" className="ml-2">Normal</Badge>;
+      case "low":
+        return <Badge variant="secondary" className="ml-2">Low</Badge>;
       default:
-        return <Bell className="h-4 w-4 text-blue-500" />;
+        return null;
     }
   };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "commission": return "Commission";
+      case "compliance": return "Compliance";
+      case "contact": return "Contact";
+      case "appointment": return "Appointment";
+      case "message": return "Message";
+      case "payment": return "Payment";
+      case "user": return "User";
+      case "system": return "System";
+      default: return "Notification";
+    }
+  };
+
+  const uniqueTypes = Array.from(new Set(adminNotifications.map(n => n.type)));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
-          <p className="text-muted-foreground">
-            Admin notifications and system alerts
-          </p>
+          <h1 className="text-3xl font-bold">Notifications</h1>
+          <p className="text-muted-foreground">System notifications and alerts</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={handleMarkAllAsRead}
-            disabled={unreadCount === 0 || isLoading}
-          >
-            <CheckCheck className="h-4 w-4 mr-2" />
-            Mark All Read ({unreadCount})
-          </Button>
+        <div className="flex gap-2">
+          {unreadCount > 0 && (
+            <Button variant="outline" onClick={handleMarkAllAsRead}>
+              <CheckCheck className="h-4 w-4 mr-2" />
+              Mark All Read ({unreadCount})
+            </Button>
+          )}
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Admin Notifications
-              </CardTitle>
-              <CardDescription>
-                System notifications and alerts for administrators
-              </CardDescription>
-            </div>
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="commission">Commission</SelectItem>
-                <SelectItem value="compliance">Compliance</SelectItem>
-                <SelectItem value="contact">Contact</SelectItem>
-                <SelectItem value="appointment">Appointment</SelectItem>
-                <SelectItem value="payment">Payment</SelectItem>
-                <SelectItem value="info">Info</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Loading notifications...</p>
-            </div>
-          ) : filteredNotifications.length === 0 ? (
-            <div className="text-center py-8">
-              <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No notifications found</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredNotifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-4 rounded-lg border transition-colors ${
-                    !notification.read 
-                      ? "bg-muted/50 border-primary/20" 
-                      : "bg-background hover:bg-muted/30"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-1">
-                      {getTypeIcon(notification.type)}
+      <div className="flex gap-4 items-center">
+        <Select value={selectedType} onValueChange={setSelectedType}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {uniqueTypes.map(type => (
+              <SelectItem key={type} value={type}>
+                {getTypeLabel(type)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <div className="text-sm text-muted-foreground">
+          {filteredNotifications.length} notifications
+          {unreadCount > 0 && ` • ${unreadCount} unread`}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {filteredNotifications.length === 0 ? (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground">No notifications</h3>
+                <p className="text-sm text-muted-foreground">No notifications match your current filters</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredNotifications.map((notification) => (
+            <Card 
+              key={notification.id} 
+              className={`cursor-pointer transition-colors hover:bg-muted/50 ${
+                !notification.read ? 'border-primary bg-primary/5' : ''
+              }`}
+              onClick={() => !notification.read && handleMarkAsRead(notification.id)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 mt-1">
+                    {getTypeIcon(notification.type)}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className={`font-medium ${!notification.read ? 'font-semibold' : ''}`}>
+                        {notification.title}
+                      </h4>
+                      {getPriorityBadge(notification.priority)}
+                      {!notification.read && (
+                        <Badge variant="default" className="ml-auto">New</Badge>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-sm truncate">
-                            {notification.title}
-                          </h3>
-                          {!notification.read && (
-                            <Badge variant="secondary" className="text-xs">
-                              New
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Badge 
-                            variant="secondary" 
-                            className={`text-xs ${getTypeColor(notification.type)}`}
+                    
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {notification.message}
+                    </p>
+                    
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>{getTypeLabel(notification.type)}</span>
+                      <span>•</span>
+                      <span>{formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}</span>
+                      {!notification.read && (
+                        <>
+                          <span>•</span>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkAsRead(notification.id);
+                            }}
                           >
-                            {notification.type}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                          </span>
-                        </div>
-                      </div>
+                            Mark as read
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Statistics Card */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{notifications.length}</div>
-            <p className="text-xs text-muted-foreground">
-              All notifications
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unread</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{unreadCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Require attention
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Commission</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {notifications.filter(n => ['commission', 'payment'].includes(n.type)).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Payment related
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Compliance</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {notifications.filter(n => n.type === 'compliance').length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Compliance alerts
-            </p>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

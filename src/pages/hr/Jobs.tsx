@@ -1,14 +1,9 @@
 import { useState } from 'react';
-import { jobsService } from '@/services/jobs';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useJobStore } from '@/lib/stores';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { 
   ResponsiveTableDesktop,
   ResponsiveTableMobile,
@@ -22,220 +17,186 @@ import {
   TableRow 
 } from '@/components/ui/responsive-table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, Eye } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Search, Users, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Jobs = () => {
-  const queryClient = useQueryClient();
-  const { data: jobsData = { items: [] } } = useQuery({
-    queryKey: ['jobs'],
-    queryFn: jobsService.getAll
-  });
-
-  const jobs = Array.isArray(jobsData) ? jobsData : jobsData.items || [];
-
-  const createJobMutation = useMutation({
-    mutationFn: jobsService.create,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['jobs'] })
-  });
-
-  const updateJobMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: any }) => jobsService.update(id, updates),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['jobs'] })
-  });
-
+  const { jobs, addJob, updateJob, toggleJobStatus } = useJobStore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const [newJob, setNewJob] = useState({
     title: '',
-    department: 'Sales',
-    location: 'London',
-    employmentType: 'Full-time',
-    salaryMin: '',
-    salaryMax: '',
+    department: '',
+    location: '',
     description: '',
-    requirements: ''
+    requirements: ['']
   });
 
-  const [selectedJob, setSelectedJob] = useState<any>(null);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-
-  const filteredJobs = jobs.filter((job: any) =>
-    job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.location?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const handleCreateJob = () => {
-    if (!newJob.title || !newJob.description) {
+    const filteredRequirements = newJob.requirements.filter(req => req.trim() !== '');
+    
+    if (!newJob.title || !newJob.department || !newJob.location || !newJob.description) {
       toast({
-        title: "Missing required fields",
-        description: "Please fill in title and description",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive'
       });
       return;
     }
 
-    const jobData = {
-      title: newJob.title,
-      department: newJob.department,
-      location: newJob.location,
-      description: newJob.description,
-      requirements: newJob.requirements ? newJob.requirements.split(',').map(r => r.trim()) : []
-    };
-
-    createJobMutation.mutate(jobData, {
-      onSuccess: () => {
-        setNewJob({
-          title: '',
-          department: 'Sales',
-          location: 'London', 
-          employmentType: 'Full-time',
-          salaryMin: '',
-          salaryMax: '',
-          description: '',
-          requirements: ''
-        });
-        setIsCreateDialogOpen(false);
-
-        toast({
-          title: "Job created",
-          description: "New job posting has been created successfully.",
-        });
-      }
+    addJob({
+      ...newJob,
+      requirements: filteredRequirements,
+      createdBy: 'HR Team',
+      status: 'Open'
     });
-  };
 
-  const handleToggleStatus = (job: any) => {
-    const newStatus = job.status === 'Open' ? 'Closed' : 'Open';
-    updateJobMutation.mutate({ id: job.id, updates: { status: newStatus } });
-    
     toast({
-      title: `Job ${newStatus.toLowerCase()}`,
-      description: `${job.title} has been ${newStatus.toLowerCase()}.`,
+      title: 'Success',
+      description: 'Job posting created successfully'
+    });
+
+    setNewJob({
+      title: '',
+      department: '',
+      location: '',
+      description: '',
+      requirements: ['']
+    });
+
+    setIsCreateDialogOpen(false);
+  };
+
+  const handleCancelJob = () => {
+    setNewJob({
+      title: '',
+      department: '',
+      location: '',
+      description: '',
+      requirements: ['']
+    });
+    setIsCreateDialogOpen(false);
+  };
+
+  const handleToggleStatus = (jobId: string) => {
+    toggleJobStatus(jobId);
+    toast({
+      title: 'Job Updated',
+      description: 'Job status has been updated'
     });
   };
 
-  const handleViewJob = (job: any) => {
-    setSelectedJob(job);
-    setIsViewDialogOpen(true);
+  const addRequirement = () => {
+    setNewJob(prev => ({
+      ...prev,
+      requirements: [...prev.requirements, '']
+    }));
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Open': return 'default';
-      case 'Closed': return 'secondary';
-      case 'Draft': return 'outline';
-      default: return 'secondary';
-    }
+  const updateRequirement = (index: number, value: string) => {
+    setNewJob(prev => ({
+      ...prev,
+      requirements: prev.requirements.map((req, i) => i === index ? value : req)
+    }));
   };
+
+  const removeRequirement = (index: number) => {
+    setNewJob(prev => ({
+      ...prev,
+      requirements: prev.requirements.filter((_, i) => i !== index)
+    }));
+  };
+
+  const filteredJobs = jobs.filter(job =>
+    job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (jobs.length === 0) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Job Postings</h1>
+            <p className="text-muted-foreground">Manage recruitment positions</p>
+          </div>
+        </div>
+        
+        <Card className="p-8 text-center">
+          <div className="space-y-4">
+            <Users className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h3 className="text-lg font-medium">No job postings yet</h3>
+            <p className="text-muted-foreground">Create your first job posting to start recruiting</p>
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Job Posting
+                </Button>
+              </DialogTrigger>
+              <JobCreateDialog
+                newJob={newJob}
+                setNewJob={setNewJob}
+                addRequirement={addRequirement}
+                updateRequirement={updateRequirement}
+                removeRequirement={removeRequirement}
+                handleCreateJob={handleCreateJob}
+                onCancel={() => setIsCreateDialogOpen(false)}
+              />
+            </Dialog>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-3 sm:p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold">Job Management</h1>
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Job Postings</h1>
+          <p className="text-muted-foreground">Manage recruitment positions</p>
+        </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Job
+              <Plus className="h-4 w-4 mr-2" />
+              Create Job Posting
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Job Posting</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="title">Job Title *</Label>
-                <Input
-                  id="title"
-                  value={newJob.title}
-                  onChange={(e) => setNewJob({...newJob, title: e.target.value})}
-                  placeholder="e.g. Senior Financial Advisor"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="department">Department</Label>
-                  <Select value={newJob.department} onValueChange={(value) => setNewJob({...newJob, department: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Sales">Sales</SelectItem>
-                      <SelectItem value="Operations">Operations</SelectItem>
-                      <SelectItem value="HR">HR</SelectItem>
-                      <SelectItem value="IT">IT</SelectItem>
-                      <SelectItem value="Marketing">Marketing</SelectItem>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="location">Location</Label>
-                  <Select value={newJob.location} onValueChange={(value) => setNewJob({...newJob, location: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="London">London</SelectItem>
-                      <SelectItem value="Dublin">Dublin</SelectItem>
-                      <SelectItem value="Frankfurt">Frankfurt</SelectItem>
-                      <SelectItem value="Belgrade">Belgrade</SelectItem>
-                      <SelectItem value="Remote">Remote</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="description">Job Description *</Label>
-                <Textarea
-                  id="description"
-                  value={newJob.description}
-                  onChange={(e) => setNewJob({...newJob, description: e.target.value})}
-                  placeholder="Describe the role, responsibilities, and company culture..."
-                  rows={4}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="requirements">Requirements (comma-separated)</Label>
-                <Textarea
-                  id="requirements"
-                  value={newJob.requirements}
-                  onChange={(e) => setNewJob({...newJob, requirements: e.target.value})}
-                  placeholder="List required skills, experience, and qualifications..."
-                  rows={4}
-                />
-              </div>
-
-              <Button onClick={handleCreateJob} className="w-full">
-                Create Job Posting
-              </Button>
-            </div>
-          </DialogContent>
+          <JobCreateDialog
+            newJob={newJob}
+            setNewJob={setNewJob}
+            addRequirement={addRequirement}
+            updateRequirement={updateRequirement}
+            removeRequirement={removeRequirement}
+            handleCreateJob={handleCreateJob}
+            onCancel={() => setIsCreateDialogOpen(false)}
+          />
         </Dialog>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Job Postings</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search jobs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
+        <div className="p-4">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search jobs by title, department, or location..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
+
           {/* Desktop Table */}
           <ResponsiveTableDesktop>
             <Table>
@@ -245,36 +206,42 @@ const Jobs = () => {
                   <TableHead>Department</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Applications</TableHead>
+                  <TableHead>Applicants</TableHead>
+                  <TableHead>Posted</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredJobs.map((job: any) => (
-                  <TableRow key={job.id}>
+                {filteredJobs.map((job) => (
+                  <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50">
                     <TableCell className="font-medium">{job.title}</TableCell>
                     <TableCell>{job.department}</TableCell>
                     <TableCell>{job.location}</TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          checked={job.status === 'Open'}
-                          onCheckedChange={() => handleToggleStatus(job)}
-                        />
-                        <Badge variant={getStatusColor(job.status)}>
-                          {job.status}
-                        </Badge>
+                      <Badge variant={job.status === 'Open' ? 'default' : 'secondary'}>
+                        {job.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        {job.applicantCount}
                       </div>
                     </TableCell>
-                    <TableCell>{job.applicantCount || 0}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewJob(job)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      {new Date(job.postedAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Sheet>
+                          <SheetTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </SheetTrigger>
+                          <JobDetailsSheet job={job} onToggleStatus={handleToggleStatus} />
+                        </Sheet>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -284,7 +251,7 @@ const Jobs = () => {
 
           {/* Mobile Cards */}
           <ResponsiveTableMobile>
-            {filteredJobs.map((job: any) => (
+            {filteredJobs.map((job) => (
               <ResponsiveTableCard key={job.id}>
                 <ResponsiveTableField label="Title">
                   <span className="font-medium">{job.title}</span>
@@ -296,90 +263,203 @@ const Jobs = () => {
                   {job.location}
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Status">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={job.status === 'Open'}
-                      onCheckedChange={() => handleToggleStatus(job)}
-                    />
-                    <Badge variant={getStatusColor(job.status)}>
-                      {job.status}
-                    </Badge>
+                  <Badge variant={job.status === 'Open' ? 'default' : 'secondary'}>
+                    {job.status}
+                  </Badge>
+                </ResponsiveTableField>
+                <ResponsiveTableField label="Applicants">
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    {job.applicantCount}
                   </div>
                 </ResponsiveTableField>
-                <ResponsiveTableField label="Applications">
-                  {job.applicantCount || 0}
+                <ResponsiveTableField label="Posted">
+                  {new Date(job.postedAt).toLocaleDateString()}
                 </ResponsiveTableField>
                 <ResponsiveTableField label="Actions">
-                  <Button
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleViewJob(job)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </SheetTrigger>
+                    <JobDetailsSheet job={job} onToggleStatus={handleToggleStatus} />
+                  </Sheet>
                 </ResponsiveTableField>
               </ResponsiveTableCard>
             ))}
           </ResponsiveTableMobile>
-        </CardContent>
+        </div>
       </Card>
-
-      {/* Job Details Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{selectedJob?.title}</DialogTitle>
-          </DialogHeader>
-          {selectedJob && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Department</Label>
-                  <p className="text-sm font-medium">{selectedJob.department}</p>
-                </div>
-                <div>
-                  <Label>Location</Label>
-                  <p className="text-sm font-medium">{selectedJob.location}</p>
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Badge variant={getStatusColor(selectedJob.status)}>
-                    {selectedJob.status}
-                  </Badge>
-                </div>
-              </div>
-
-              <div>
-                <Label>Description</Label>
-                <p className="text-sm mt-1">{selectedJob.description}</p>
-              </div>
-
-              {selectedJob.requirements && (
-                <div>
-                  <Label>Requirements</Label>
-                  <ul className="text-sm mt-1 list-disc list-inside">
-                    {Array.isArray(selectedJob.requirements) 
-                      ? selectedJob.requirements.map((req: string, index: number) => (
-                          <li key={index}>{req}</li>
-                        ))
-                      : <li>{selectedJob.requirements}</li>
-                    }
-                  </ul>
-                </div>
-              )}
-
-              <div>
-                <Label>Posted</Label>
-                <p className="text-sm font-medium">
-                  {new Date(selectedJob.postedAt || selectedJob.createdAt || Date.now()).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
+
+const JobCreateDialog = ({ newJob, setNewJob, addRequirement, updateRequirement, removeRequirement, handleCreateJob, onCancel }) => (
+  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+    <DialogHeader>
+      <DialogTitle>Create New Job Posting</DialogTitle>
+    </DialogHeader>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="title">Job Title *</Label>
+          <Input
+            id="title"
+            value={newJob.title}
+            onChange={(e) => setNewJob(prev => ({ ...prev, title: e.target.value }))}
+            placeholder="Enter job title"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="department">Department *</Label>
+          <Select
+            value={newJob.department}
+            onValueChange={(value) => setNewJob(prev => ({ ...prev, department: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select department" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Sales">Sales</SelectItem>
+              <SelectItem value="Advisory">Advisory</SelectItem>
+              <SelectItem value="Compliance">Compliance</SelectItem>
+              <SelectItem value="IT">IT</SelectItem>
+              <SelectItem value="HR">HR</SelectItem>
+              <SelectItem value="Finance">Finance</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="location">Location *</Label>
+        <Select
+          value={newJob.location}
+          onValueChange={(value) => setNewJob(prev => ({ ...prev, location: value }))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select location" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="London Office">London Office</SelectItem>
+            <SelectItem value="Dublin Office">Dublin Office</SelectItem>
+            <SelectItem value="Frankfurt Office">Frankfurt Office</SelectItem>
+            <SelectItem value="Belgrade Office">Belgrade Office</SelectItem>
+            <SelectItem value="Remote">Remote</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Job Description *</Label>
+        <Textarea
+          id="description"
+          value={newJob.description}
+          onChange={(e) => setNewJob(prev => ({ ...prev, description: e.target.value }))}
+          placeholder="Enter detailed job description"
+          rows={4}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Requirements</Label>
+          <Button type="button" variant="outline" size="sm" onClick={addRequirement}>
+            Add Requirement
+          </Button>
+        </div>
+        {newJob.requirements.map((req, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <Input
+              value={req}
+              onChange={(e) => updateRequirement(index, e.target.value)}
+              placeholder="Enter requirement"
+            />
+            {newJob.requirements.length > 1 && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => removeRequirement(index)}
+              >
+                Remove
+              </Button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button type="button" onClick={handleCreateJob}>Create Job</Button>
+      </div>
+    </div>
+  </DialogContent>
+);
+
+const JobDetailsSheet = ({ job, onToggleStatus }) => (
+  <SheetContent className="w-full sm:w-[500px] lg:w-[600px]">
+    <SheetHeader>
+      <SheetTitle>{job.title}</SheetTitle>
+    </SheetHeader>
+    <div className="space-y-6 py-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <Label className="text-sm font-medium text-muted-foreground">Department</Label>
+          <p className="mt-1">{job.department}</p>
+        </div>
+        <div>
+          <Label className="text-sm font-medium text-muted-foreground">Location</Label>
+          <p className="mt-1">{job.location}</p>
+        </div>
+        <div>
+          <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+          <div className="mt-1 flex items-center gap-2">
+            <Badge variant={job.status === 'Open' ? 'default' : 'secondary'}>
+              {job.status}
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onToggleStatus(job.id)}
+            >
+              {job.status === 'Open' ? 'Close' : 'Reopen'}
+            </Button>
+          </div>
+        </div>
+        <div>
+          <Label className="text-sm font-medium text-muted-foreground">Applicants</Label>
+          <p className="mt-1">{job.applicantCount}</p>
+        </div>
+        <div>
+          <Label className="text-sm font-medium text-muted-foreground">Posted</Label>
+          <p className="mt-1">{new Date(job.postedAt).toLocaleDateString()}</p>
+        </div>
+        <div>
+          <Label className="text-sm font-medium text-muted-foreground">Created By</Label>
+          <p className="mt-1">{job.createdBy}</p>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium text-muted-foreground">Description</Label>
+        <p className="mt-1 text-sm leading-relaxed">{job.description}</p>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium text-muted-foreground">Requirements</Label>
+        <ul className="mt-1 space-y-1">
+          {job.requirements.map((req, index) => (
+            <li key={index} className="text-sm flex items-start gap-2">
+              <span className="text-muted-foreground">•</span>
+              {req}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </SheetContent>
+);
 
 export default Jobs;

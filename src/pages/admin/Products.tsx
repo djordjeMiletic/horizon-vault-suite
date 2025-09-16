@@ -19,28 +19,12 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/responsive-table';
-import { productsService as productsAPI, type Product } from '@/services/products';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useProductStore } from '@/lib/stores';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Search } from 'lucide-react';
 
 const AdminProducts = () => {
-  const queryClient = useQueryClient();
-  const { data: products = [] } = useQuery({
-    queryKey: ['products'],
-    queryFn: () => productsAPI.getPublicProducts()
-  });
-
-  const createProductMutation = useMutation({
-    mutationFn: productsAPI.create,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] })
-  });
-
-  const updateProductMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: any }) => productsAPI.update(id, updates),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] })
-  });
-
+  const { products, addProduct, updateProduct, toggleActive } = useProductStore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,10 +42,10 @@ const AdminProducts = () => {
     bands: ''
   });
 
-  const filteredProducts = products.filter((product: any) =>
-    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.provider?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.type?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const resetForm = () => {
@@ -83,16 +67,16 @@ const AdminProducts = () => {
   const handleEdit = (product: any) => {
     setEditingProduct(product);
     setForm({
-      name: product.name || '',
-      provider: product.provider || '',
-      type: product.type || '',
-      commissionRate: ((product.commissionRate || 0) * 100).toString(),
-      margin: ((product.margin || 0) * 100).toString(),
-      description: product.description || '',
-      features: product.features?.join(', ') || '',
-      apeExample: product.commissionExample?.ape?.toString() || '',
-      commissionExample: product.commissionExample?.commission?.toString() || '',
-      bands: product.bands?.map((b: any) => `${b.threshold}:${(b.rateAdjustment || 0) * 100}`).join(', ') || ''
+      name: product.name,
+      provider: product.provider,
+      type: product.type,
+      commissionRate: (product.commissionRate * 100).toString(),
+      margin: (product.margin * 100).toString(),
+      description: product.description,
+      features: product.features.join(', '),
+      apeExample: product.commissionExample.ape.toString(),
+      commissionExample: product.commissionExample.commission.toString(),
+      bands: product.bands.map((b: any) => `${b.threshold}:${b.rateAdjustment * 100}`).join(', ')
     });
     setIsModalOpen(true);
   };
@@ -133,13 +117,13 @@ const AdminProducts = () => {
     };
 
     if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, updates: productData });
+      updateProduct({ ...editingProduct, ...productData });
       toast({
-        title: "Product updated", 
+        title: "Product updated",
         description: `${productData.name} has been updated successfully.`,
       });
     } else {
-      createProductMutation.mutate(productData);
+      addProduct(productData);
       toast({
         title: "Product created",
         description: `${productData.name} has been created successfully.`,
@@ -151,7 +135,7 @@ const AdminProducts = () => {
   };
 
   const handleToggleActive = (id: string, currentStatus: boolean) => {
-    updateProductMutation.mutate({ id, updates: { active: !currentStatus } });
+    toggleActive(id);
     toast({
       title: currentStatus ? "Product deactivated" : "Product activated",
       description: `Product has been ${currentStatus ? 'deactivated' : 'activated'} successfully.`,
@@ -323,9 +307,9 @@ const AdminProducts = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                 {filteredProducts.map((product: any) => (
-                   <TableRow key={product.id}>
-                     <TableCell className="font-medium">{product.name}</TableCell>
+                {filteredProducts.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.provider}</TableCell>
                     <TableCell>{product.type}</TableCell>
                     <TableCell>{(product.commissionRate * 100).toFixed(1)}%</TableCell>
@@ -359,10 +343,10 @@ const AdminProducts = () => {
           {/* Mobile Cards */}
           <ResponsiveTableMobile>
             {filteredProducts.map((product) => (
-               <ResponsiveTableCard key={product.id}>
-                 <ResponsiveTableField label="Name">
-                   <span className="font-medium">{product.name}</span>
-                 </ResponsiveTableField>
+              <ResponsiveTableCard key={product.id}>
+                <ResponsiveTableField label="Name">
+                  <span className="font-medium">{product.name}</span>
+                </ResponsiveTableField>
                 <ResponsiveTableField label="Provider">
                   {product.provider}
                 </ResponsiveTableField>

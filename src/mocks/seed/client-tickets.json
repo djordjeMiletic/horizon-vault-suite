@@ -1,0 +1,52 @@
+[
+  {
+    "id": 101,
+    "subject": "Document upload issue",
+    "status": "Open",
+    "lastUpdate": "2025-09-11",
+    "description": "Unable to upload PDF document for case review. Getting error message 'File format not supported'.",
+    "priority": "Medium",
+    "createdDate": "2025-09-10",
+    "category": "Technical"
+  },
+  {
+    "id": 102,
+    "subject": "Meeting reschedule request",
+    "status": "Pending",
+    "lastUpdate": "2025-09-12",
+    "description": "Need to reschedule my appointment scheduled for Friday due to a conflict. Please provide alternative times.",
+    "priority": "High",
+    "createdDate": "2025-09-11",
+    "category": "Appointment"
+  },
+  {
+    "id": 103,
+    "subject": "Case #12345 update request",
+    "status": "Resolved",
+    "lastUpdate": "2025-09-13",
+    "description": "Requesting status update on my insurance case #12345. Haven't heard back in over a week.",
+    "priority": "Medium",
+    "createdDate": "2025-09-05",
+    "category": "Case Management"
+  },
+  {
+    "id": 104,
+    "subject": "Login access problems",
+    "status": "Open",
+    "lastUpdate": "2025-09-14",
+    "description": "Cannot access my account. Password reset emails are not being received.",
+    "priority": "High",
+    "createdDate": "2025-09-14",
+    "category": "Technical"
+  },
+  {
+    "id": 105,
+    "subject": "Policy document clarification",
+    "status": "In Progress",
+    "lastUpdate": "2025-09-13",
+    "description": "Need clarification on section 4.2 of my policy document regarding coverage limits.",
+    "priority": "Low",
+    "createdDate": "2025-09-12",
+    "category": "Policy"
+  }
+]

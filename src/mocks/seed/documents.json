@@ -1,0 +1,74 @@
+[
+  {
+    "id": "DOC-001",
+    "caseId": "C-301",
+    "name": "Medical Examination Report",
+    "version": 1,
+    "uploadedAt": "2025-09-05T16:45:00Z",
+    "uploadedBy": "Sarah Johnson",
+    "uploadedById": "2",
+    "sizeKb": 1248,
+    "type": "Medical",
+    "status": "Processed"
+  },
+  {
+    "id": "DOC-002",
+    "caseId": "C-301",
+    "name": "Proof of Income",
+    "version": 2,
+    "uploadedAt": "2025-09-06T10:30:00Z",
+    "uploadedBy": "Sarah Johnson",
+    "uploadedById": "2",
+    "sizeKb": 856,
+    "type": "Financial",
+    "status": "Processed"
+  },
+  {
+    "id": "DOC-003", 
+    "caseId": "C-301",
+    "name": "Proof of Income",
+    "version": 1,
+    "uploadedAt": "2025-09-04T14:20:00Z",
+    "uploadedBy": "Sarah Johnson",
+    "uploadedById": "2",
+    "sizeKb": 723,
+    "type": "Financial",
+    "status": "Superseded"
+  },
+  {
+    "id": "DOC-004",
+    "caseId": "C-302",
+    "name": "Health Questionnaire",
+    "version": 1,
+    "uploadedAt": "2025-08-22T14:15:00Z",
+    "uploadedBy": "Michael Brown",
+    "uploadedById": "3",
+    "sizeKb": 425,
+    "type": "Medical",
+    "status": "Processed"
+  },
+  {
+    "id": "DOC-005",
+    "caseId": "C-302",
+    "name": "Identity Verification",
+    "version": 1,
+    "uploadedAt": "2025-08-21T09:10:00Z",
+    "uploadedBy": "Michael Brown", 
+    "uploadedById": "3",
+    "sizeKb": 634,
+    "type": "Identity",
+    "status": "Processed"
+  },
+  {
+    "id": "DOC-006",
+    "caseId": "C-303",
+    "name": "Travel Itinerary",
+    "version": 1,
+    "uploadedAt": "2025-09-12T10:15:00Z",
+    "uploadedBy": "Sarah Johnson",
+    "uploadedById": "2", 
+    "sizeKb": 298,
+    "type": "Travel",
+    "status": "Pending"
+  }
+]

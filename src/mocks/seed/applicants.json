@@ -1,0 +1,149 @@
+[
+  {
+    "id": "APP-001",
+    "name": "Emma Thompson",
+    "email": "emma.thompson@email.com",
+    "phone": "+44 20 7123 4567",
+    "appliedFor": "JOB-001",
+    "jobTitle": "Senior Life Insurance Advisor",
+    "status": "Interview",
+    "appliedAt": "2025-09-02T10:30:00Z",
+    "cv": "/mock-cvs/emma-thompson.pdf",
+    "notes": "Strong candidate with excellent insurance background. Scheduled for final interview.",
+    "timeline": [
+      {
+        "id": "TL-001",
+        "at": "2025-09-02T10:30:00Z",
+        "action": "Application Received",
+        "by": "System",
+        "details": "Application submitted via website"
+      },
+      {
+        "id": "TL-002", 
+        "at": "2025-09-03T14:15:00Z",
+        "action": "Screening Completed",
+        "by": "HR Team",
+        "details": "Initial screening passed, moving to interview stage"
+      },
+      {
+        "id": "TL-003",
+        "at": "2025-09-05T09:00:00Z",
+        "action": "Interview Scheduled",
+        "by": "Sarah Johnson",
+        "details": "First interview scheduled for September 10th"
+      }
+    ]
+  },
+  {
+    "id": "APP-002",
+    "name": "James Wilson",
+    "email": "james.wilson@email.com", 
+    "phone": "+353 1 234 5678",
+    "appliedFor": "JOB-002",
+    "jobTitle": "Junior Financial Advisor",
+    "status": "Screening",
+    "appliedAt": "2025-08-30T16:20:00Z",
+    "cv": "/mock-cvs/james-wilson.pdf",
+    "notes": "Recent graduate with strong academic performance. Needs assessment for practical skills.",
+    "timeline": [
+      {
+        "id": "TL-004",
+        "at": "2025-08-30T16:20:00Z",
+        "action": "Application Received", 
+        "by": "System",
+        "details": "Application submitted via website"
+      },
+      {
+        "id": "TL-005",
+        "at": "2025-09-01T11:30:00Z",
+        "action": "Initial Review",
+        "by": "HR Team",
+        "details": "Academic credentials verified, proceeding with screening"
+      }
+    ]
+  },
+  {
+    "id": "APP-003",
+    "name": "Maria Schmidt",
+    "email": "maria.schmidt@email.com",
+    "phone": "+49 69 1234 5678",
+    "appliedFor": "JOB-003",
+    "jobTitle": "Compliance Officer",
+    "status": "Offer",
+    "appliedAt": "2025-08-18T09:45:00Z",
+    "cv": "/mock-cvs/maria-schmidt.pdf",
+    "notes": "Exceptional candidate with extensive EU compliance experience. Offer extended.",
+    "timeline": [
+      {
+        "id": "TL-006",
+        "at": "2025-08-18T09:45:00Z",
+        "action": "Application Received",
+        "by": "System", 
+        "details": "Application submitted via LinkedIn"
+      },
+      {
+        "id": "TL-007",
+        "at": "2025-08-20T13:00:00Z",
+        "action": "Fast-track Interview",
+        "by": "John Smith",
+        "details": "Impressive credentials, scheduled immediate interview"
+      },
+      {
+        "id": "TL-008",
+        "at": "2025-08-25T15:30:00Z",
+        "action": "Offer Extended",
+        "by": "HR Team",
+        "details": "Competitive offer package extended, awaiting response"
+      }
+    ]
+  },
+  {
+    "id": "APP-004",
+    "name": "Aleksandar Petrovic",
+    "email": "aleksandar.petrovic@email.com",
+    "phone": "+381 11 123 4567",
+    "appliedFor": "JOB-004",
+    "jobTitle": "IT Support Specialist", 
+    "status": "New",
+    "appliedAt": "2025-09-06T14:15:00Z",
+    "cv": "/mock-cvs/aleksandar-petrovic.pdf", 
+    "notes": "Application just received, pending initial review.",
+    "timeline": [
+      {
+        "id": "TL-009",
+        "at": "2025-09-06T14:15:00Z",
+        "action": "Application Received",
+        "by": "System",
+        "details": "Application submitted via website"
+      }
+    ]
+  },
+  {
+    "id": "APP-005",
+    "name": "Sophie Martin",
+    "email": "sophie.martin@email.com",
+    "phone": "+44 20 7987 6543",
+    "appliedFor": "JOB-001",
+    "jobTitle": "Senior Life Insurance Advisor",
+    "status": "Rejected",
+    "appliedAt": "2025-09-01T08:00:00Z",
+    "cv": "/mock-cvs/sophie-martin.pdf",
+    "notes": "Insufficient experience for senior role. Suggested to apply for junior positions when available.",
+    "timeline": [
+      {
+        "id": "TL-010",
+        "at": "2025-09-01T08:00:00Z",
+        "action": "Application Received",
+        "by": "System", 
+        "details": "Application submitted via website"
+      },
+      {
+        "id": "TL-011",
+        "at": "2025-09-04T10:45:00Z",
+        "action": "Application Rejected",
+        "by": "HR Team",
+        "details": "Experience level does not match role requirements"
+      }
+    ]
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "comm-001",
+    "advisorId": "1",
+    "productId": "royal-protect",
+    "clientId": "5",
+    "policyNumber": "RP-2024-001",
+    "ape": 12000,
+    "actualReceipts": 8500,
+    "paymentType": "APE",
+    "commissionAmount": 315.75,
+    "paymentDate": "2024-01-15",
+    "status": "Paid",
+    "month": "2024-01",
+    "distributionRoles": {
+      "advisor": 0.7,
+      "introducer": 0.1,
+      "manager": 0.15,
+      "executiveSalesManager": 0.05
+    }
+  },
+  {
+    "id": "comm-002", 
+    "advisorId": "1",
+    "productId": "guardian-life",
+    "clientId": "5",
+    "policyNumber": "GL-2024-002",
+    "ape": 18000,
+    "actualReceipts": 22000,
+    "paymentType": "Actual Receipts",
+    "commissionAmount": 742.8,
+    "paymentDate": "2024-02-20",
+    "status": "Paid",
+    "month": "2024-02",
+    "distributionRoles": {
+      "advisor": 0.75,
+      "introducer": 0.05,
+      "manager": 0.15,
+      "executiveSalesManager": 0.05
+    }
+  },
+  {
+    "id": "comm-003",
+    "advisorId": "1", 
+    "productId": "metlife-secure",
+    "clientId": "5",
+    "policyNumber": "MS-2024-003",
+    "ape": 6000,
+    "actualReceipts": 6000,
+    "paymentType": "APE",
+    "commissionAmount": 127.8,
+    "paymentDate": "2024-03-10",
+    "status": "Pending",
+    "month": "2024-03",
+    "distributionRoles": {
+      "advisor": 0.8,
+      "introducer": 0.0,
+      "manager": 0.15,
+      "executiveSalesManager": 0.05
+    }
+  }
+]

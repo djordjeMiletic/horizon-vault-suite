@@ -19,7 +19,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { useSession } from '@/state/SessionContext';
+import { useAuth } from '@/lib/auth';
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -34,8 +34,8 @@ import {
 } from '@/components/ui/sidebar';
 
 export const Sidebar = () => {
-  const { state, setOpenMobile, isMobile } = useSidebar();
-  const { user } = useSession();
+  const { state, setOpenMobile } = useSidebar();
+  const { user } = useAuth();
   const location = useLocation();
 
   const advisorItems = [
@@ -47,19 +47,18 @@ export const Sidebar = () => {
   ];
 
   const managerItems = [
-    { title: 'Dashboard', url: '/manager/dashboard', icon: BarChart3 },
+    { title: 'Dashboard', url: '/advisor/dashboard', icon: BarChart3 },
     { title: 'Reports', url: '/advisor/reports', icon: FileText },
     { title: 'Analytics', url: '/advisor/analytics', icon: BarChart3 },
     { title: 'Audit Log', url: '/advisor/audit', icon: Shield },
     { title: 'Goals', url: '/advisor/goals', icon: Target },
-    { title: 'Recruitment', url: '/hr/jobs', icon: Briefcase },
-    { title: 'Applicants', url: '/hr/applications', icon: UserPlus },
-    { title: 'Interviews', url: '/hr/interviews', icon: Calendar },
-    { title: 'Onboarding', url: '/hr/onboarding', icon: ClipboardList },
+    { title: 'Recruitment', url: '/advisor/recruitment', icon: Briefcase },
+    { title: 'Applicants', url: '/advisor/applicants', icon: UserPlus },
+    { title: 'Interviews', url: '/advisor/interviews', icon: Calendar },
+    { title: 'Onboarding', url: '/advisor/onboarding', icon: ClipboardList },
   ];
 
   const clientItems = [
-    { title: 'Dashboard', url: '/client/dashboard', icon: BarChart3 },
     { title: 'Cases', url: '/client/cases', icon: FolderOpen },
     { title: 'Documents', url: '/client/documents', icon: FileText },
     { title: 'Messages', url: '/client/messages', icon: MessageSquare },
@@ -71,7 +70,6 @@ export const Sidebar = () => {
   ];
 
   const adminItems = [
-    { title: 'Dashboard', url: '/admin/dashboard', icon: BarChart3 },
     { title: 'Compliance', url: '/admin/compliance', icon: Shield },
     { title: 'Payments', url: '/admin/payments', icon: CreditCard },
     { title: 'Leads', url: '/admin/leads', icon: Users },
@@ -94,20 +92,14 @@ export const Sidebar = () => {
     const path = location.pathname;
     if (path.startsWith('/advisor')) {
       // Hide other advisor items for referral partners
-      if (user?.role === 'ReferralPartner') {
+      if (user?.role === 'referral') {
         return advisorItems.filter(item => item.url === '/advisor/reports');
       }
       // Show manager items (with HR tabs) if user is manager
-      if (user?.role === 'Manager') {
+      if (user?.role === 'manager') {
         return managerItems;
       }
       return advisorItems;
-    }
-    if (path.startsWith('/manager')) {
-      return managerItems;
-    }
-    if (path.startsWith('/referral')) {
-      return advisorItems.filter(item => item.url === '/advisor/reports');
     }
     if (path.startsWith('/client')) return clientItems;
     if (path.startsWith('/admin')) return adminItems;
@@ -121,34 +113,26 @@ export const Sidebar = () => {
 
   const handleNavigation = () => {
     // Auto-close sidebar on navigation for mobile/tablet
-    if (isMobile) {
-      setOpenMobile(false);
-    }
+    setOpenMobile(false);
   };
 
   const getNavClassName = ({ isActive }: { isActive: boolean }) =>
     isActive 
-      ? 'bg-secondary/30 text-secondary font-medium focus-visible:outline-2 focus-visible:outline-secondary animate-scale-in' 
-      : 'hover:bg-secondary/15 text-neutral focus-visible:outline-2 focus-visible:outline-secondary hover-scale transition-all duration-200';
+      ? 'bg-secondary/30 text-secondary font-medium focus-visible:outline-2 focus-visible:outline-secondary' 
+      : 'hover:bg-secondary/15 text-neutral focus-visible:outline-2 focus-visible:outline-secondary';
 
   if (items.length === 0) return null;
 
   return (
     <SidebarComponent
-      className="bg-primary border-primary/20 animate-slide-in-right"
+      className="bg-primary border-primary/20"
       collapsible="offcanvas"
     >
-      {/* Mobile trigger always visible */}
-      <div className="lg:hidden">
-        <SidebarTrigger className="m-2" />
-      </div>
-      
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-primary-foreground/80">
-            {location.pathname.startsWith('/advisor') && 'Advisory Portal'}
-            {location.pathname.startsWith('/manager') && 'Manager Portal'}
-            {location.pathname.startsWith('/referral') && 'Referral Portal'}
+          <SidebarGroupLabel>
+            {location.pathname.startsWith('/advisor') && 
+              (user?.role === 'manager' ? 'Manager Portal' : 'Advisory Portal')}
             {location.pathname.startsWith('/client') && 'Client Portal'}
             {location.pathname.startsWith('/admin') && 'Admin Portal'}
             {location.pathname.startsWith('/hr') && 'HR Portal'}
@@ -156,8 +140,8 @@ export const Sidebar = () => {
 
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item, index) => (
-                <SidebarMenuItem key={item.title} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
@@ -167,10 +151,8 @@ export const Sidebar = () => {
                     >
                       {({ isActive }) => (
                         <>
-                          <item.icon className="mr-2 h-4 w-4 opacity-80 transition-all duration-200" />
-                          <span className={`transition-all duration-200 ${collapsed ? 'sr-only' : ''}`}>
-                            {item.title}
-                          </span>
+                          <item.icon className="mr-2 h-4 w-4 opacity-80" />
+                          <span className={collapsed ? 'sr-only' : ''}>{item.title}</span>
                           {isActive && <span className="sr-only" aria-current="page">Current page</span>}
                         </>
                       )}

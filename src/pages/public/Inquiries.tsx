@@ -4,16 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { inquiriesService } from '@/services/inquiries';
-import { useMutation } from '@tanstack/react-query';
+import { useLeadStore } from '@/lib/stores';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, MessageSquare } from 'lucide-react';
 
 const PublicInquiries = () => {
-  const createInquiryMutation = useMutation({
-    mutationFn: inquiriesService.create
-  });
-
+  const { addLead } = useLeadStore();
   const { toast } = useToast();
   const [form, setForm] = useState({
     name: '',
@@ -26,29 +22,35 @@ const PublicInquiries = () => {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) return;
 
-    const newInquiry = {
+    const newLead = {
+      createdAt: new Date().toISOString(),
+      source: 'Website',
       name: form.name,
       email: form.email,
       phone: form.phone,
-      message: form.message,
-      source: 'Website'
+      status: 'New' as const,
+      assignee: 'unassigned',
+      assigneeName: 'Unassigned',
+      priority: 'Medium' as const,
+      estimatedValue: 0,
+      notes: form.message,
+      history: [
+        {
+          id: `history-${Date.now()}`,
+          at: new Date().toISOString(),
+          by: 'Website Form',
+          action: 'Lead Created',
+          details: 'New inquiry submitted via website contact form'
+        }
+      ]
     };
 
-    createInquiryMutation.mutate(newInquiry, {
-      onSuccess: () => {
-        setForm({ name: '', email: '', phone: '', message: '' });
-        toast({
-          title: "Thank you for your inquiry!",
-          description: "We've received your message and will get back to you soon.",
-        });
-      },
-      onError: () => {
-        toast({
-          title: "Error",
-          description: "There was a problem submitting your inquiry. Please try again.",
-          variant: "destructive"
-        });
-      }
+    addLead(newLead);
+    setForm({ name: '', email: '', phone: '', message: '' });
+
+    toast({
+      title: "Thank you for your inquiry!",
+      description: "We've received your message and will get back to you soon.",
     });
   };
 
@@ -172,9 +174,9 @@ const PublicInquiries = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={!form.name || !form.email || !form.message || createInquiryMutation.isPending}
+                  disabled={!form.name || !form.email || !form.message}
                 >
-                  {createInquiryMutation.isPending ? 'Sending...' : 'Send Message'}
+                  Send Message
                 </Button>
               </form>
             </CardContent>

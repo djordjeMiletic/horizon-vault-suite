@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,80 +7,86 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, DollarSign, Calendar, User, Building, Loader2 } from "lucide-react";
-import { getDeals, createDeal, moveDeal, type Deal, type CreateDealPayload } from "@/services/pipeline";
-import { useToast } from "@/hooks/use-toast";
+import { Plus, DollarSign, Calendar, User, Building } from "lucide-react";
 
+// Mock pipeline data - in real app this would come from a store
+const pipelineData = [
+  {
+    id: "deal-001",
+    title: "Corporate Insurance Package",
+    company: "Tech Solutions Ltd",
+    client: "sarah.johnson@techsolutions.co.uk", 
+    value: 25000,
+    owner: "John Smith",
+    stage: "Qualified",
+    priority: "High",
+    probability: 75,
+    expectedCloseDate: "2024-03-30",
+    nextAction: "Follow up call scheduled",
+    createdAt: "2024-01-15"
+  },
+  {
+    id: "deal-002", 
+    title: "Life Insurance Policy",
+    company: "Green Energy Corp",
+    client: "michael.brown@greenenergy.com",
+    value: 12000,
+    owner: "Jane Doe",
+    stage: "Proposal",
+    priority: "Medium",
+    probability: 60,
+    expectedCloseDate: "2024-04-15",
+    nextAction: "Send proposal document",
+    createdAt: "2024-02-01"
+  },
+  {
+    id: "deal-003",
+    title: "Health Insurance Plan",
+    company: "Creative Agency",
+    client: "alex.wilson@creative.co.uk",
+    value: 8500,
+    owner: "John Smith", 
+    stage: "New",
+    priority: "Low",
+    probability: 25,
+    expectedCloseDate: "2024-05-01",
+    nextAction: "Initial discovery call",
+    createdAt: "2024-02-15"
+  },
+  {
+    id: "deal-004",
+    title: "Travel Insurance",
+    company: "Global Consulting",
+    client: "emma.davis@globalconsult.com",
+    value: 15000,
+    owner: "Jane Doe",
+    stage: "Won", 
+    priority: "High",
+    probability: 100,
+    expectedCloseDate: "2024-02-28",
+    nextAction: "Policy setup",
+    createdAt: "2024-01-20"
+  },
+  {
+    id: "deal-005",
+    title: "Property Insurance",
+    company: "Real Estate Partners", 
+    client: "james.taylor@realestate.co.uk",
+    value: 30000,
+    owner: "John Smith",
+    stage: "Lost",
+    priority: "Medium",
+    probability: 0,
+    expectedCloseDate: "2024-03-15",
+    nextAction: "Post-mortem review",
+    createdAt: "2024-01-10"
+  }
+];
 
 const stages = ["New", "Qualified", "Proposal", "Won", "Lost"];
 
 const Pipeline = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [deals, setDeals] = useState<Deal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newDeal, setNewDeal] = useState<Partial<CreateDealPayload>>({});
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchDeals = async () => {
-      try {
-        const data = await getDeals();
-        setDeals(data);
-      } catch (error) {
-        console.error('Failed to fetch deals:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load deals",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDeals();
-  }, [toast]);
-
-  const handleCreateDeal = async () => {
-    if (!newDeal.title || !newDeal.company || !newDeal.client || !newDeal.value) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const dealData: CreateDealPayload = {
-        title: newDeal.title,
-        company: newDeal.company,
-        client: newDeal.client,
-        value: newDeal.value,
-        owner: newDeal.owner || "Current User",
-        priority: newDeal.priority || "Medium",
-        expectedCloseDate: newDeal.expectedCloseDate || new Date().toISOString().split('T')[0],
-        nextAction: newDeal.nextAction || "Initial contact"
-      };
-
-      const deal = await createDeal(dealData);
-      setDeals(prev => [...prev, deal]);
-      setNewDeal({});
-      setIsDialogOpen(false);
-      
-      toast({
-        title: "Success",
-        description: "Deal created successfully"
-      });
-    } catch (error) {
-      console.error('Failed to create deal:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create deal",
-        variant: "destructive"
-      });
-    }
-  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -103,7 +109,7 @@ const Pipeline = () => {
   };
 
   const getDealsInStage = (stage: string) => {
-    return deals.filter(deal => deal.stage === stage);
+    return pipelineData.filter(deal => deal.stage === stage);
   };
 
   return (
@@ -129,61 +135,39 @@ const Pipeline = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="title">Deal Title</Label>
-                  <Input 
-                    id="title" 
-                    placeholder="Corporate Insurance Package"
-                    value={newDeal.title || ''}
-                    onChange={(e) => setNewDeal({...newDeal, title: e.target.value})}
-                  />
+                  <Input id="title" placeholder="Corporate Insurance Package" />
                 </div>
                 <div>
                   <Label htmlFor="company">Company</Label>
-                  <Input 
-                    id="company" 
-                    placeholder="Company name"
-                    value={newDeal.company || ''}
-                    onChange={(e) => setNewDeal({...newDeal, company: e.target.value})}
-                  />
+                  <Input id="company" placeholder="Company name" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="client">Client Email</Label>
-                  <Input 
-                    id="client" 
-                    type="email" 
-                    placeholder="client@company.com"
-                    value={newDeal.client || ''}
-                    onChange={(e) => setNewDeal({...newDeal, client: e.target.value})}
-                  />
+                  <Input id="client" type="email" placeholder="client@company.com" />
                 </div>
                 <div>
                   <Label htmlFor="value">Deal Value</Label>
-                  <Input 
-                    id="value" 
-                    type="number" 
-                    placeholder="25000"
-                    value={newDeal.value || ''}
-                    onChange={(e) => setNewDeal({...newDeal, value: Number(e.target.value)})}
-                  />
+                  <Input id="value" type="number" placeholder="25000" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="owner">Deal Owner</Label>
-                  <Select value={newDeal.owner || ''} onValueChange={(value) => setNewDeal({...newDeal, owner: value})}>
+                  <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select owner" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="John Smith">John Smith</SelectItem>
-                      <SelectItem value="Jane Doe">Jane Doe</SelectItem>
+                      <SelectItem value="john">John Smith</SelectItem>
+                      <SelectItem value="jane">Jane Doe</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label htmlFor="priority">Priority</Label>
-                  <Select value={newDeal.priority || ''} onValueChange={(value) => setNewDeal({...newDeal, priority: value as any})}>
+                  <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
@@ -197,28 +181,17 @@ const Pipeline = () => {
               </div>
               <div>
                 <Label htmlFor="nextAction">Next Action</Label>
-                <Textarea 
-                  id="nextAction" 
-                  placeholder="Next steps..."
-                  value={newDeal.nextAction || ''}
-                  onChange={(e) => setNewDeal({...newDeal, nextAction: e.target.value})}
-                />
+                <Textarea id="nextAction" placeholder="Next steps..." />
               </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreateDeal}>Create Deal</Button>
+              <Button onClick={() => setIsDialogOpen(false)}>Create Deal</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin mr-2" />
-          Loading pipeline...
-        </div>
-      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {stages.map((stage) => {
           const deals = getDealsInStage(stage);
@@ -285,7 +258,6 @@ const Pipeline = () => {
           );
         })}
       </div>
-      )}
     </div>
   );
 };

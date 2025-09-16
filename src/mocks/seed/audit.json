@@ -1,0 +1,187 @@
+[
+  {
+    "id": "audit-001",
+    "timestamp": "2024-01-15T14:30:00.000Z",
+    "actor": {
+      "id": "1",
+      "name": "John Smith",
+      "email": "john.smith@eh.com",
+      "role": "advisor"
+    },
+    "action": "payment_created",
+    "entity": {
+      "type": "payment",
+      "id": "PAY-2024-001",
+      "name": "Commission Payment - Policy RP-2024-001"
+    },
+    "details": "Created commission payment of £315.75 for policy RP-2024-001",
+    "metadata": {
+      "amount": 315.75,
+      "currency": "GBP",
+      "policyNumber": "RP-2024-001",
+      "commissionType": "Monthly APE",
+      "status": "pending"
+    }
+  },
+  {
+    "id": "audit-002",
+    "timestamp": "2024-01-15T09:15:00.000Z",
+    "actor": {
+      "id": "4",
+      "name": "Emma Wilson",
+      "email": "emma.wilson@eh.com",
+      "role": "admin"
+    },
+    "action": "payment_approved",
+    "entity": {
+      "type": "payment",
+      "id": "PAY-2024-002",
+      "name": "Commission Payment - Policy MS-2024-003"
+    },
+    "details": "Approved commission payment of £1,250.00 for policy MS-2024-003",
+    "metadata": {
+      "amount": 1250.00,
+      "currency": "GBP",
+      "policyNumber": "MS-2024-003",
+      "previousStatus": "pending",
+      "newStatus": "approved"
+    }
+  },
+  {
+    "id": "audit-003",
+    "timestamp": "2024-01-14T16:45:00.000Z",
+    "actor": {
+      "id": "1",
+      "name": "John Smith",
+      "email": "john.smith@eh.com",
+      "role": "advisor"
+    },
+    "action": "document_uploaded",
+    "entity": {
+      "type": "document",
+      "id": "DOC-2024-001",
+      "name": "Client Agreement - Sarah Johnson"
+    },
+    "details": "Uploaded client agreement document for Sarah Johnson",
+    "metadata": {
+      "fileName": "client_agreement_sarah_johnson.pdf",
+      "fileSize": 245760,  
+      "clientId": "CLIENT-001",
+      "documentType": "agreement"
+    }
+  },
+  {
+    "id": "audit-004",
+    "timestamp": "2024-01-14T11:20:00.000Z",
+    "actor": {
+      "id": "2",
+      "name": "Sarah Johnson",
+      "email": "sarah.johnson@email.com",
+      "role": "client"
+    },
+    "action": "case_status_changed",
+    "entity": {
+      "type": "case",
+      "id": "CASE-2024-001",
+      "name": "Life Insurance Application"
+    },
+    "details": "Case status changed from 'In Review' to 'Approved'",
+    "metadata": {
+      "previousStatus": "in_review",
+      "newStatus": "approved",
+      "caseType": "life_insurance",
+      "advisorId": "1"
+    }
+  },
+  {
+    "id": "audit-005",
+    "timestamp": "2024-01-13T14:10:00.000Z",
+    "actor": {
+      "id": "1",
+      "name": "John Smith",
+      "email": "john.smith@eh.com",
+      "role": "advisor"
+    },
+    "action": "ticket_created",
+    "entity": {
+      "type": "ticket",
+      "id": "TICKET-2024-001",
+      "name": "Payment Discrepancy Issue"
+    },
+    "details": "Created support ticket for payment discrepancy on policy RP-2024-005",
+    "metadata": {
+      "priority": "high",
+      "category": "payment",
+      "description": "Commission amount doesn't match expected calculation",
+      "policyNumber": "RP-2024-005"
+    }
+  },
+  {
+    "id": "audit-006",
+    "timestamp": "2024-01-13T10:30:00.000Z",
+    "actor": {
+      "id": "4",
+      "name": "Emma Wilson",
+      "email": "emma.wilson@eh.com",
+      "role": "admin"
+    },
+    "action": "ticket_closed",
+    "entity": {
+      "type": "ticket",
+      "id": "TICKET-2024-002",
+      "name": "Access Permission Request"
+    },
+    "details": "Closed support ticket after granting requested permissions",
+    "metadata": {
+      "previousStatus": "in_progress",
+      "newStatus": "closed",
+      "resolution": "Permissions granted as requested",
+      "assignedTo": "4"
+    }
+  },
+  {
+    "id": "audit-007",
+    "timestamp": "2024-01-12T15:45:00.000Z",
+    "actor": {
+      "id": "1",
+      "name": "John Smith",
+      "email": "john.smith@eh.com",
+      "role": "advisor"
+    },
+    "action": "goal_updated",
+    "entity": {
+      "type": "goal",
+      "id": "GOAL-2024-01",
+      "name": "January 2024 Monthly Target"
+    },
+    "details": "Updated monthly commission target from £50,000 to £55,000",
+    "metadata": {
+      "previousTarget": 50000,
+      "newTarget": 55000,
+      "month": "2024-01",
+      "currency": "GBP"
+    }
+  },
+  {
+    "id": "audit-008",
+    "timestamp": "2024-01-11T09:00:00.000Z",
+    "actor": {
+      "id": "3",
+      "name": "Michael Brown",
+      "email": "michael.brown@email.com",
+      "role": "client"
+    },
+    "action": "profile_updated",
+    "entity": {
+      "type": "profile",
+      "id": "PROFILE-003",
+      "name": "Michael Brown Profile"
+    },
+    "details": "Updated contact information and address details",
+    "metadata": {
+      "fieldsChanged": ["phone", "address", "timezone"],
+      "previousPhone": "+44 20 1234 5678",
+      "newPhone": "+44 20 8765 4321"
+    }
+  }
+]

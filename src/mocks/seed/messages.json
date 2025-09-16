@@ -1,0 +1,83 @@
+[
+  {
+    "threadId": "C-301",
+    "caseId": "C-301",
+    "subject": "Medical Documents Required",
+    "participants": ["2", "1"],
+    "participantNames": ["Sarah Johnson", "John Smith"],
+    "lastActivity": "2025-09-10T15:45:00Z",
+    "unreadCount": 1,
+    "messages": [
+      {
+        "id": "msg-001",
+        "at": "2025-09-02T09:30:00Z",
+        "from": "1",
+        "fromName": "John Smith",
+        "text": "Hello Sarah, thank you for submitting your life insurance application. To proceed with your application, we'll need some additional documents: medical examination report and proof of income. Please upload these at your earliest convenience.",
+        "read": true
+      },
+      {
+        "id": "msg-002",
+        "at": "2025-09-05T16:50:00Z",
+        "from": "2",
+        "fromName": "Sarah Johnson",
+        "text": "Hi John, I've just uploaded my medical examination report. I'll get the proof of income document to you by tomorrow. Thanks for your help with this process!",
+        "read": true
+      },
+      {
+        "id": "msg-003",
+        "at": "2025-09-10T15:45:00Z",
+        "from": "1",
+        "fromName": "John Smith",
+        "text": "Perfect! I've received all your documents. Your application is now under underwriting review. I'll keep you updated on the progress. Expected turnaround is 5-7 business days.",
+        "read": false
+      }
+    ]
+  },
+  {
+    "threadId": "C-302",
+    "caseId": "C-302",
+    "subject": "Health Insurance Application Update",
+    "participants": ["3", "1"],
+    "participantNames": ["Michael Brown", "John Smith"],
+    "lastActivity": "2025-09-08T11:25:00Z",
+    "unreadCount": 0,
+    "messages": [
+      {
+        "id": "msg-004",
+        "at": "2025-08-22T14:20:00Z",
+        "from": "1",
+        "fromName": "John Smith",
+        "text": "Hi Michael, I've received your health insurance application. Everything looks good so far. I'll be in touch once we hear back from the underwriting team.",
+        "read": true
+      },
+      {
+        "id": "msg-005",
+        "at": "2025-09-08T11:25:00Z", 
+        "from": "1",
+        "fromName": "John Smith",
+        "text": "Great news Michael! Your health insurance application has been approved. Your policy documents have been sent to your email address. Welcome to Metro Shield Health!",
+        "read": true
+      }
+    ]
+  },
+  {
+    "threadId": "general-2",
+    "caseId": null,
+    "subject": "General Inquiry",
+    "participants": ["2", "1"],
+    "participantNames": ["Sarah Johnson", "John Smith"],
+    "lastActivity": "2025-09-11T10:30:00Z",
+    "unreadCount": 0,
+    "messages": [
+      {
+        "id": "msg-006",
+        "at": "2025-09-11T10:30:00Z",
+        "from": "2",
+        "fromName": "Sarah Johnson",
+        "text": "Hi John, I was wondering about travel insurance options for my upcoming business trip to Europe. Could you provide some information about coverage options?",
+        "read": true
+      }
+    ]
+  }
+]

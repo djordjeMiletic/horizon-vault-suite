@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,62 +10,95 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import { Download, Filter, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
-import { useSession } from '@/state/SessionContext';
-import { getCommissionDetails } from '@/services/payments';
-import type { CommissionDetailsRowDto, Paginated } from '@/types/api';
+import { useAuth } from '@/lib/auth';
+import { canExportCSV, computeCommission, getProductName, type Policy } from '@/lib/commission';
+import { usePaymentDataStore } from '@/lib/stores';
 import CustomReports from './components/CustomReports';
 
+import policiesData from '@/mocks/seed/policies.json';
+import productsData from '@/mocks/seed/products.json';
+
 const Reports = () => {
-  const { user } = useSession();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [commissionData, setCommissionData] = useState<Paginated<CommissionDetailsRowDto>>({
-    items: [],
-    page: 1,
-    pageSize: 12,
-    totalCount: 0
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const { payments: paymentsData } = usePaymentDataStore();
   const [filters, setFilters] = useState({
     period: 'all',
+    product: 'all',
+    role: 'all',
     advisor: 'all'
   });
+
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const itemsPerPage = 12;
 
-  // Load commission details
-  useEffect(() => {
-    const loadCommissionDetails = async () => {
-      setIsLoading(true);
-      try {
-        const params: any = {
-          page: currentPage,
-          pageSize: itemsPerPage
-        };
+  // Get unique advisors for filtering
+  const getAdvisors = () => {
+    const advisorEmails = [...new Set(paymentsData.map(p => p.advisorEmail))];
+    return advisorEmails.map(email => {
+      if (email === 'advisor@advisor.com') return { email, name: 'Sarah Johnson' };
+      if (email === 'advisor2@advisor.com') return { email, name: 'Michael Carter' };
+      return { email, name: email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase()) };
+    });
+  };
 
-        // Apply advisor filter based on role
-        if (user?.role === 'Advisor') {
-          params.advisorEmail = user.email;
-        } else if (user?.role === 'Manager' && filters.advisor !== 'all') {
-          params.advisorEmail = filters.advisor;
-        }
+  const advisors = getAdvisors();
 
-        const data = await getCommissionDetails(params);
-        setCommissionData(data);
-      } catch (error) {
-        console.error('Failed to load commission details:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load commission details',
-          variant: 'destructive'
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Calculate commission breakdown using centralized utility
+  const calculateCommissionBreakdown = (payment: any) => {
+    const policy = (policiesData as Policy[]).find(p => p.productId === payment.productId);
+    if (!policy) {
+      return {
+        methodUsed: 'N/A' as const,
+        productRatePct: 0,
+        marginPct: 0,
+        commissionBase: 0,
+        poolAmount: 0,
+        split: { Advisor: 0, Introducer: 0, Manager: 0, ExecSalesManager: 0 }
+      };
+    }
+    
+    return computeCommission(payment, policy);
+  };
 
-    loadCommissionDetails();
-  }, [currentPage, filters, user, toast]);
+  // Filter payments based on current user and filters
+  const getFilteredPayments = () => {
+    let filtered = paymentsData;
+
+    // Role-based data scoping
+    if (user?.role === 'advisor') {
+      filtered = filtered.filter(p => p.advisorEmail === user?.email);
+    } else if (user?.role === 'manager' && filters.advisor !== 'all') {
+      filtered = filtered.filter(p => p.advisorEmail === filters.advisor);
+    }
+
+    // Apply filters
+    if (filters.product !== 'all') {
+      filtered = filtered.filter(p => p.productId === filters.product);
+    }
+
+    if (filters.period === 'current-month') {
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      filtered = filtered.filter(p => p.date.slice(0, 7) === currentMonth);
+    } else if (filters.period === 'last-month') {
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      const lastMonthStr = lastMonth.toISOString().slice(0, 7);
+      filtered = filtered.filter(p => p.date.slice(0, 7) === lastMonthStr);
+    } else if (filters.period === 'ytd') {
+      const currentYear = new Date().getFullYear().toString();
+      filtered = filtered.filter(p => p.date.startsWith(currentYear));
+    }
+
+    return filtered;
+  };
+
+  const filteredPayments = getFilteredPayments();
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPagePayments = filteredPayments.slice(startIndex, endIndex);
 
   const toggleRowExpansion = (paymentId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -77,284 +110,329 @@ const Reports = () => {
     setExpandedRows(newExpanded);
   };
 
-  const totalPages = Math.ceil(commissionData.totalCount / itemsPerPage);
-
-  const handleExport = async () => {
-    try {
-      const params: any = {};
-      
-      if (user?.role === 'Advisor') {
-        params.advisorEmail = user.email;
-      } else if (user?.role === 'Manager' && filters.advisor !== 'all') {
-        params.advisorEmail = filters.advisor;
-      }
-
-      const exportData = await getCommissionDetails({ ...params, page: 1, pageSize: 10000 });
-      
-      const headers = [
-        'Date', 'Provider', 'Product', 'Method Used', 'Product Rate %', 'Margin %', 
-        'Commission Base', 'Pool Amount', 'Advisor Share', 'Introducer Share', 
-        'Manager Share', 'Exec Share', 'Advisor Email'
-      ];
-      
-      const csvContent = [
-        headers.join(','),
-        ...exportData.items.map(row => [
-          row.date,
-          `"${row.provider}"`,
-          `"${row.product}"`,
-          row.methodUsed,
-          row.productRatePct,
-          row.marginPct,
-          row.commissionBase.toFixed(2),
-          row.poolAmount.toFixed(2),
-          row.advisorShare.toFixed(2),
-          row.introducerShare.toFixed(2),
-          row.managerShare.toFixed(2),
-          row.execShare.toFixed(2),
-          row.advisorEmail
-        ].join(','))
-      ].join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `commission-details-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: 'Export Complete',
-        description: `Exported ${exportData.items.length} commission records`
+  const handleExportCSV = () => {
+    if (!canExportCSV(user?.role || '')) {
+      toast({ 
+        title: "Access Denied", 
+        description: "You don't have permission to export data.", 
+        variant: "destructive" 
       });
-    } catch (error) {
-      console.error('Export failed:', error);
-      toast({
-        title: 'Export Failed', 
-        description: 'Failed to export commission details',
-        variant: 'destructive'
-      });
+      return;
     }
+
+    // Export the filtered dataset with commission breakdown
+    const csvData = filteredPayments.map(payment => {
+      const commission = calculateCommissionBreakdown(payment);
+      const advisor = advisors.find(a => a.email === payment.advisorEmail);
+      
+      return {
+        'Date': payment.date,
+        'Advisor': advisor?.name || payment.advisorEmail,
+        'Product': getProductName(payment.productId),
+        'Provider': payment.provider,
+        'APE': payment.ape,
+        'Receipts': payment.receipts,
+        'Method Used': commission.methodUsed,
+        'Product Rate %': commission.productRatePct,
+        'Margin %': commission.marginPct,
+        'Commission Base': commission.commissionBase.toFixed(2),
+        'Pool Amount': commission.poolAmount.toFixed(2),
+        'Advisor Share': commission.split.Advisor.toFixed(2),
+        'Introducer Share': commission.split.Introducer.toFixed(2),
+        'Manager Share': commission.split.Manager.toFixed(2),
+        'Exec Sales Manager Share': commission.split.ExecSalesManager.toFixed(2),
+        'Status': payment.status
+      };
+    });
+
+    // Convert to CSV
+    const headers = Object.keys(csvData[0] || {});
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
+    ].join('\n');
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `commission-details-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({ 
+      title: "Export Complete", 
+      description: `Exported ${csvData.length} commission records.` 
+    });
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-        <p className="text-muted-foreground">
-          Commission reports and analytics for your business
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Reports</h1>
+          <p className="text-muted-foreground">Commission reports and analytics</p>
+        </div>
+        {canExportCSV(user?.role || '') && (
+          <Button onClick={handleExportCSV} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        )}
       </div>
 
-      <Tabs defaultValue="commission" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="commission">Commission Details</TabsTrigger>
-          <TabsTrigger value="custom">Custom Reports</TabsTrigger>
+      <Tabs defaultValue="commission-details" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="commission-details">Commission Details</TabsTrigger>
+          <TabsTrigger value="custom-reports">Custom Reports</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="commission" className="space-y-4">
+        <TabsContent value="commission-details" className="space-y-6">
+          {/* Filters */}
           <Card>
-            <div className="flex items-center justify-between p-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Commission Details</h3>
-                <p className="text-sm text-muted-foreground">
-                  Showing {((commissionData.page - 1) * commissionData.pageSize) + 1} to {Math.min(commissionData.page * commissionData.pageSize, commissionData.totalCount)} of {commissionData.totalCount} records
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleExport}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export CSV
-                </Button>
-              </div>
-            </div>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Period</Label>
+                  <Select
+                    value={filters.period}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, period: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="current-month">Current Month</SelectItem>
+                      <SelectItem value="last-month">Last Month</SelectItem>
+                      <SelectItem value="ytd">Year to Date</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10"></TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead className="text-right">Pool Amount</TableHead>
-                    <TableHead className="text-right">Advisor Share</TableHead>
-                    {user?.role === 'Manager' && <TableHead>Advisor</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
+                <div>
+                  <Label>Product</Label>
+                  <Select
+                    value={filters.product}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, product: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Products</SelectItem>
+                      {(policiesData as Policy[]).map((policy) => (
+                        <SelectItem key={policy.productId} value={policy.productId}>
+                          {getProductName(policy.productId)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {user?.role === 'manager' && (
+                  <div>
+                    <Label>Advisor</Label>
+                    <Select
+                      value={filters.advisor}
+                      onValueChange={(value) => setFilters(prev => ({ ...prev, advisor: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Advisors</SelectItem>
+                        {advisors.map((advisor) => (
+                          <SelectItem key={advisor.email} value={advisor.email}>
+                            {advisor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Commission Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Commission Details</CardTitle>
+              <CardDescription>
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredPayments.length)} of {filteredPayments.length} results
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={user?.role === 'Manager' ? 8 : 7} className="text-center py-8">
-                        Loading commission details...
-                      </TableCell>
+                      <TableHead></TableHead>
+                      <TableHead>Date</TableHead>
+                      {user?.role === 'manager' && <TableHead>Advisor</TableHead>}
+                      <TableHead>Product</TableHead>
+                      <TableHead>Provider</TableHead>
+                      <TableHead className="text-right">APE</TableHead>
+                      <TableHead className="text-right">Receipts</TableHead>
+                      <TableHead>Method Used</TableHead>
+                      <TableHead className="text-right">Product Rate</TableHead>
+                      <TableHead className="text-right">Pool Amount</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ) : commissionData.items.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={user?.role === 'Manager' ? 8 : 7} className="text-center py-8">
-                        No commission data found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    commissionData.items.map((row) => (
-                      <>
-                        <TableRow 
-                          key={row.id} 
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => toggleRowExpansion(row.id)}
-                        >
-                          <TableCell>
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                              {expandedRows.has(row.id) ? 
-                                <ChevronDown className="h-4 w-4" /> : 
-                                <ChevronRight className="h-4 w-4" />
-                              }
-                            </Button>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {new Date(row.date).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>{row.provider}</TableCell>
-                          <TableCell>{row.product}</TableCell>
-                          <TableCell>
-                            <Badge variant={row.methodUsed === 'APE' ? 'default' : 'secondary'}>
-                              {row.methodUsed}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            £{row.poolAmount.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            £{row.advisorShare.toFixed(2)}
-                          </TableCell>
-                          {user?.role === 'Manager' && (
-                            <TableCell>{row.advisorEmail}</TableCell>
-                          )}
-                        </TableRow>
-                        
-                        {expandedRows.has(row.id) && (
-                          <TableRow>
-                            <TableCell colSpan={user?.role === 'Manager' ? 8 : 7}>
-                              <div className="bg-muted/30 p-4 rounded-lg">
-                                <h4 className="font-semibold mb-3">Commission Breakdown</h4>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
-                                  <div>
-                                    <span className="text-muted-foreground">Product Rate:</span>
-                                    <div className="font-medium">{row.productRatePct}%</div>
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Margin:</span>
-                                    <div className="font-medium">{row.marginPct}%</div>
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Commission Base:</span>
-                                    <div className="font-medium">£{row.commissionBase.toFixed(2)}</div>
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Pool Amount:</span>
-                                    <div className="font-medium">£{row.poolAmount.toFixed(2)}</div>
-                                  </div>
-                                </div>
-                                
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead>Role</TableHead>
-                                      <TableHead className="text-right">Amount</TableHead>
-                                      <TableHead className="text-right">Percentage</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    <TableRow>
-                                      <TableCell>Advisor</TableCell>
-                                      <TableCell className="text-right">£{row.advisorShare.toFixed(2)}</TableCell>
-                                      <TableCell className="text-right">{((row.advisorShare / row.poolAmount) * 100).toFixed(1)}%</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                      <TableCell>Introducer</TableCell>
-                                      <TableCell className="text-right">£{row.introducerShare.toFixed(2)}</TableCell>
-                                      <TableCell className="text-right">{((row.introducerShare / row.poolAmount) * 100).toFixed(1)}%</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                      <TableCell>Manager</TableCell>
-                                      <TableCell className="text-right">£{row.managerShare.toFixed(2)}</TableCell>
-                                      <TableCell className="text-right">{((row.managerShare / row.poolAmount) * 100).toFixed(1)}%</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                      <TableCell>Exec Sales Manager</TableCell>
-                                      <TableCell className="text-right">£{row.execShare.toFixed(2)}</TableCell>
-                                      <TableCell className="text-right">{((row.execShare / row.poolAmount) * 100).toFixed(1)}%</TableCell>
-                                    </TableRow>
-                                  </TableBody>
-                                </Table>
-                              </div>
+                  </TableHeader>
+                  <TableBody>
+                    {currentPagePayments.map((payment) => {
+                      const advisor = advisors.find(a => a.email === payment.advisorEmail);
+                      const commission = calculateCommissionBreakdown(payment);
+                      const isExpanded = expandedRows.has(payment.id);
+                      
+                      return (
+                        <>
+                          <TableRow key={payment.id}>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleRowExpansion(payment.id)}
+                                className="p-0 h-8 w-8"
+                              >
+                                {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(payment.date).toLocaleDateString()}
+                            </TableCell>
+                            {user?.role === 'manager' && (
+                              <TableCell>{advisor?.name || payment.advisorEmail}</TableCell>
+                            )}
+                            <TableCell>{getProductName(payment.productId)}</TableCell>
+                            <TableCell>{payment.provider}</TableCell>
+                            <TableCell className="text-right">£{payment.ape.toLocaleString()}</TableCell>
+                            <TableCell className="text-right">£{payment.receipts.toLocaleString()}</TableCell>
+                            <TableCell>
+                              <Badge variant={commission.methodUsed === 'APE' ? 'default' : 'secondary'}>
+                                {commission.methodUsed}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">{commission.productRatePct}%</TableCell>
+                            <TableCell className="text-right font-medium">£{commission.poolAmount.toFixed(2)}</TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={
+                                  payment.status === 'Approved' ? 'default' : 
+                                  payment.status === 'Pending' ? 'secondary' : 'destructive'
+                                }
+                              >
+                                {payment.status}
+                              </Badge>
                             </TableCell>
                           </TableRow>
-                        )}
-                      </>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t">
-                <div className="text-sm text-muted-foreground whitespace-nowrap">
-                  Page {commissionData.page} of {totalPages}
-                </div>
-                <Pagination>
-                  <PaginationContent>
-                    {commissionData.page > 1 && (
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={() => setCurrentPage(commissionData.page - 1)}
-                          className="cursor-pointer"
-                        />
-                      </PaginationItem>
-                    )}
-                    
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const pageNum = i + 1;
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <PaginationLink
-                            onClick={() => setCurrentPage(pageNum)}
-                            isActive={pageNum === commissionData.page}
-                            className="cursor-pointer"
-                          >
-                            {pageNum}
-                          </PaginationLink>
-                        </PaginationItem>
+                          {isExpanded && (
+                            <TableRow>
+                              <TableCell colSpan={user?.role === 'manager' ? 11 : 10}>
+                                <div className="p-4 bg-muted/30 rounded-lg">
+                                  <h4 className="font-medium mb-3">Commission Split Breakdown</h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    <div>
+                                      <span className="text-muted-foreground">Advisor:</span>
+                                      <div className="font-medium">£{commission.split.Advisor.toFixed(2)}</div>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">Introducer:</span>
+                                      <div className="font-medium">£{commission.split.Introducer.toFixed(2)}</div>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">Manager:</span>
+                                      <div className="font-medium">£{commission.split.Manager.toFixed(2)}</div>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">Exec Sales Manager:</span>
+                                      <div className="font-medium">£{commission.split.ExecSalesManager.toFixed(2)}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
                       );
                     })}
+                  </TableBody>
+                </Table>
 
-                    {totalPages > 5 && (
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )}
+                {filteredPayments.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No commission data found for the selected filters.
+                  </div>
+                )}
+              </div>
 
-                    {commissionData.page < totalPages && (
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-sm text-muted-foreground whitespace-nowrap">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <Pagination>
+                    <PaginationContent>
                       <PaginationItem>
-                        <PaginationNext 
-                          onClick={() => setCurrentPage(commissionData.page + 1)}
-                          className="cursor-pointer"
+                        <PaginationPrevious 
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage > 1) setCurrentPage(currentPage - 1);
+                          }}
+                          className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
                         />
                       </PaginationItem>
-                    )}
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
+                      
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const pageNumber = i + 1;
+                        return (
+                          <PaginationItem key={pageNumber}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(pageNumber);
+                              }}
+                              isActive={currentPage === pageNumber}
+                            >
+                              {pageNumber}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                          }}
+                          className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="custom">
+        <TabsContent value="custom-reports">
           <CustomReports />
         </TabsContent>
       </Tabs>

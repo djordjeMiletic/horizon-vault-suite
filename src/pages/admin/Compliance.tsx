@@ -1,36 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Shield, CheckCircle, Clock, XCircle, FileText, Loader2 } from 'lucide-react';
-import { getComplianceDocuments, type ComplianceDocument } from '@/services/compliance';
-import { useToast } from '@/hooks/use-toast';
+import { Shield, CheckCircle, Clock, XCircle, FileText } from 'lucide-react';
+import complianceData from '@/mocks/seed/compliance.json';
 
 const Compliance = () => {
-  const [documents, setDocuments] = useState<ComplianceDocument[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const data = await getComplianceDocuments();
-        setDocuments(data.items || []);
-      } catch (error) {
-        console.error('Failed to fetch compliance documents:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load compliance documents",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDocuments();
-  }, [toast]);
+  const [documents] = useState(complianceData);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -67,12 +44,6 @@ const Compliance = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="ml-2">Loading compliance documents...</span>
-            </div>
-          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -104,7 +75,6 @@ const Compliance = () => {
               ))}
             </TableBody>
           </Table>
-          )}
         </CardContent>
       </Card>
     </div>

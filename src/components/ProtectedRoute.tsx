@@ -1,11 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useSession } from '@/state/SessionContext';
-import type { UserSession } from '@/types/api';
+import { useAuth, UserRole } from '@/lib/auth';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles?: UserSession["role"][];
+  allowedRoles?: UserRole[];
   redirectTo?: string;
 }
 
@@ -14,14 +13,14 @@ export const ProtectedRoute = ({
   allowedRoles,
   redirectTo = '/login' 
 }: ProtectedRouteProps) => {
-  const { user } = useSession();
+  const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
-  if (!user) {
+  if (!isAuthenticated) {
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

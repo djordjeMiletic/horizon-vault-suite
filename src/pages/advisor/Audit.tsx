@@ -7,53 +7,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Shield, Search, Filter, ChevronLeft, ChevronRight, Calendar, User, FileText, Eye } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/lib/auth';
-import { useToast } from '@/hooks/use-toast';
 import { normalizeAction } from '@/lib/commission';
-import { getAuditEntries, type AuditEntry } from '@/services/audit';
+
+// Import audit data
+import auditData from '@/mocks/seed/audit.json';
 
 const Audit = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [auditData, setAuditData] = useState<AuditEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedActor, setSelectedActor] = useState('all');
   const [selectedEntityType, setSelectedEntityType] = useState('all');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   
   const pageSize = 20;
-
-  useEffect(() => {
-    const fetchAuditEntries = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getAuditEntries({
-          search: searchTerm || undefined,
-          actorId: selectedActor !== 'all' ? selectedActor : undefined,
-          entityType: selectedEntityType !== 'all' ? selectedEntityType : undefined,
-          fromDate: dateRange.from || undefined,
-          toDate: dateRange.to || undefined,
-          page: currentPage,
-          pageSize,
-        });
-        setAuditData(data.items);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch audit entries",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAuditEntries();
-  }, [searchTerm, selectedActor, selectedEntityType, dateRange, currentPage, toast]);
 
   // Filter and sort audit data
   const filteredData = useMemo(() => {

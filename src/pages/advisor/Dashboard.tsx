@@ -11,12 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, PoundSterling, Users, Bell, Calendar, ChevronRight, Plus, FileUp, Ticket, CreditCard } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useState } from 'react';
-import { ticketsService } from '@/services/tickets';
-import { documentsService } from '@/services/documents';
-import { paymentsService as paymentsAPI } from '@/services/payments';
-import { goalsService as goalsAPI } from '@/services/goals';
-import { notificationsService as notificationsAPI } from '@/services/notifications';
-import { useQuery } from '@tanstack/react-query';
+import { usePaymentStore, useTicketStore, useDocumentStore, useNotificationStore, usePaymentDataStore, useGoalsDataStore, useNotificationDataStore } from '@/lib/stores';
 import { computeCommission } from '@/lib/commission';
 import AddPaymentModal from '@/components/AddPaymentModal';
 import { rollupMonthly, getCurrentMonth } from '@/lib/timeSeries';
@@ -24,34 +19,17 @@ import { rollupMonthly, getCurrentMonth } from '@/lib/timeSeries';
 const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { addPayment } = usePaymentStore();
+  const { addTicket } = useTicketStore();
+  const { addDocument } = useDocumentStore();
+  const { addNotification } = useNotificationStore();
+  
+  // Use new data stores
+  const { payments, getPaymentsByAdvisor } = usePaymentDataStore();
+  const { getAdvisorGoals, getManagerGoals } = useGoalsDataStore();
+  const { notifications, getNotificationsByRecipient } = useNotificationDataStore();
+
   const isManager = user?.role === 'manager';
-  
-  // Use API services
-  const { data: payments = [] } = useQuery({
-    queryKey: ['payments'],
-    queryFn: async () => {
-      const result = await paymentsAPI.getAll();
-      return Array.isArray(result) ? result : result.items || [];
-    }
-  });
-  
-  const { data: advisorGoals } = useQuery({
-    queryKey: ['advisorGoals', user?.email],
-    queryFn: () => goalsAPI.getAdvisorGoals(user?.email || ''),
-    enabled: !!user?.email && !isManager
-  });
-  
-  const { data: managerGoals } = useQuery({
-    queryKey: ['managerGoals'],
-    queryFn: goalsAPI.getManagerGoals,
-    enabled: isManager
-  });
-  
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications', user?.email],
-    queryFn: () => notificationsAPI.getByRecipient(user?.email || ''),
-    enabled: !!user?.email
-  });
 
   // Modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -74,68 +52,97 @@ const Dashboard = () => {
     description: ''
   });
 
-  const handleAddPayment = async () => {
+  const handleAddPayment = () => {
     if (!paymentForm.policyNumber || !paymentForm.amount || !paymentForm.product) {
       toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
 
-    try {
-      await paymentsAPI.addPayment({
-        date: paymentForm.date,
-        productId: paymentForm.product,
-        provider: 'Demo Provider',
-        ape: paymentForm.type === 'APE' ? parseFloat(paymentForm.amount) : 0,
-        receipts: paymentForm.type === 'Receipts' ? parseFloat(paymentForm.amount) : 0,
-        notes: `Policy: ${paymentForm.policyNumber}`,
-        advisorEmail: user?.email || ''
-      });
+    addPayment({
+      policyNumber: paymentForm.policyNumber,
+      amount: parseFloat(paymentForm.amount),
+      type: paymentForm.type,
+      product: paymentForm.product,
+      date: paymentForm.date,
+      status: 'pending'
+    });
 
-      setPaymentForm({ policyNumber: '', amount: '', type: 'APE', product: '', date: new Date().toISOString().split('T')[0] });
-      setShowPaymentModal(false);
-      toast({ title: "Success", description: "Payment added successfully" });
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to add payment", variant: "destructive" });
-    }
+    addNotification({
+      userId: user?.id || '',
+      type: 'payment',
+      title: 'Payment Added',
+      message: `Payment of £${paymentForm.amount} for policy ${paymentForm.policyNumber} has been added.`,
+      read: false,
+      priority: 'normal'
+    });
+
+    setPaymentForm({ policyNumber: '', amount: '', type: 'APE', product: '', date: new Date().toISOString().split('T')[0] });
+    setShowPaymentModal(false);
+    toast({ title: "Success", description: "Payment added (demo)" });
   };
 
   const handleRequestApproval = () => {
-    // This would be an actual API call in production
+    // Mock approval request
+    addNotification({
+      userId: user?.id || '',
+      type: 'approval',
+      title: 'Approval Requested',
+      message: 'Approval has been requested for pending payments.',
+      read: false,
+      priority: 'high'
+    });
+
     setShowApprovalModal(false);
-    toast({ title: "Success", description: "Approval requested" });
+    toast({ title: "Success", description: "Approval requested (demo)" });
   };
 
-  const handleUploadDocument = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadDocument = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      try {
-        await documentsService.uploadDocument(file, { ownerEmail: user?.email });
-        toast({ title: "Success", description: "Document uploaded successfully" });
-      } catch (error) {
-        toast({ title: "Error", description: "Failed to upload document", variant: "destructive" });
-      }
+      addDocument({
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+
+      addNotification({
+        userId: user?.id || '',
+        type: 'document',
+        title: 'Document Uploaded',
+        message: `Document "${file.name}" has been uploaded successfully.`,
+        read: false,
+        priority: 'normal'
+      });
+
+      toast({ title: "Success", description: "Document uploaded (demo)" });
     }
     setShowDocumentModal(false);
   };
 
-  const handleCreateTicket = async () => {
+  const handleCreateTicket = () => {
     if (!ticketForm.subject) {
       toast({ title: "Error", description: "Please enter a subject", variant: "destructive" });
       return;
     }
 
-    try {
-      await ticketsService.createTicket({
-        subject: ticketForm.subject,
-        message: ticketForm.description || ticketForm.subject
-      });
+    addTicket({
+      subject: ticketForm.subject,
+      priority: ticketForm.priority,
+      description: ticketForm.description
+    });
 
-      setTicketForm({ subject: '', priority: 'medium', description: '' });
-      setShowTicketModal(false);
-      toast({ title: "Success", description: "Ticket created successfully" });
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to create ticket", variant: "destructive" });
-    }
+    addNotification({
+      userId: user?.id || '',
+      type: 'ticket',
+      title: 'Support Ticket Created',
+      message: `Ticket "${ticketForm.subject}" has been created.`,
+      read: false,
+      priority: 'normal'
+    });
+
+    setTicketForm({ subject: '', priority: 'medium', description: '' });
+    setShowTicketModal(false);
+    toast({ title: "Success", description: "Ticket created (demo)" });
   };
 
 // Simple commission calculator for dashboard KPIs
@@ -177,13 +184,13 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
   const getKPIData = () => {
     if (isManager) {
       // Manager sees aggregated data from all advisors
-      const relevantPayments = (payments as any[]) || [];
+      const relevantPayments = payments;
       const commissionData = relevantPayments.map(p => {
-        const result = calculateCommission(p.ape || 0, p.receipts || 0, p.productId || 'PRD-01');
+        const result = calculateCommission(p.ape, p.receipts, p.productId);
         return {
           commission: result.split.Advisor,
           date: p.date,
-          advisorEmail: p.advisorEmail || ''
+          advisorEmail: p.advisorEmail
         };
       });
       
@@ -215,11 +222,10 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
       const avgPayment = paymentsLast30Days > 0 ? totalYTD / paymentsLast30Days : 0;
       
       // Recent payments (last 5) - format for display
-      const recentPayments = (relevantPayments || [])
-        .filter((p: any) => p.status === 'Approved')
-        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      const recentPayments = relevantPayments
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 5)
-        .map((p: any) => {
+        .map(p => {
           const result = calculateCommission(p.ape, p.receipts, p.productId);
           return {
             id: p.id,
@@ -232,13 +238,14 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
         });
         
       // Manager goals
+      const managerGoals = getManagerGoals();
       const currentGoal = managerGoals ? {
         advisorId: user?.id,
         month: currentMonth,
-        target: (managerGoals as any)?.monthlyTarget || 0,
-        achieved: (managerGoals as any)?.history?.find((h: any) => h.month === currentMonth)?.achieved || 0,
-        progress: ((managerGoals as any)?.monthlyTarget || 0) > 0 
-          ? ((managerGoals as any)?.history?.find((h: any) => h.month === currentMonth)?.achieved || 0) / ((managerGoals as any)?.monthlyTarget || 0)
+        target: managerGoals.monthlyTarget,
+        achieved: managerGoals.history?.find(h => h.month === currentMonth)?.achieved || 0,
+        progress: managerGoals.monthlyTarget > 0 
+          ? (managerGoals.history?.find(h => h.month === currentMonth)?.achieved || 0) / managerGoals.monthlyTarget 
           : 0,
         type: 'Team Monthly Target'
       } : null;
@@ -246,9 +253,9 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
       return { totalYTD, momChange, paymentsLast30Days, avgPayment, recentPayments, currentGoal };
     } else {
       // Advisor sees only their own data
-      const advisorPayments = (payments as any[]).filter((p: any) => p.advisorEmail === user?.email);
-      const commissionData = advisorPayments.map((p: any) => {
-        const result = calculateCommission(p.ape || 0, p.receipts || 0, p.productId || 'PRD-01');
+      const advisorPayments = getPaymentsByAdvisor(user?.email || '');
+      const commissionData = advisorPayments.map(p => {
+        const result = calculateCommission(p.ape, p.receipts, p.productId);
         return {
           commission: result.split.Advisor,
           date: p.date
@@ -299,13 +306,14 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
         });
         
       // Advisor goals
+      const advisorGoals = getAdvisorGoals(user?.email || '');
       const currentGoal = advisorGoals ? {
         advisorId: user?.id,
         month: currentMonth,
-        target: (advisorGoals as any)?.monthlyTarget || 0,
-        achieved: (advisorGoals as any)?.history?.find((h: any) => h.month === currentMonth)?.achieved || 0,
-        progress: ((advisorGoals as any)?.monthlyTarget || 0) > 0 
-          ? ((advisorGoals as any)?.history?.find((h: any) => h.month === currentMonth)?.achieved || 0) / ((advisorGoals as any)?.monthlyTarget || 0)
+        target: advisorGoals.monthlyTarget,
+        achieved: advisorGoals.history?.find(h => h.month === currentMonth)?.achieved || 0,
+        progress: advisorGoals.monthlyTarget > 0 
+          ? (advisorGoals.history?.find(h => h.month === currentMonth)?.achieved || 0) / advisorGoals.monthlyTarget 
           : 0,
         type: 'Monthly APE'
       } : null;
@@ -317,9 +325,9 @@ const calculateCommission = (ape: number, receipts: number, productId: string = 
   const { totalYTD, momChange, paymentsLast30Days, avgPayment, recentPayments, currentGoal } = getKPIData();
 
   // User notifications - format for display
-  const userNotifications = ((notifications as any[]) || [])
+  const userNotifications = getNotificationsByRecipient(user?.email || '')
     .slice(0, 5)
-    .map((n: any) => ({
+    .map(n => ({
       ...n,
       message: n.title,
       timestamp: n.createdAt

@@ -10,29 +10,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { appointmentsService } from '@/services/appointments';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAppointmentStore } from '@/lib/stores';
 import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon, Clock, Video, Phone, MapPin, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const Appointments = () => {
-  const queryClient = useQueryClient();
-  const { data: appointments = [] } = useQuery({
-    queryKey: ['appointments'],
-    queryFn: appointmentsService.getAll
-  });
-
-  const createAppointmentMutation = useMutation({
-    mutationFn: appointmentsService.create,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['appointments'] })
-  });
-
-  const updateAppointmentMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: any }) => appointmentsService.update(id, updates),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['appointments'] })
-  });
+  const { appointments, addAppointment, updateAppointment } = useAppointmentStore();
   const [filter, setFilter] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [appointmentForm, setAppointmentForm] = useState({
@@ -85,7 +70,7 @@ const Appointments = () => {
       ...(appointmentForm.type === 'Office' && { location: 'London Office, Meeting Room 1' })
     };
 
-    createAppointmentMutation.mutate(newAppointment);
+    addAppointment(newAppointment);
     setIsOpen(false);
     setAppointmentForm({
       type: 'Virtual',
@@ -104,7 +89,7 @@ const Appointments = () => {
   };
 
   const handleCancelAppointment = (appointmentId: string) => {
-    updateAppointmentMutation.mutate({ id: appointmentId, updates: { status: 'Cancelled' } });
+    updateAppointment(appointmentId, { status: 'Cancelled' });
     toast({
       title: "Appointment cancelled",
       description: "Your appointment has been cancelled.",

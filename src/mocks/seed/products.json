@@ -1,0 +1,79 @@
+[
+  {
+    "id": "royal-protect",
+    "name": "Royal Protect",
+    "provider": "Royal London",
+    "type": "Life Insurance",
+    "commissionRate": 0.025,
+    "margin": 0.15,
+    "description": "Comprehensive life insurance with flexible premiums and investment options.",
+    "features": [
+      "Flexible premium payments",
+      "Investment-linked benefits", 
+      "Terminal illness cover",
+      "Waiver of premium option"
+    ],
+    "commissionExample": {
+      "ape": 10000,
+      "rate": "2.5%",
+      "commission": 250,
+      "note": "Plus 1.5% margin applied to pool"
+    },
+    "bands": [
+      { "threshold": 50000, "rateAdjustment": 0.005 },
+      { "threshold": 100000, "rateAdjustment": 0.01 },
+      { "threshold": 250000, "rateAdjustment": 0.015 }
+    ]
+  },
+  {
+    "id": "guardian-life", 
+    "name": "Guardian Life",
+    "provider": "Guardian Financial",
+    "type": "Whole Life",
+    "commissionRate": 0.03,
+    "margin": 0.12,
+    "description": "Permanent life insurance with guaranteed cash value growth and dividends.",
+    "features": [
+      "Guaranteed cash value",
+      "Annual dividends",
+      "Loan facility available",
+      "Paid-up additions"
+    ],
+    "commissionExample": {
+      "ape": 15000,
+      "rate": "3.0%", 
+      "commission": 450,
+      "note": "Plus 1.2% margin applied to pool"
+    },
+    "bands": [
+      { "threshold": 75000, "rateAdjustment": 0.005 },
+      { "threshold": 150000, "rateAdjustment": 0.01 }
+    ]
+  },
+  {
+    "id": "metlife-secure",
+    "name": "MetLife Secure",
+    "provider": "MetLife",
+    "type": "Term Life", 
+    "commissionRate": 0.02,
+    "margin": 0.18,
+    "description": "Affordable term life insurance with conversion options and renewable terms.",
+    "features": [
+      "Level premiums",
+      "Conversion to permanent life",
+      "Renewable up to age 85",
+      "Accelerated death benefit"
+    ],
+    "commissionExample": {
+      "ape": 5000,
+      "rate": "2.0%",
+      "commission": 100, 
+      "note": "Plus 1.8% margin applied to pool"
+    },
+    "bands": [
+      { "threshold": 25000, "rateAdjustment": 0.003 },
+      { "threshold": 50000, "rateAdjustment": 0.007 },
+      { "threshold": 100000, "rateAdjustment": 0.012 }
+    ]
+  }
+]

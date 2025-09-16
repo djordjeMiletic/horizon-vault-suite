@@ -10,30 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { paymentCyclesService, PaymentCycle } from "@/services/paymentCycles";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePaymentCycleStore } from "@/lib/stores";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { Download, Plus, Check, X, AlertTriangle, FileText, Activity, Flag, CheckSquare, MessageSquare } from "lucide-react";
 
 const Payments = () => {
-  const queryClient = useQueryClient();
-  const { data: cycles = [] } = useQuery({
-    queryKey: ['paymentCycles'],
-    queryFn: () => paymentCyclesService.getCycles()
-  });
-  
-  const updateItemMutation = useMutation({
-    mutationFn: ({ cycleId, itemId, updates }: { cycleId: string; itemId: string; updates: any }) =>
-      paymentCyclesService.updateItem(cycleId, itemId, updates),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['paymentCycles'] })
-  });
-
-  const addCycleMutation = useMutation({
-    mutationFn: paymentCyclesService.createCycle,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['paymentCycles'] })
-  });
-
+  const { cycles, updatePaymentItem, addCycle } = usePaymentCycleStore();
   const [selectedCycle, setSelectedCycle] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("summary");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -51,7 +34,7 @@ const Payments = () => {
 
   const handleStatusUpdate = (cycleId: string, itemId: string, newStatus: string, statusType: 'proposed' | 'final') => {
     const updateField = statusType === 'proposed' ? 'proposedStatus' : 'finalStatus';
-    updateItemMutation.mutate({ cycleId, itemId, updates: { [updateField]: newStatus } });
+    updatePaymentItem(cycleId, itemId, { [updateField]: newStatus });
     
     // Add audit entry
     const auditEntry = {
@@ -136,12 +119,19 @@ const Payments = () => {
     }
 
     const newCycle = {
-      name: newCycleData.cycle,
-      startDate: new Date().toISOString().split('T')[0], // Current date as fallback
-      endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0] // End of current month
+      cycle: newCycleData.cycle,
+      status: 'Draft' as const,
+      totals: {
+        payments: 0,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+        exceptions: 0
+      },
+      items: []
     };
 
-    addCycleMutation.mutate(newCycle);
+    addCycle(newCycle);
     
     toast({
       title: "Cycle Created",
@@ -197,8 +187,7 @@ const Payments = () => {
     }
   };
 
-  const cyclesArray = Array.isArray(cycles) ? cycles : cycles?.items || [];
-  const currentCycle = selectedCycle ? cyclesArray.find(c => c.id === selectedCycle) : null;
+  const currentCycle = selectedCycle ? cycles.find(c => c.id === selectedCycle) : null;
   
   // Calculate counts for proposed vs final statuses
   const proposedCounts = currentCycle?.items.reduce((acc, item: any) => {
@@ -278,7 +267,7 @@ const Payments = () => {
 
       {!selectedCycle ? (
         <div className="grid gap-4">
-          {cyclesArray.map((cycle) => (
+          {cycles.map((cycle) => (
             <Card key={cycle.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedCycle(cycle.id)}>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -395,12 +384,12 @@ const Payments = () => {
                         <CardDescription>Manager proposals pending admin review</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                         {Object.entries(proposedCounts).map(([status, count]) => (
-                           <div key={status} className="flex justify-between items-center">
-                             <span className="text-sm">{status}</span>
-                             <Badge variant="outline">{String(count)}</Badge>
-                           </div>
-                         ))}
+                        {Object.entries(proposedCounts).map(([status, count]) => (
+                          <div key={status} className="flex justify-between items-center">
+                            <span className="text-sm">{status}</span>
+                            <Badge variant="outline">{count}</Badge>
+                          </div>
+                        ))}
                       </CardContent>
                     </Card>
 
@@ -410,12 +399,12 @@ const Payments = () => {
                         <CardDescription>Admin finalized decisions</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                         {Object.entries(finalCounts).map(([status, count]) => (
-                           <div key={status} className="flex justify-between items-center">
-                             <span className="text-sm">{status}</span>
-                             <Badge variant="outline">{String(count)}</Badge>
-                           </div>
-                         ))}
+                        {Object.entries(finalCounts).map(([status, count]) => (
+                          <div key={status} className="flex justify-between items-center">
+                            <span className="text-sm">{status}</span>
+                            <Badge variant="outline">{count}</Badge>
+                          </div>
+                        ))}
                       </CardContent>
                     </Card>
                   </div>

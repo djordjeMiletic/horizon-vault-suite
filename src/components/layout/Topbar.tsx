@@ -1,6 +1,6 @@
 import { Bell, LogOut, User } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useSession } from '@/state/SessionContext';
+import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,60 +14,58 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Modal, ModalHeader, ModalTitle, ModalDescription, ModalContent, ModalFooter } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState, useEffect } from 'react';
+import { useNotificationStore } from '@/lib/stores';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getNotifications, markAllRead } from '@/services/notifications';
-import type { NotificationDto } from '@/types/api';
+
+// Import notifications data
+import notificationsData from '@/mocks/seed/notifications.json';
+
+// Simple state to track read notifications across app
+const readNotifications = new Set<string>();
 
 export const Topbar = () => {
-  const { user, setUser } = useSession();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
+  const { notifications, markAllAsRead } = useNotificationStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationDto[]>([]);
-  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
-  // Load notifications
-  useEffect(() => {
-    const loadNotifications = async () => {
-      if (!user) return;
-      
-      setIsLoadingNotifications(true);
-      try {
-        const scope = user.role === 'Administrator' ? 'admin' : user.role === 'Client' ? 'client' : 'current';
-        const data = await getNotifications(scope);
-        setNotifications(data);
-      } catch (error) {
-        console.error('Failed to load notifications:', error);
-      } finally {
-        setIsLoadingNotifications(false);
-      }
-    };
+  // Merge seed notifications with store notifications, handle read state properly
+  const seedNotifications = notificationsData
+    .filter(n => n.userId === user?.id)
+    .map(n => ({ ...n, read: readNotifications.has(n.id) }));
+  
+  const allNotifications = [...seedNotifications, ...notifications.filter(n => n.userId === user?.id)]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 8);
 
-    loadNotifications();
-  }, [user]);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = allNotifications.filter(n => !n.read).length;
 
   const handleLogout = () => {
-    setUser(null);
+    logout();
     navigate('/login');
   };
 
-  const handleMarkAllRead = async () => {
-    if (!user) return;
-    
-    try {
-      const scope = user.role === 'Administrator' ? 'admin' : user.role === 'Client' ? 'client' : 'current';
-      await markAllRead(scope);
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const handleMarkAllRead = () => {
+    if (user?.id) {
+      // Mark store notifications as read
+      markAllAsRead(user.id);
+      // Mark seed notifications as read by adding to Set
+      allNotifications.forEach(n => {
+        if (n.userId === user.id) {
+          readNotifications.add(n.id);
+        }
+      });
+      // Force component re-render to reflect changes
+      setForceUpdate(prev => prev + 1);
       toast({ title: "Success", description: "All notifications marked as read" });
-    } catch (error) {
-      console.error('Failed to mark notifications as read:', error);
-      toast({ title: "Error", description: "Failed to mark notifications as read", variant: "destructive" });
     }
   };
 
@@ -137,18 +135,15 @@ export const Topbar = () => {
                 </Button>
               </div>
               <div className="max-h-80 overflow-y-auto">
-                {isLoadingNotifications ? (
-                  <div className="p-6 text-center text-muted-foreground">
-                    Loading notifications...
-                  </div>
-                ) : notifications.length > 0 ? (
-                  notifications.slice(0, 8).map((notification) => (
+                {allNotifications.length > 0 ? (
+                  allNotifications.map((notification) => (
                     <div key={notification.id} className={`p-3 border-b hover:bg-muted/50 ${!notification.read ? 'bg-accent/10' : ''}`}>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p className="font-medium text-sm">{notification.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
                           <p className="text-xs text-muted-foreground mt-2">
-                            {new Date(notification.createdAt).toLocaleString()}
+                            {new Date(notification.timestamp).toLocaleString()}
                           </p>
                         </div>
                         {!notification.read && <div className="w-2 h-2 bg-accent rounded-full mt-1" />}
@@ -169,9 +164,9 @@ export const Topbar = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full focus-visible:outline-2 focus-visible:outline-secondary">
                 <Avatar className="h-8 w-8">
-                  {/* <AvatarImage src={user.avatar} alt={user.displayName || user.email} /> */}
+                  <AvatarImage src={user.avatar} alt={user.name} />
                   <AvatarFallback>
-                    {(user.displayName || user.email).split(' ').map(n => n[0]).join('').toUpperCase()}
+                    {user.name.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -179,7 +174,7 @@ export const Topbar = () => {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.displayName || user.email}</p>
+                  <p className="text-sm font-medium leading-none">{user.name}</p>
                   <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   <Badge variant="secondary" className="w-fit capitalize">{user.role}</Badge>
                 </div>
@@ -200,7 +195,7 @@ export const Topbar = () => {
                   <div className="mt-6 space-y-4">
                     <div className="grid gap-2">
                       <Label>Name</Label>
-                      <Input value={user.displayName || user.email} readOnly />
+                      <Input value={user.name} readOnly />
                     </div>
                     <div className="grid gap-2">
                       <Label>Email</Label>
